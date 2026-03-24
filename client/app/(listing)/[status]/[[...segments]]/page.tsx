@@ -25,9 +25,15 @@ const TYPE_LABELS: Record<string, string> = {
 
 function parseSegments(status: string, segments: string[] = []) {
   const [seg0, seg1, seg2] = segments;
+  // /jual/jakarta/kebayoran/rumah
   if (seg2 && PROPERTY_TYPES.includes(seg2)) return { status, city: seg0, district: seg1, type: seg2 };
+  // /jual/jakarta/rumah
   if (seg1 && PROPERTY_TYPES.includes(seg1)) return { status, city: seg0, type: seg1 };
-  if (seg0 && !PROPERTY_TYPES.includes(seg0)) return { status, city: seg0 };
+  // /jual/rumah
+  if (seg0 && PROPERTY_TYPES.includes(seg0)) return { status, type: seg0 };
+  // /jual/jakarta
+  if (seg0) return { status, city: seg0 };
+  // /jual
   return { status };
 }
 
@@ -36,6 +42,11 @@ function buildBreadcrumbs(parsed: ReturnType<typeof parseSegments>) {
     { label: 'Beranda', href: '/' },
     { label: parsed.status === 'jual' ? 'Jual' : 'Sewa', href: `/${parsed.status}` },
   ];
+  // /jual/rumah — type tanpa city
+  if (!parsed.city && parsed.type) {
+    crumbs.push({ label: TYPE_LABELS[parsed.type] ?? parsed.type });
+    return crumbs;
+  }
   if (parsed.city) {
     const label = parsed.city.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     crumbs.push({ label, href: `/${parsed.status}/${parsed.city}` });

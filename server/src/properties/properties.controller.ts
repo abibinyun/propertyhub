@@ -139,19 +139,20 @@ export class PropertiesController {
   }
 
   /**
-   * List: /:status/:city (tanpa jenis)
-   * Contoh: /jual/jakarta-selatan
+   * List: /:status/:type (type tanpa city)
+   * Contoh: /jual/rumah
    */
-  @Get(':status/:city')
-  findByCity(
+  @Get(':status/:type')
+  findByType(
     @Param('status') status: string,
-    @Param('city') city: string,
+    @Param('type') type: string,
     @Query() query: any,
   ) {
-    if (!LISTING_TYPES.includes(status)) {
-      return this.propertiesService.findAll(query);
+    if (!LISTING_TYPES.includes(status) || !PROPERTY_TYPES.includes(type)) {
+      // Bukan tipe properti — anggap sebagai city
+      return this.propertiesService.findByCategory({ status, city: type, ...query });
     }
-    return this.propertiesService.findByCategory({ status, city, ...query });
+    return this.propertiesService.findByCategory({ status, type, ...query });
   }
 
   /**

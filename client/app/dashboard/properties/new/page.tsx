@@ -2,8 +2,11 @@ import { PropertyForm } from '@/components/client/property-form';
 
 export default function NewPropertyPage() {
   return (
-    <div className="container mx-auto px-4 py-8 max-w-3xl">
-      <h1 className="text-3xl font-bold mb-8">Tambah Properti</h1>
+    <div className="py-2 max-w-3xl">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">Pasang Iklan Properti</h1>
+        <p className="text-sm text-muted-foreground mt-1">Isi detail properti Anda untuk mulai menerima calon pembeli</p>
+      </div>
       <PropertyForm />
     </div>
   );

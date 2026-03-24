@@ -18,8 +18,11 @@ export default async function EditPropertyPage({ params }: Props) {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-3xl">
-      <h1 className="text-3xl font-bold mb-8">Edit Properti</h1>
+    <div className="py-2 max-w-3xl">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">Edit Properti</h1>
+        <p className="text-sm text-muted-foreground mt-1 line-clamp-1">{property.title}</p>
+      </div>
       <PropertyForm property={property} />
     </div>
   );
