@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { authApi } from '@/lib/api/auth';
 import { Button } from '@/components/ui/button';
@@ -9,8 +9,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 
+import { useAuth } from '@/lib/context/auth-context';
+
 export function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { setUser } = useAuth();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -26,13 +30,14 @@ export function RegisterForm() {
 
     setLoading(true);
     try {
-      await authApi.register({
+      const result = await authApi.register({
         name: fd.get('name') as string,
         email: fd.get('email') as string,
         password,
         phone: fd.get('phone') as string || undefined,
       });
-      router.push('/dashboard');
+      setUser({ ...result.user, verified: false } as import('@/types/auth').User);
+      router.push(searchParams.get('redirect') || '/dashboard');
       router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Registrasi gagal');

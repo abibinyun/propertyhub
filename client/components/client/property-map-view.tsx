@@ -15,9 +15,17 @@ export function PropertyMapView({ lat: latProp, lng: lngProp, title }: Props) {
   const mapInstanceRef = useRef<import('leaflet').Map | null>(null);
 
   useEffect(() => {
-    if (!mapRef.current || mapInstanceRef.current) return;
+    if (!mapRef.current) return;
+
+    // Leaflet sets _leaflet_id on the DOM element when initialized
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((mapRef.current as any)._leaflet_id) return;
 
     import('leaflet').then((L) => {
+      if (!mapRef.current) return;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((mapRef.current as any)._leaflet_id) return;
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       delete (L.Icon.Default.prototype as any)._getIconUrl;
       L.Icon.Default.mergeOptions({
@@ -26,7 +34,7 @@ export function PropertyMapView({ lat: latProp, lng: lngProp, title }: Props) {
         shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       });
 
-      const map = L.map(mapRef.current!, { scrollWheelZoom: false }).setView([lat, lng], 15);
+      const map = L.map(mapRef.current, { scrollWheelZoom: false }).setView([lat, lng], 15);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors',
       }).addTo(map);

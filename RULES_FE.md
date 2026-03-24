@@ -335,6 +335,69 @@ Optimize for performance, scalability, and clean architecture.
 
 ---
 
+# 🗺️ 19. THIRD-PARTY DOM LIBRARIES
+
+```txt id="dom-libraries"
+- Library yang butuh DOM (Leaflet, Chart.js, dll) WAJIB pakai next/dynamic dengan ssr: false
+- DILARANG import() manual di useEffect untuk library DOM
+```
+
+## ✅ Contoh:
+
+```tsx id="dynamic-import"
+'use client';
+import dynamic from 'next/dynamic';
+
+const Map = dynamic(() => import('./map-inner'), {
+  ssr: false,
+  loading: () => <div className="h-64 animate-pulse bg-muted rounded-lg" />,
+});
+```
+
+---
+
+# 🖼️ 20. IMAGE RULES
+
+```txt id="image-rules"
+- WAJIB pakai next/image, DILARANG <img> biasa
+- Selalu set sizes prop untuk responsive images
+- Gunakan fill + object-cover untuk card images
+- Tambah loading="eager" untuk LCP image (above the fold)
+```
+
+---
+
+# 🔗 21. URL HELPER RULE
+
+```txt id="url-helper"
+- Semua link ke detail properti WAJIB lewat propertyDetailUrl() dari lib/url.ts
+- Semua link ke listing WAJIB lewat listingUrl() dari lib/url.ts
+- DILARANG hardcode path /properti/ atau /jual/ langsung di komponen
+```
+
+---
+
+# 📝 22. FORM RULES
+
+```txt id="form-rules"
+- Form state di client component dengan useState
+- Submit WAJIB lewat lib/api/ wrapper
+- DILARANG fetch langsung di dalam form handler
+- Error state wajib ditampilkan ke user
+```
+
+---
+
+# 🚨 23. ERROR BOUNDARY RULE
+
+```txt id="error-boundary"
+- Setiap route group WAJIB punya error.tsx
+- Setiap route group WAJIB punya loading.tsx
+- not-found.tsx untuk dynamic routes
+```
+
+---
+
 # 🎯 FINAL SUMMARY
 
 Kalau diringkas jadi 5 hukum utama:

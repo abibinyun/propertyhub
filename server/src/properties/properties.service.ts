@@ -197,7 +197,7 @@ export class PropertiesService {
   }
 
   async findByCategory(filters: any) {
-    const { status, type, city, district, page = 1, limit = 20, minPrice, maxPrice } = filters;
+    const { status, type, city, district, page = 1, limit = 20, minPrice, maxPrice, sort, bedrooms, minArea, certificate, furnishing } = filters;
     const where: any = { status: 'ACTIVE', moderationStatus: 'APPROVED' };
 
     if (status) where.listingType = this.reverseTranslateListingType(status);
@@ -209,6 +209,15 @@ export class PropertiesService {
       if (minPrice) where.price.gte = Number(minPrice);
       if (maxPrice) where.price.lte = Number(maxPrice);
     }
+    if (bedrooms) where.bedrooms = { gte: Number(bedrooms) };
+    if (minArea) where.landArea = { gte: Number(minArea) };
+    if (certificate) where.certificateType = certificate;
+    if (furnishing) where.furnishing = furnishing;
+    const orderBy: any[] = [{ featured: 'desc' }];
+    if (sort === 'price_asc') orderBy.push({ price: 'asc' });
+    else if (sort === 'price_desc') orderBy.push({ price: 'desc' });
+    else if (sort === 'newest') orderBy.push({ createdAt: 'desc' });
+    else { orderBy.push({ rankScore: 'desc' }); orderBy.push({ createdAt: 'desc' }); }
 
     const [properties, total] = await Promise.all([
       this.prisma.property.findMany({
@@ -217,11 +226,7 @@ export class PropertiesService {
           images: { where: { isPrimary: true }, take: 1 },
           user: { select: { name: true, phone: true, company: true } },
         },
-        orderBy: [
-          { featured: 'desc' },
-          { rankScore: 'desc' },
-          { createdAt: 'desc' },
-        ],
+        orderBy,
         skip: (Number(page) - 1) * Number(limit),
         take: Number(limit),
       }),
@@ -230,12 +235,7 @@ export class PropertiesService {
 
     return {
       data: properties,
-      meta: {
-        total,
-        page: Number(page),
-        limit: Number(limit),
-        totalPages: Math.ceil(total / Number(limit)),
-      },
+      meta: { total, page: Number(page), limit: Number(limit), totalPages: Math.ceil(total / Number(limit)) },
     };
   }
 

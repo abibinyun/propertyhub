@@ -9,6 +9,8 @@ export interface PropertyQuery {
   listingType?: string;
   minPrice?: number;
   maxPrice?: number;
+  bedrooms?: number;
+  sort?: string;
   page?: number;
   limit?: number;
 }

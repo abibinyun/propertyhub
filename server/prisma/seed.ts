@@ -62,25 +62,29 @@ async function main() {
   console.log('✅ Users created');
 
   // Property data templates
-  const cities = ['Jakarta', 'Surabaya', 'Bandung', 'Bali', 'Yogyakarta', 'Semarang'];
+  const cities = ['Jakarta', 'Surabaya', 'Bandung', 'Bali', 'Yogyakarta', 'Semarang', 'Medan', 'Makassar'];
   const districts = {
-    Jakarta: ['Menteng', 'Kebayoran Baru', 'Pondok Indah', 'Kelapa Gading'],
-    Surabaya: ['Gubeng', 'Rungkut', 'Darmo', 'Citraland'],
-    Bandung: ['Dago', 'Cihampelas', 'Pasteur', 'Setiabudi'],
-    Bali: ['Seminyak', 'Canggu', 'Ubud', 'Sanur'],
-    Yogyakarta: ['Sleman', 'Condongcatur', 'Seturan', 'Mlati'],
-    Semarang: ['Tembalang', 'Banyumanik', 'Semarang Tengah', 'Gajahmungkur'],
+    Jakarta: ['Menteng', 'Kebayoran Baru', 'Pondok Indah', 'Kelapa Gading', 'Kemang', 'Senayan'],
+    Surabaya: ['Gubeng', 'Rungkut', 'Darmo', 'Citraland', 'Pakuwon', 'Wiyung'],
+    Bandung: ['Dago', 'Cihampelas', 'Pasteur', 'Setiabudi', 'Buah Batu', 'Antapani'],
+    Bali: ['Seminyak', 'Canggu', 'Ubud', 'Sanur', 'Kuta', 'Nusa Dua'],
+    Yogyakarta: ['Sleman', 'Condongcatur', 'Seturan', 'Mlati', 'Depok', 'Gamping'],
+    Semarang: ['Tembalang', 'Banyumanik', 'Semarang Tengah', 'Gajahmungkur', 'Pedurungan', 'Ngaliyan'],
+    Medan: ['Medan Baru', 'Medan Selayang', 'Medan Sunggal', 'Medan Helvetia', 'Medan Johor', 'Medan Amplas'],
+    Makassar: ['Panakkukang', 'Rappocini', 'Tamalanrea', 'Biringkanaya', 'Manggala', 'Tallo'],
   };
 
-  const propertyTypes = ['HOUSE', 'APARTMENT', 'LAND', 'COMMERCIAL'];
+  const propertyTypes = ['HOUSE', 'APARTMENT', 'LAND', 'COMMERCIAL', 'VILLA', 'WAREHOUSE'];
   const listingTypes = ['SALE', 'RENT'];
   const furnishings = ['UNFURNISHED', 'SEMI_FURNISHED', 'FULLY_FURNISHED'];
-  const certificates = ['SHM', 'SHGB', 'HGB', 'GIRIK'];
+  const certificates = ['SHM', 'SHGB', 'HGB', 'GIRIK', 'STRATA_TITLE'];
 
   const features = [
-    'AC', 'Balkon', 'Taman', 'Garasi', 'Kolam Renang', 'Gym', 
+    'AC', 'Balkon', 'Taman', 'Garasi', 'Kolam Renang', 'Gym',
     'Security 24/7', 'CCTV', 'Playground', 'Jogging Track',
     'Carport', 'Dapur', 'Ruang Makan', 'Ruang Keluarga',
+    'Water Heater', 'Internet/WiFi', 'Lift', 'Rooftop',
+    'Gudang', 'Mushola', 'Laundry', 'Cluster',
   ];
 
   const imageUrls = [
@@ -92,13 +96,17 @@ async function main() {
     'https://images.unsplash.com/photo-1600573472550-8090b5e0745e',
     'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde',
     'https://images.unsplash.com/photo-1600210492493-0946911123ea',
+    'https://images.unsplash.com/photo-1512917774080-9991f1c4c750',
+    'https://images.unsplash.com/photo-1613490493576-7fde63acd811',
+    'https://images.unsplash.com/photo-1558618666-fcd25c85cd64',
+    'https://images.unsplash.com/photo-1570129477492-45c003edd2be',
   ];
 
   const agents = [agent1, agent2];
   let propertyCount = 0;
 
-  // Generate 50 properties
-  for (let i = 0; i < 50; i++) {
+  // Generate 100 properties
+  for (let i = 0; i < 100; i++) {
     const city = cities[Math.floor(Math.random() * cities.length)];
     const district = districts[city][Math.floor(Math.random() * districts[city].length)];
     const propertyType = propertyTypes[Math.floor(Math.random() * propertyTypes.length)];
@@ -111,11 +119,13 @@ async function main() {
     const buildingArea = propertyType === 'LAND' ? null : Math.floor(Math.random() * 300) + 50;
     const floors = propertyType === 'APARTMENT' ? null : Math.floor(Math.random() * 3) + 1;
 
-    const basePrice = propertyType === 'LAND' ? 500000000 : 
-                     propertyType === 'APARTMENT' ? 800000000 :
-                     propertyType === 'COMMERCIAL' ? 2000000000 : 1500000000;
-    
-    const price = basePrice + (Math.floor(Math.random() * 10) * 100000000);
+    const basePrice = propertyType === 'LAND' ? 500000000 :
+                     propertyType === 'APARTMENT' ? 600000000 :
+                     propertyType === 'COMMERCIAL' ? 2000000000 :
+                     propertyType === 'VILLA' ? 3000000000 :
+                     propertyType === 'WAREHOUSE' ? 1500000000 : 1200000000;
+    const rentMultiplier = listingType === 'RENT' ? 0.005 : 1; // ~0.5% per bulan
+    const price = Math.round((basePrice + (Math.floor(Math.random() * 15) * 100000000)) * rentMultiplier);
 
     const titles = {
       HOUSE: [
@@ -123,24 +133,46 @@ async function main() {
         `Rumah Modern Minimalis ${district} ${city}`,
         `Rumah Siap Huni ${bedrooms}KT ${district}`,
         `Rumah Strategis dekat Pusat Kota ${city}`,
+        `Rumah Cluster Premium ${district}`,
+        `Rumah 2 Lantai ${bedrooms} Kamar ${district}`,
       ],
       APARTMENT: [
         `Apartemen ${bedrooms} Kamar di ${district}`,
         `Apartment Modern ${district} ${city}`,
         `Unit Apartemen Siap Huni ${district}`,
         `Apartemen View Kota ${city}`,
+        `Studio Apartemen ${district} Strategis`,
+        `Apartemen Furnished ${bedrooms}BR ${district}`,
       ],
       LAND: [
         `Tanah Kavling ${landArea}m² di ${district}`,
         `Tanah Strategis ${district} ${city}`,
         `Kavling Siap Bangun ${district}`,
         `Tanah Investasi ${city}`,
+        `Tanah Hook ${landArea}m² ${district}`,
+        `Kavling Premium ${district} ${city}`,
       ],
       COMMERCIAL: [
         `Ruko ${floors} Lantai di ${district}`,
         `Gedung Komersial ${district} ${city}`,
         `Ruko Strategis ${district}`,
         `Bangunan Komersial ${city}`,
+        `Ruko Baru ${floors}Lt ${district}`,
+        `Kios Strategis ${district} ${city}`,
+      ],
+      VILLA: [
+        `Villa Mewah ${bedrooms} Kamar di ${district}`,
+        `Villa Private Pool ${district} ${city}`,
+        `Villa Modern ${district} View Alam`,
+        `Villa Eksklusif ${bedrooms}KT ${district}`,
+        `Villa Tropis ${district} ${city}`,
+      ],
+      WAREHOUSE: [
+        `Gudang ${landArea}m² di ${district}`,
+        `Gudang Strategis ${district} ${city}`,
+        `Warehouse ${buildingArea}m² ${district}`,
+        `Gudang Industri ${district} ${city}`,
+        `Gudang Siap Pakai ${district}`,
       ],
     };
 
@@ -164,14 +196,30 @@ async function main() {
         address: `Jl. ${district} No. ${Math.floor(Math.random() * 100) + 1}`,
         city,
         district,
-        province: city === 'Jakarta' ? 'DKI Jakarta' : 
+        province: city === 'Jakarta' ? 'DKI Jakarta' :
                  city === 'Surabaya' ? 'Jawa Timur' :
                  city === 'Bandung' ? 'Jawa Barat' :
                  city === 'Bali' ? 'Bali' :
-                 city === 'Yogyakarta' ? 'DI Yogyakarta' : 'Jawa Tengah',
+                 city === 'Yogyakarta' ? 'DI Yogyakarta' :
+                 city === 'Medan' ? 'Sumatera Utara' :
+                 city === 'Makassar' ? 'Sulawesi Selatan' : 'Jawa Tengah',
         postalCode: `${Math.floor(Math.random() * 90000) + 10000}`,
-        latitude: -6.2 + (Math.random() * 2),
-        longitude: 106.8 + (Math.random() * 2),
+        latitude: city === 'Jakarta' ? -6.2 + (Math.random() * 0.3 - 0.15) :
+                 city === 'Surabaya' ? -7.25 + (Math.random() * 0.2 - 0.1) :
+                 city === 'Bandung' ? -6.9 + (Math.random() * 0.2 - 0.1) :
+                 city === 'Bali' ? -8.65 + (Math.random() * 0.3 - 0.15) :
+                 city === 'Yogyakarta' ? -7.8 + (Math.random() * 0.2 - 0.1) :
+                 city === 'Medan' ? 3.58 + (Math.random() * 0.2 - 0.1) :
+                 city === 'Makassar' ? -5.14 + (Math.random() * 0.2 - 0.1) :
+                 -7.0 + (Math.random() * 0.2 - 0.1),
+        longitude: city === 'Jakarta' ? 106.82 + (Math.random() * 0.3 - 0.15) :
+                  city === 'Surabaya' ? 112.75 + (Math.random() * 0.2 - 0.1) :
+                  city === 'Bandung' ? 107.61 + (Math.random() * 0.2 - 0.1) :
+                  city === 'Bali' ? 115.2 + (Math.random() * 0.3 - 0.15) :
+                  city === 'Yogyakarta' ? 110.37 + (Math.random() * 0.2 - 0.1) :
+                  city === 'Medan' ? 98.67 + (Math.random() * 0.2 - 0.1) :
+                  city === 'Makassar' ? 119.43 + (Math.random() * 0.2 - 0.1) :
+                  110.41 + (Math.random() * 0.2 - 0.1),
         bedrooms,
         bathrooms,
         landArea,
@@ -181,7 +229,8 @@ async function main() {
         certificateType: certificates[Math.floor(Math.random() * certificates.length)],
         furnishing: propertyType === 'LAND' ? null : furnishings[Math.floor(Math.random() * furnishings.length)],
         userId: agent.id,
-        status: i < 40 ? 'ACTIVE' : i < 45 ? 'DRAFT' : i < 48 ? 'SOLD' : 'INACTIVE',
+        status: i < 80 ? 'ACTIVE' : i < 88 ? 'DRAFT' : i < 95 ? 'SOLD' : 'INACTIVE',
+        moderationStatus: 'APPROVED',
       },
     });
 

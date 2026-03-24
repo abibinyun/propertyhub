@@ -22,11 +22,16 @@ export function PropertyMapPicker({ lat: latProp, lng: lngProp, onChange }: Prop
   const markerRef = useRef<import('leaflet').Marker | null>(null);
 
   useEffect(() => {
-    if (!mapRef.current || mapInstanceRef.current) return;
+    if (!mapRef.current) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((mapRef.current as any)._leaflet_id) return;
 
     let map: import('leaflet').Map;
 
     import('leaflet').then((L) => {
+      if (!mapRef.current) return;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((mapRef.current as any)._leaflet_id) return;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       delete (L.Icon.Default.prototype as any)._getIconUrl;
       L.Icon.Default.mergeOptions({
