@@ -58,6 +58,9 @@ export const propertiesApi = {
   deleteImage: (imageId: string): Promise<{ message: string }> =>
     apiFetch(`/properties/images/${imageId}`, { method: 'DELETE' }),
 
+  setPrimaryImage: (imageId: string): Promise<{ message: string }> =>
+    apiFetch(`/properties/images/${imageId}/primary`, { method: 'PATCH' }),
+
   uploadImage: async (propertyId: string, file: File, isPrimary: boolean, order: number): Promise<PropertyImage> => {
     const formData = new FormData();
     formData.append('file', file);

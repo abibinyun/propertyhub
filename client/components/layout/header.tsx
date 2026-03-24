@@ -282,8 +282,16 @@ export function Header() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
-    const slug = searchQuery.trim().toLowerCase().replace(/\s+/g, '-');
-    router.push(`/jual/${slug}`);
+    const q = searchQuery.trim().toLowerCase();
+    const slug = q.replace(/\s+/g, '-');
+    const TYPES = ['rumah', 'apartemen', 'tanah', 'komersial', 'villa', 'gudang'];
+    // Kalau query adalah tipe properti → /jual/rumah
+    if (TYPES.includes(slug)) {
+      router.push(`/jual/${slug}`);
+    } else {
+      // Anggap sebagai kota → /jual/{kota}
+      router.push(`/jual/${slug}`);
+    }
     setSearchOpen(false);
     setSearchQuery('');
   };

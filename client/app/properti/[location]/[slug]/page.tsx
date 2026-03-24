@@ -21,6 +21,26 @@ interface Props {
   params: Promise<{ location: string; slug: string }>;
 }
 
+const FEATURE_LABEL: Record<string, string> = {
+  security_24h: 'Keamanan 24 Jam', cctv: 'CCTV', one_gate: 'One Gate System',
+  pam_water: 'Air PAM', well_water: 'Air Sumur', pln: 'Listrik PLN', genset: 'Genset', solar_panel: 'Solar Panel',
+  swimming_pool: 'Kolam Renang', gym: 'Gym / Fitness', garden: 'Taman', rooftop: 'Rooftop', balcony: 'Balkon',
+  living_room: 'Ruang Tamu', dining_room: 'Ruang Makan', kitchen: 'Dapur', dirty_kitchen: 'Dapur Kotor',
+  laundry_room: 'Ruang Laundry', storage_room: 'Gudang', carport: 'Carport', garage_facility: 'Garasi',
+  fence: 'Pagar', internet: 'Internet / WiFi', cable_tv: 'TV Kabel',
+  near_school: 'Dekat Sekolah', near_hospital: 'Dekat Rumah Sakit', near_mall: 'Dekat Mall',
+  near_highway: 'Dekat Tol', near_public_transport: 'Dekat Transportasi Umum', corner_lot: 'Hook / Sudut',
+};
+
+function featureLabel(key: string): string {
+  if (FEATURE_LABEL[key]) return FEATURE_LABEL[key];
+  // other_nama_fasilitas → "Nama Fasilitas"
+  if (key.startsWith('other_')) {
+    return key.replace('other_', '').replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+  return key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 const TYPE_LABEL: Record<string, string> = {
   HOUSE: 'Rumah', APARTMENT: 'Apartemen', LAND: 'Tanah',
   COMMERCIAL: 'Ruko/Komersial', VILLA: 'Villa', WAREHOUSE: 'Gudang',
@@ -216,7 +236,7 @@ export default async function PropertyDetailPage({ params }: Props) {
                   {property.features.map((f) => (
                     <div key={f.id} className="flex items-center gap-2 text-sm">
                       <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-                      <span>{f.feature}</span>
+                      <span>{featureLabel(f.feature)}</span>
                     </div>
                   ))}
                 </div>
@@ -244,10 +264,20 @@ export default async function PropertyDetailPage({ params }: Props) {
                   Lokasi di Peta
                 </h2>
                 <PropertyMapView lat={property.latitude} lng={property.longitude} title={property.title} />
-                <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">
-                  <Shield className="h-3 w-3" />
-                  Lokasi ditampilkan dalam radius terdekat untuk privasi pemilik
-                </p>
+                <div className="flex items-center justify-between mt-3">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Shield className="h-3 w-3" />
+                    Lokasi ditampilkan dalam radius terdekat untuk privasi pemilik
+                  </p>
+                  <a
+                    href={`https://www.google.com/maps?q=${property.latitude},${property.longitude}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-primary font-medium hover:underline flex items-center gap-1 flex-shrink-0"
+                  >
+                    Buka di Google Maps ↗
+                  </a>
+                </div>
               </div>
             )}
 

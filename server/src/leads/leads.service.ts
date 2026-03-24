@@ -65,13 +65,27 @@ export class LeadsService {
         message: dto.message,
         source: dto.source || 'website',
       },
-      include: { property: { select: PROPERTY_SELECT } },
+      include: { property: { select: { ...PROPERTY_SELECT, userId: true } } },
     });
 
     await this.prisma.property.update({
       where: { id: dto.propertyId },
       data: { leadsCount: { increment: 1 } },
     });
+
+    // Email notification — log ke console (ganti dengan email service nanti)
+    const ownerEmail = await this.prisma.user.findUnique({
+      where: { id: (lead.property as any).userId },
+      select: { email: true, name: true },
+    });
+    if (ownerEmail) {
+      console.log(`\n📧 [LEAD NOTIFICATION]`);
+      console.log(`To: ${ownerEmail.name} <${ownerEmail.email}>`);
+      console.log(`Subject: Lead baru untuk properti "${lead.property.title}"`);
+      console.log(`From: ${lead.name} (${lead.phone})`);
+      console.log(`Message: ${lead.message}`);
+      console.log(`---\n`);
+    }
 
     return lead;
   }

@@ -39,6 +39,18 @@ export class PropertiesController {
     return this.propertiesService.uploadImage(user.id, propertyId, file, dto.isPrimary, dto.order);
   }
 
+  @Patch('images/:imageId/primary')
+  @UseGuards(JwtAuthGuard)
+  setPrimaryImage(@CurrentUser() user: any, @Param('imageId') imageId: string) {
+    return this.propertiesService.setPrimaryImage(user.id, imageId);
+  }
+
+  @Delete('images/:imageId')
+  @UseGuards(JwtAuthGuard)
+  deleteImage(@CurrentUser() user: any, @Param('imageId') imageId: string) {
+    return this.propertiesService.deleteImage(user.id, imageId);
+  }
+
   @Patch(':slug')
   @UseGuards(JwtAuthGuard)
   update(@CurrentUser() user: any, @Param('slug') slug: string, @Body() dto: UpdatePropertyDto) {
@@ -49,12 +61,6 @@ export class PropertiesController {
   @UseGuards(JwtAuthGuard)
   delete(@CurrentUser() user: any, @Param('slug') slug: string) {
     return this.propertiesService.delete(user.id, slug);
-  }
-
-  @Delete('images/:imageId')
-  @UseGuards(JwtAuthGuard)
-  deleteImage(@CurrentUser() user: any, @Param('imageId') imageId: string) {
-    return this.propertiesService.deleteImage(user.id, imageId);
   }
 
   // ─── Queries ──────────────────────────────────────────────────────────────

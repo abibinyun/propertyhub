@@ -194,4 +194,9 @@ export class UpdatePropertyDto {
   @IsNumber()
   @Type(() => Number)
   longitude?: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  features?: string[];
 }

@@ -53,11 +53,13 @@ NODE_ENV=development
 | GET | /properties/jual/:city/:type | Per kota + jenis |
 | GET | /properties/jual/:city/:district/:type | Per kota + kecamatan + jenis |
 | GET | /properties/properti/detail/:slug | Detail properti |
+| GET | /properties/my | Properti milik user (auth) |
 | POST | /properties | Buat properti (auth) |
 | PATCH | /properties/:slug | Update properti (auth) |
 | DELETE | /properties/:slug | Hapus properti (auth) |
-| POST | /properties/:id/images | Upload gambar |
-| DELETE | /properties/images/:imageId | Hapus gambar |
+| POST | /properties/:id/images | Upload gambar (auth) |
+| PATCH | /properties/images/:imageId/primary | Set foto utama (auth) |
+| DELETE | /properties/images/:imageId | Hapus gambar (auth) |
 
 ### Leads, Favorites, Admin — lihat [docs/API.md](../docs/API.md)
 
@@ -78,6 +80,8 @@ src/
 ## Database
 
 9 tabel: `User`, `Property`, `PropertyImage`, `PropertyFeature`, `Lead`, `Favorite`, `ModerationLog`, `AuditLog`, `Session`
+
+`PropertyFeature` menyimpan fasilitas properti sebagai string per baris (e.g. `security_24h`, `swimming_pool`, `other_nama_custom`).
 
 ```bash
 bunx prisma studio   # GUI database

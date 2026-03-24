@@ -153,7 +153,15 @@ export class PropertiesService {
       throw new ForbiddenException('You can only update your own properties');
     }
 
-    const updateData: any = { ...dto };
+    const { features, ...rest } = dto;
+    const updateData: any = { ...rest };
+
+    if (features !== undefined) {
+      updateData.features = {
+        deleteMany: {},
+        create: features.map((feature) => ({ feature })),
+      };
+    }
 
     const updated = await this.prisma.property.update({
       where: { slug },
@@ -322,6 +330,18 @@ export class PropertiesService {
         order,
       },
     });
+  }
+
+  async setPrimaryImage(userId: string, imageId: string) {
+    const image = await this.prisma.propertyImage.findUnique({
+      where: { id: imageId },
+      include: { property: true },
+    });
+    if (!image) throw new NotFoundException('Image not found');
+    if (image.property.userId !== userId) throw new ForbiddenException();
+    await this.prisma.propertyImage.updateMany({ where: { propertyId: image.propertyId }, data: { isPrimary: false } });
+    await this.prisma.propertyImage.update({ where: { id: imageId }, data: { isPrimary: true } });
+    return { message: 'Primary image updated' };
   }
 
   async deleteImage(userId: string, imageId: string) {

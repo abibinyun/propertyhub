@@ -7,7 +7,7 @@ UI layer untuk platform listing properti. Dibangun dengan Next.js 16 + Tailwind 
 - **Framework**: Next.js 16 (App Router, Turbopack)
 - **Styling**: Tailwind CSS v4 + shadcn/ui
 - **Runtime**: Bun
-- **Maps**: Leaflet + OpenStreetMap
+- **Maps**: Leaflet + OpenStreetMap (Nominatim untuk geocoding pin)
 - **Auth**: Cookie-based (httpOnly, dari backend)
 
 ## Setup
@@ -65,7 +65,23 @@ lib/
   server/               # Server-side fetchers
   context/              # Auth context
 types/                  # TypeScript interfaces
+public/
+  wilayah/              # Data wilayah Indonesia (offline)
 ```
+
+## Data Wilayah Indonesia
+
+Form properti menggunakan data wilayah **offline** untuk dropdown Provinsi → Kota/Kabupaten → Kecamatan.
+
+**Sumber**: [ibnux/data-indonesia](https://github.com/ibnux/data-indonesia) — data wilayah Indonesia lengkap dengan koordinat (lat/lng) per wilayah.
+
+**Teknik**:
+- Data di-merge dan disimpan sebagai 2 file JSON statis di `public/wilayah/`:
+  - `provinsi-kabupaten.json` (~49KB) — dimuat saat form dibuka
+  - `kecamatan.json` (~623KB) — lazy load + in-memory cache, hanya dimuat saat dibutuhkan
+- Pilih provinsi/kota/kecamatan → peta otomatis berpindah ke koordinat wilayah tersebut
+- Search pin (Nominatim/OpenStreetMap) hanya menggerakkan pin peta, tidak mengubah dropdown
+- Saat edit mode, dropdown di-restore dari nama wilayah yang tersimpan dengan cara match nama → id
 
 ## SEO
 

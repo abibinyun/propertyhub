@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Info } from 'lucide-react';
 import { LocationSection } from './form-sections/location';
+import { FeaturesSection } from './form-sections/features';
 import { ImageUploadSection } from './form-sections/image-upload';
 import { cn, formatPrice } from '@/lib/utils';
 
@@ -17,14 +18,14 @@ interface FormState {
   price: string; address: string; city: string; district: string; province: string;
   postalCode: string; landArea: string; buildingArea: string; bedrooms: string;
   bathrooms: string; floors: string; garage: string; certificateType: string; yearBuilt: string;
-  furnishing: Furnishing; latitude?: number; longitude?: number;
+  furnishing: Furnishing; latitude?: number; longitude?: number; features: string[];
 }
 
 const DEFAULT: FormState = {
   title: '', description: '', propertyType: 'HOUSE', listingType: 'SALE',
   price: '', address: '', city: '', district: '', province: '', postalCode: '',
   landArea: '', buildingArea: '', bedrooms: '', bathrooms: '', floors: '', garage: '',
-  certificateType: '', yearBuilt: '', furnishing: 'UNFURNISHED',
+  certificateType: '', yearBuilt: '', furnishing: 'UNFURNISHED', features: [],
 };
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
@@ -78,6 +79,7 @@ export function PropertyForm({ property }: { property?: Property }) {
     certificateType: property?.certificateType ?? DEFAULT.certificateType,
     yearBuilt: property?.yearBuilt?.toString() ?? DEFAULT.yearBuilt,
     furnishing: property?.furnishing ?? DEFAULT.furnishing,
+    features: property?.features?.map((f: { feature: string }) => f.feature) ?? [],
     latitude: property?.latitude,
     longitude: property?.longitude,
   });
@@ -101,6 +103,7 @@ export function PropertyForm({ property }: { property?: Property }) {
         yearBuilt: form.yearBuilt ? parseInt(form.yearBuilt) : undefined,
         latitude: form.latitude,
         longitude: form.longitude,
+        features: form.features,
       };
       if (isEdit) {
         await propertiesApi.update(property.slug, payload);
@@ -153,127 +156,139 @@ export function PropertyForm({ property }: { property?: Property }) {
     <form onSubmit={handleSubmit} className="space-y-5">
       {error && <div className="bg-destructive/10 text-destructive text-sm p-4 rounded-xl border border-destructive/20">{error}</div>}
 
-      {/* Informasi Dasar */}
-      <SectionCard title="Informasi Dasar">
-        <FormField label="Judul Iklan" required hint="Judul yang menarik meningkatkan peluang dilihat">
-          <Input name="title" value={form.title} onChange={set} required placeholder="Rumah Modern 3 Kamar di Kebayoran Baru" className="rounded-xl" />
-        </FormField>
-        <FormField label="Deskripsi" required>
-          <textarea
-            name="description" value={form.description} onChange={set} required rows={4}
-            placeholder="Deskripsikan properti Anda secara lengkap — lokasi, kondisi, fasilitas sekitar..."
-            className="flex w-full rounded-xl border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
-          />
-        </FormField>
-        <div className="grid grid-cols-2 gap-4">
-          <FormField label="Tipe Properti" required>
-            <select name="propertyType" value={form.propertyType} onChange={set} required className={selectClass}>
-              <option value="HOUSE">Rumah</option>
-              <option value="APARTMENT">Apartemen</option>
-              <option value="LAND">Tanah</option>
-              <option value="COMMERCIAL">Komersial / Ruko</option>
-              <option value="VILLA">Villa</option>
-              <option value="WAREHOUSE">Gudang</option>
-            </select>
-          </FormField>
-          <FormField label="Dijual / Disewa" required>
-            <select name="listingType" value={form.listingType} onChange={set} required className={selectClass}>
-              <option value="SALE">Dijual</option>
-              <option value="RENT">Disewa</option>
-            </select>
-          </FormField>
-        </div>
-        <FormField label={form.listingType === 'RENT' ? 'Harga Sewa / Bulan (Rp)' : 'Harga Jual (Rp)'} required>
-          <Input name="price" type="number" value={form.price} onChange={set} required placeholder="2500000000" className="rounded-xl" />
-          {priceNum > 0 && (
-            <p className="text-xs text-primary font-medium mt-1">{formatPrice(String(priceNum))}</p>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Left col — main info */}
+        <div className="lg:col-span-2 space-y-5">
+          {/* Informasi Dasar */}
+          <SectionCard title="Informasi Dasar">
+            <FormField label="Judul Iklan" required hint="Judul yang menarik meningkatkan peluang dilihat">
+              <Input name="title" value={form.title} onChange={set} required placeholder="Rumah Modern 3 Kamar di Kebayoran Baru" className="rounded-xl" />
+            </FormField>
+            <FormField label="Deskripsi" required>
+              <textarea
+                name="description" value={form.description} onChange={set} required rows={5}
+                placeholder="Deskripsikan properti Anda secara lengkap — lokasi, kondisi, fasilitas sekitar..."
+                className="flex w-full rounded-xl border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
+              />
+            </FormField>
+          </SectionCard>
+
+          {/* Lokasi */}
+          <SectionCard title="Lokasi">
+            <LocationSection
+              values={form}
+              onChange={set}
+              onCoordinatesChange={(lat, lng) => setForm((p) => ({ ...p, latitude: lat, longitude: lng }))}
+            />
+          </SectionCard>
+
+          {/* Spesifikasi */}
+          <SectionCard title="Spesifikasi">
+            <div className="grid grid-cols-2 gap-4">
+              <FormField label="Luas Tanah (m²)">
+                <Input name="landArea" type="number" value={form.landArea} onChange={set} placeholder="150" className="rounded-xl" />
+              </FormField>
+              <FormField label="Luas Bangunan (m²)">
+                <Input name="buildingArea" type="number" value={form.buildingArea} onChange={set} placeholder="120" className="rounded-xl" />
+              </FormField>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <FormField label="Kamar Tidur">
+                <Input name="bedrooms" type="number" value={form.bedrooms} onChange={set} placeholder="3" className="rounded-xl" />
+              </FormField>
+              <FormField label="Kamar Mandi">
+                <Input name="bathrooms" type="number" value={form.bathrooms} onChange={set} placeholder="2" className="rounded-xl" />
+              </FormField>
+              <FormField label="Lantai">
+                <Input name="floors" type="number" value={form.floors} onChange={set} placeholder="2" className="rounded-xl" />
+              </FormField>
+              <FormField label="Garasi">
+                <Input name="garage" type="number" value={form.garage} onChange={set} placeholder="1" className="rounded-xl" />
+              </FormField>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <FormField label="Sertifikat">
+                <select name="certificateType" value={form.certificateType} onChange={set} className={selectClass}>
+                  <option value="">Pilih sertifikat</option>
+                  <option value="SHM">SHM (Sertifikat Hak Milik)</option>
+                  <option value="SHGB">SHGB (Hak Guna Bangunan)</option>
+                  <option value="HGB">HGB</option>
+                  <option value="GIRIK">Girik</option>
+                  <option value="STRATA_TITLE">Strata Title</option>
+                </select>
+              </FormField>
+              <FormField label="Tahun Dibangun">
+                <Input name="yearBuilt" type="number" value={form.yearBuilt} onChange={set} placeholder="2020" className="rounded-xl" />
+              </FormField>
+            </div>
+            <FormField label="Kondisi Furnitur">
+              <select name="furnishing" value={form.furnishing} onChange={set} className={selectClass}>
+                <option value="UNFURNISHED">Tidak Furnished</option>
+                <option value="SEMI_FURNISHED">Semi Furnished</option>
+                <option value="FULLY_FURNISHED">Fully Furnished</option>
+              </select>
+            </FormField>
+          </SectionCard>
+
+          {/* Fasilitas */}
+          <SectionCard title="Fasilitas">
+            <FeaturesSection
+              value={form.features}
+              onChange={(features) => setForm((p) => ({ ...p, features }))}
+            />
+          </SectionCard>
+
+          {/* Image upload untuk edit */}
+          {isEdit && property.images && (
+            <div className="bg-white rounded-2xl border border-border/60 overflow-hidden">
+              <div className="px-6 py-4 border-b border-border/50">
+                <h2 className="font-semibold text-sm">Foto Properti</h2>
+              </div>
+              <div className="p-6">
+                <ImageUploadSection propertyId={property.id} initialImages={property.images} />
+              </div>
+            </div>
           )}
-        </FormField>
-      </SectionCard>
+        </div>
 
-      {/* Lokasi */}
-      <div className="bg-white rounded-2xl border border-border/60 overflow-hidden">
-        <div className="px-6 py-4 border-b border-border/50">
-          <h2 className="font-semibold text-sm">Lokasi</h2>
-        </div>
-        <div className="p-6">
-          <LocationSection
-            values={form}
-            onChange={set}
-            onCoordinatesChange={(lat, lng) => setForm((p) => ({ ...p, latitude: lat, longitude: lng }))}
-          />
-        </div>
-      </div>
+        {/* Right col — tipe, harga, actions */}
+        <div className="space-y-5">
+          <SectionCard title="Tipe & Harga">
+            <FormField label="Tipe Properti" required>
+              <select name="propertyType" value={form.propertyType} onChange={set} required className={selectClass}>
+                <option value="HOUSE">Rumah</option>
+                <option value="APARTMENT">Apartemen</option>
+                <option value="LAND">Tanah</option>
+                <option value="COMMERCIAL">Komersial / Ruko</option>
+                <option value="VILLA">Villa</option>
+                <option value="WAREHOUSE">Gudang</option>
+              </select>
+            </FormField>
+            <FormField label="Dijual / Disewa" required>
+              <select name="listingType" value={form.listingType} onChange={set} required className={selectClass}>
+                <option value="SALE">Dijual</option>
+                <option value="RENT">Disewa</option>
+              </select>
+            </FormField>
+            <FormField label={form.listingType === 'RENT' ? 'Harga Sewa / Bulan (Rp)' : 'Harga Jual (Rp)'} required>
+              <Input name="price" type="number" value={form.price} onChange={set} required placeholder="2500000000" className="rounded-xl" />
+              {priceNum > 0 && (
+                <p className="text-xs text-primary font-medium mt-1">{formatPrice(String(priceNum))}</p>
+              )}
+            </FormField>
+          </SectionCard>
 
-      {/* Spesifikasi */}
-      <SectionCard title="Spesifikasi">
-        <div className="grid grid-cols-2 gap-4">
-          <FormField label="Luas Tanah (m²)">
-            <Input name="landArea" type="number" value={form.landArea} onChange={set} placeholder="150" className="rounded-xl" />
-          </FormField>
-          <FormField label="Luas Bangunan (m²)">
-            <Input name="buildingArea" type="number" value={form.buildingArea} onChange={set} placeholder="120" className="rounded-xl" />
-          </FormField>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <FormField label="Kamar Tidur">
-            <Input name="bedrooms" type="number" value={form.bedrooms} onChange={set} placeholder="3" className="rounded-xl" />
-          </FormField>
-          <FormField label="Kamar Mandi">
-            <Input name="bathrooms" type="number" value={form.bathrooms} onChange={set} placeholder="2" className="rounded-xl" />
-          </FormField>
-          <FormField label="Lantai">
-            <Input name="floors" type="number" value={form.floors} onChange={set} placeholder="2" className="rounded-xl" />
-          </FormField>
-          <FormField label="Garasi">
-            <Input name="garage" type="number" value={form.garage} onChange={set} placeholder="1" className="rounded-xl" />
-          </FormField>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <FormField label="Sertifikat">
-            <select name="certificateType" value={form.certificateType} onChange={set} className={selectClass}>
-              <option value="">Pilih sertifikat</option>
-              <option value="SHM">SHM (Sertifikat Hak Milik)</option>
-              <option value="SHGB">SHGB (Hak Guna Bangunan)</option>
-              <option value="HGB">HGB</option>
-              <option value="GIRIK">Girik</option>
-              <option value="STRATA_TITLE">Strata Title</option>
-            </select>
-          </FormField>
-          <FormField label="Tahun Dibangun">
-            <Input name="yearBuilt" type="number" value={form.yearBuilt} onChange={set} placeholder="2020" className="rounded-xl" />
-          </FormField>
-        </div>
-        <FormField label="Kondisi Furnitur">
-          <select name="furnishing" value={form.furnishing} onChange={set} className={selectClass}>
-            <option value="UNFURNISHED">Tidak Furnished</option>
-            <option value="SEMI_FURNISHED">Semi Furnished</option>
-            <option value="FULLY_FURNISHED">Fully Furnished</option>
-          </select>
-        </FormField>
-      </SectionCard>
-
-      {/* Image upload untuk edit */}
-      {isEdit && property.images && (
-        <div className="bg-white rounded-2xl border border-border/60 overflow-hidden">
-          <div className="px-6 py-4 border-b border-border/50">
-            <h2 className="font-semibold text-sm">Foto Properti</h2>
-          </div>
-          <div className="p-6">
-            <ImageUploadSection propertyId={property.id} initialImages={property.images} />
+          {/* Sticky actions */}
+          <div className="lg:sticky lg:top-24 space-y-3">
+            <Button type="submit" disabled={loading} className="w-full rounded-xl font-semibold">
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {loading ? 'Menyimpan...' : isEdit ? 'Simpan Perubahan' : 'Lanjut ke Upload Foto →'}
+            </Button>
+            <Button type="button" variant="outline" onClick={() => router.back()} disabled={loading} className="w-full rounded-xl">
+              Batal
+            </Button>
           </div>
         </div>
-      )}
-
-      {/* Actions */}
-      <div className="flex gap-3 pt-2">
-        <Button type="submit" disabled={loading} className="flex-1 rounded-xl font-semibold">
-          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {loading ? 'Menyimpan...' : isEdit ? 'Simpan Perubahan' : 'Lanjut ke Upload Foto →'}
-        </Button>
-        <Button type="button" variant="outline" onClick={() => router.back()} disabled={loading} className="rounded-xl">
-          Batal
-        </Button>
       </div>
     </form>
   );

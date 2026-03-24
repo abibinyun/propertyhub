@@ -46,7 +46,7 @@ export default async function MyPropertiesPage({ searchParams }: Props) {
   ];
 
   return (
-    <div className="py-2 max-w-5xl">
+    <div className="py-2">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold">Properti Saya</h1>
