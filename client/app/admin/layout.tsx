@@ -3,15 +3,7 @@ import Link from 'next/link';
 import { serverApi } from '@/lib/server/api';
 import { getToken } from '@/lib/server/auth';
 import { AdminSidebarActive } from '@/components/client/admin-sidebar-active';
-import { LayoutDashboard, Users, Building2, ShieldCheck, MessageSquare, LogOut } from 'lucide-react';
-
-export const NAV_ITEMS = [
-  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
-  { href: '/admin/moderation', label: 'Moderasi', icon: ShieldCheck },
-  { href: '/admin/properties', label: 'Properti', icon: Building2 },
-  { href: '/admin/users', label: 'Pengguna', icon: Users },
-  { href: '/admin/leads', label: 'Leads', icon: MessageSquare },
-];
+import { LogOut } from 'lucide-react';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const token = await getToken();
@@ -37,7 +29,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
         {/* Nav */}
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-          <AdminSidebarActive items={NAV_ITEMS} />
+          <AdminSidebarActive />
         </nav>
 
         {/* User info */}

@@ -2,22 +2,23 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LucideIcon } from 'lucide-react';
+import { LayoutDashboard, Users, Building2, ShieldCheck, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface NavItem {
-  href: string;
-  label: string;
-  icon: LucideIcon;
-  exact?: boolean;
-}
+const NAV_ITEMS = [
+  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
+  { href: '/admin/moderation', label: 'Moderasi', icon: ShieldCheck },
+  { href: '/admin/properties', label: 'Properti', icon: Building2 },
+  { href: '/admin/users', label: 'Pengguna', icon: Users },
+  { href: '/admin/leads', label: 'Leads', icon: MessageSquare },
+];
 
-export function AdminSidebarActive({ items }: { items: NavItem[] }) {
+export function AdminSidebarActive() {
   const pathname = usePathname();
 
   return (
     <>
-      {items.map(({ href, label, icon: Icon, exact }) => {
+      {NAV_ITEMS.map(({ href, label, icon: Icon, exact }) => {
         const active = exact ? pathname === href : pathname.startsWith(href);
         return (
           <Link

@@ -387,9 +387,10 @@ export class AdminService {
   }
 
   async getAllLeads(query: any) {
+    const VALID_STATUSES = ['NEW', 'CONTACTED', 'QUALIFIED', 'CLOSED', 'LOST'];
     const { status, page = 1, limit = 20 } = query;
     const where: any = {};
-    if (status) where.status = status;
+    if (status && VALID_STATUSES.includes(status)) where.status = status;
 
     const [leads, total] = await Promise.all([
       this.prisma.lead.findMany({
