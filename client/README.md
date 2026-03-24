@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PropertyHub — Frontend
 
-## Getting Started
+UI layer untuk platform listing properti. Dibangun dengan Next.js 16 + Tailwind v4 + shadcn/ui.
 
-First, run the development server:
+## Tech Stack
+
+- **Framework**: Next.js 16 (App Router, Turbopack)
+- **Styling**: Tailwind CSS v4 + shadcn/ui
+- **Runtime**: Bun
+- **Maps**: Leaflet + OpenStreetMap
+- **Auth**: Cookie-based (httpOnly, dari backend)
+
+## Setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+bun install
+cp .env.example .env.local
+bun run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+App berjalan di `http://localhost:3000`. Pastikan backend sudah jalan di port 3001.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
 
-## Learn More
+## URL Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+/                                          → Homepage
+/jual                                      → Semua properti dijual
+/jual/[city]                               → Per kota
+/jual/[city]/[type]                        → Per kota + jenis
+/jual/[city]/[district]/[type]             → Per kota + kecamatan + jenis
+/sewa/...                                  → Sama untuk sewa
+/properti/[location]/[slug]                → Detail properti
+/dashboard                                 → Dashboard user
+/dashboard/properties                      → Kelola properti
+/dashboard/favorites                       → Favorit
+/dashboard/leads                           → Leads masuk
+/dashboard/profile                         → Edit profil
+/admin                                     → Admin panel (ADMIN role)
+/login, /register                          → Auth pages
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Arsitektur
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Server Components** by default — semua pages fetch data di server
+- **`'use client'`** hanya untuk komponen interaktif (form, map, filter)
+- **Cookie auth** — server components baca token dari `next/headers`
+- **API wrapper** — semua request lewat `lib/api/` atau `lib/server/api.ts`
 
-## Deploy on Vercel
+```
+app/                    # Server components (pages)
+components/
+  client/               # 'use client' components
+  property/             # Shared property components
+  layout/               # Header, Footer
+  ui/                   # shadcn/ui components
+lib/
+  api/                  # Client-side API wrappers
+  server/               # Server-side fetchers
+  context/              # Auth context
+types/                  # TypeScript interfaces
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## SEO
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `generateMetadata()` di semua halaman
+- JSON-LD `RealEstateListing` di detail page
+- JSON-LD `BreadcrumbList` di listing page
+- `sitemap.xml` — auto-generate dari API
+- `robots.txt` — block `/dashboard/`, `/admin/`
