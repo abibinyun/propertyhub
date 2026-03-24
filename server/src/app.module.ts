@@ -12,6 +12,7 @@ import { PropertiesModule } from './properties/properties.module';
 import { LeadsModule } from './leads/leads.module';
 import { FavoritesModule } from './favorites/favorites.module';
 import { AdminModule } from './admin/admin.module';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { AdminModule } from './admin/admin.module';
     ]),
     PrismaModule,
     CloudinaryModule,
+    EmailModule,
     AuthModule,
     UsersModule,
     PropertiesModule,

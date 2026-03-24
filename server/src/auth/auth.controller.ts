@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Res, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Get, Query, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
@@ -9,7 +9,7 @@ const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
   sameSite: 'lax' as const,
-  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  maxAge: 7 * 24 * 60 * 60 * 1000,
   path: '/',
 };
 
@@ -41,5 +41,16 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   getProfile(@CurrentUser() user: any) {
     return user;
+  }
+
+  @Get('verify-email')
+  verifyEmail(@Query('token') token: string) {
+    return this.authService.verifyEmail(token);
+  }
+
+  @Post('resend-verification')
+  @UseGuards(JwtAuthGuard)
+  resendVerification(@CurrentUser() user: any) {
+    return this.authService.resendVerification(user.id);
   }
 }

@@ -21,10 +21,18 @@ export interface AdminStats {
     totalLeads: number;
     activeProperties: number;
     draftProperties: number;
-    featuredProperties: number;
+    pendingModeration: number;
+    newUsersToday: number;
+    newLeadsToday: number;
   };
   recentUsers: Pick<User, 'id' | 'name' | 'email' | 'role'>[];
   recentProperties: Pick<Property, 'id' | 'title' | 'status' | 'price' | 'city'>[];
+  charts: {
+    propertiesByType: { type: string; count: number }[];
+    propertiesByCity: { city: string; count: number }[];
+    dailyListings: { date: string; count: number }[];
+    dailyLeads: { date: string; count: number }[];
+  };
 }
 
 export interface AdminUser extends Pick<User, 'id' | 'email' | 'name' | 'phone' | 'role' | 'verified' | 'company'> {
@@ -40,6 +48,17 @@ export interface ModerationLog {
   createdAt: string;
   property: { title: string; slug: string };
   moderator: { name: string; email: string };
+}
+
+export interface AdminLead {
+  id: string;
+  name: string;
+  phone: string;
+  message?: string;
+  status: string;
+  createdAt: string;
+  user: { name: string; email: string };
+  property: { title: string; slug: string; city: string };
 }
 
 export const adminApi = {
@@ -64,4 +83,6 @@ export const adminApi = {
     apiFetch(`/admin/moderation/${id}/flag`, { method: 'PATCH', body: JSON.stringify({ reason }) }),
   getModerationLogs: (): Promise<PaginatedResponse<ModerationLog>> =>
     apiFetch('/admin/moderation/logs'),
+  getLeads: (params?: string): Promise<PaginatedResponse<AdminLead>> =>
+    apiFetch(`/admin/leads${params ? '?' + params : ''}`),
 };

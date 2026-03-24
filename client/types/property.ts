@@ -47,6 +47,8 @@ export interface Property {
   furnishing?: Furnishing;
   status: PropertyStatus;
   moderationStatus: ModerationStatus;
+  moderationNotes?: string;
+  flagReason?: string;
   featured: boolean;
   viewsCount: number;
   leadsCount: number;

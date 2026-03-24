@@ -67,6 +67,11 @@ export class AdminController {
     return this.adminService.getModerationLogs(query);
   }
 
+  @Get('leads')
+  getAllLeads(@Query() query: any) {
+    return this.adminService.getAllLeads(query);
+  }
+
   @Patch('users/:id/ban')
   banUser(@Param('id') id: string, @Body() data: { reason: string }) {
     return this.adminService.banUser(id, data.reason);

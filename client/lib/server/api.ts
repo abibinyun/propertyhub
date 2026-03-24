@@ -4,7 +4,7 @@ import { Property } from '@/types/property';
 import { PaginatedResponse } from '@/types/api';
 import { FavoriteItem } from '@/lib/api/favorites';
 import { Lead } from '@/types/lead';
-import { AdminStats, AdminUser, ModerationLog } from '@/lib/api/admin';
+import { AdminStats, AdminUser, AdminLead, ModerationLog } from '@/lib/api/admin';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -48,4 +48,5 @@ export const serverApi = {
   getAdminProperties: (params?: string) => serverFetch<PaginatedResponse<Property>>(`/admin/properties${params ? '?' + params : ''}`),
   getModerationQueue: (status = 'PENDING') => serverFetch<PaginatedResponse<Property>>(`/admin/moderation/queue?status=${status}`),
   getModerationLogs: () => serverFetch<PaginatedResponse<ModerationLog>>('/admin/moderation/logs'),
+  getAdminLeads: (params?: string) => serverFetch<PaginatedResponse<AdminLead>>(`/admin/leads${params ? '?' + params : ''}`),
 };

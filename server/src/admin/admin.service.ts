@@ -7,11 +7,17 @@ export class AdminService {
 
   // Users Management
   async getAllUsers(query: any) {
-    const { role, verified, page = 1, limit = 20 } = query;
+    const { role, verified, search, page = 1, limit = 20 } = query;
     const where: any = {};
 
     if (role) where.role = role;
     if (verified !== undefined) where.verified = verified === 'true';
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+      ];
+    }
 
     const [users, total] = await Promise.all([
       this.prisma.user.findMany({
@@ -69,11 +75,18 @@ export class AdminService {
 
   // Properties Management
   async getAllProperties(query: any) {
-    const { status, userId, page = 1, limit = 20 } = query;
+    const { status, userId, search, page = 1, limit = 20 } = query;
     const where: any = {};
 
     if (status) where.status = status;
     if (userId) where.userId = userId;
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { city: { contains: search, mode: 'insensitive' } },
+        { district: { contains: search, mode: 'insensitive' } },
+      ];
+    }
 
     const [properties, total] = await Promise.all([
       this.prisma.property.findMany({
@@ -135,61 +148,93 @@ export class AdminService {
 
   // Dashboard Stats
   async getDashboardStats() {
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
     const [
       totalUsers,
       totalProperties,
       totalLeads,
       activeProperties,
       draftProperties,
-      featuredProperties,
+      pendingModeration,
+      newUsersToday,
+      newLeadsToday,
       recentUsers,
       recentProperties,
+      propertiesByType,
+      propertiesByCity,
+      dailyListings,
+      dailyLeads,
     ] = await Promise.all([
       this.prisma.user.count(),
       this.prisma.property.count(),
       this.prisma.lead.count(),
       this.prisma.property.count({ where: { status: 'ACTIVE' } }),
       this.prisma.property.count({ where: { status: 'DRAFT' } }),
-      this.prisma.property.count({ where: { featured: true } }),
+      this.prisma.property.count({ where: { moderationStatus: 'PENDING' } }),
+      this.prisma.user.count({ where: { createdAt: { gte: todayStart } } }),
+      this.prisma.lead.count({ where: { createdAt: { gte: todayStart } } }),
       this.prisma.user.findMany({
         take: 5,
         orderBy: { createdAt: 'desc' },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-          createdAt: true,
-        },
+        select: { id: true, name: true, email: true, role: true, createdAt: true, emailVerified: true },
       }),
       this.prisma.property.findMany({
         take: 5,
         orderBy: { createdAt: 'desc' },
         select: {
-          id: true,
-          title: true,
-          status: true,
-          price: true,
-          city: true,
-          createdAt: true,
-          user: {
-            select: { name: true },
-          },
+          id: true, title: true, status: true, price: true, city: true, createdAt: true,
+          user: { select: { name: true } },
+          images: { where: { isPrimary: true }, take: 1 },
         },
       }),
+      // Distribusi per tipe
+      this.prisma.property.groupBy({
+        by: ['propertyType'],
+        _count: { id: true },
+        orderBy: { _count: { id: 'desc' } },
+      }),
+      // Top 8 kota
+      this.prisma.property.groupBy({
+        by: ['city'],
+        _count: { id: true },
+        orderBy: { _count: { id: 'desc' } },
+        take: 8,
+      }),
+      // Listing per hari 30 hari terakhir
+      this.prisma.$queryRaw<{ date: string; count: bigint }[]>`
+        SELECT DATE("createdAt")::text as date, COUNT(*)::bigint as count
+        FROM properties
+        WHERE "createdAt" >= ${thirtyDaysAgo}
+        GROUP BY DATE("createdAt")
+        ORDER BY date ASC
+      `,
+      // Leads per hari 30 hari terakhir
+      this.prisma.$queryRaw<{ date: string; count: bigint }[]>`
+        SELECT DATE("createdAt")::text as date, COUNT(*)::bigint as count
+        FROM leads
+        WHERE "createdAt" >= ${sevenDaysAgo}
+        GROUP BY DATE("createdAt")
+        ORDER BY date ASC
+      `,
     ]);
 
     return {
       stats: {
-        totalUsers,
-        totalProperties,
-        totalLeads,
-        activeProperties,
-        draftProperties,
-        featuredProperties,
+        totalUsers, totalProperties, totalLeads, activeProperties,
+        draftProperties, pendingModeration, newUsersToday, newLeadsToday,
       },
       recentUsers,
       recentProperties,
+      charts: {
+        propertiesByType: propertiesByType.map((p) => ({ type: p.propertyType, count: p._count.id })),
+        propertiesByCity: propertiesByCity.map((p) => ({ city: p.city, count: p._count.id })),
+        dailyListings: dailyListings.map((d) => ({ date: d.date, count: Number(d.count) })),
+        dailyLeads: dailyLeads.map((d) => ({ date: d.date, count: Number(d.count) })),
+      },
     };
   }
 
@@ -338,6 +383,31 @@ export class AdminService {
         limit: Number(limit),
         totalPages: Math.ceil(total / limit),
       },
+    };
+  }
+
+  async getAllLeads(query: any) {
+    const { status, page = 1, limit = 20 } = query;
+    const where: any = {};
+    if (status) where.status = status;
+
+    const [leads, total] = await Promise.all([
+      this.prisma.lead.findMany({
+        where,
+        include: {
+          user: { select: { name: true, email: true } },
+          property: { select: { title: true, slug: true, city: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (Number(page) - 1) * Number(limit),
+        take: Number(limit),
+      }),
+      this.prisma.lead.count({ where }),
+    ]);
+
+    return {
+      data: leads,
+      meta: { total, page: Number(page), limit: Number(limit), totalPages: Math.ceil(total / Number(limit)) },
     };
   }
 
