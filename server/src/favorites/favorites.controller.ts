@@ -23,6 +23,16 @@ export class FavoritesController {
     return this.favoritesService.getFavorites(user.id);
   }
 
+  @Get('ids')
+  getFavoriteIds(@CurrentUser() user: any) {
+    return this.favoritesService.getFavoriteIds(user.id);
+  }
+
+  @Get('property-counts')
+  getPropertyFavoriteCounts(@CurrentUser() user: any) {
+    return this.favoritesService.getPropertyFavoriteCounts(user.id);
+  }
+
   @Get('check/:propertyId')
   isFavorite(@CurrentUser() user: any, @Param('propertyId') propertyId: string) {
     return this.favoritesService.isFavorite(user.id, propertyId);

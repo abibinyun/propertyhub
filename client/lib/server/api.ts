@@ -27,14 +27,16 @@ export const serverApi = {
   getMe: () => serverFetch<User>('/auth/me'),
 
   // Users
-  getUserStats: () => serverFetch<{ properties: number; leads: number; favorites: number; views: number }>('/users/stats'),
+  getUserStats: () => serverFetch<{ properties: number; leads: number; favorites: number; views: number; receivedFavorites: number }>('/users/stats'),
   getUserProfile: () => serverFetch<User>('/users/profile'),
 
   // Properties
-  getMyProperties: () => serverFetch<Property[]>('/properties/my'),
+  getMyProperties: (params?: string) => serverFetch<{ data: Property[]; meta: { total: number; page: number; limit: number; totalPages: number } }>(`/properties/my${params ? '?' + params : ''}`),
 
   // Favorites
   getFavorites: () => serverFetch<FavoriteItem[]>('/favorites'),
+  getFavoriteIds: () => serverFetch<string[]>('/favorites/ids'),
+  getPropertyFavoriteCounts: () => serverFetch<Record<string, number>>('/favorites/property-counts'),
 
   // Leads
   getMyLeads: (params?: string) => serverFetch<{ data: Lead[]; meta: { total: number; page: number; limit: number; totalPages: number } }>(`/leads/my${params ? '?' + params : ''}`),

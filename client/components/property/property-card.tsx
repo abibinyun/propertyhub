@@ -11,8 +11,8 @@ import { propertyDetailUrl } from '@/lib/url';
 import { favoritesApi } from '@/lib/api/favorites';
 import { PropertyQuickView } from '@/components/client/property-quick-view';
 
-function FavoriteButton({ propertyId }: { propertyId: string }) {
-  const [liked, setLiked] = useState(false);
+function FavoriteButton({ propertyId, initialLiked = false }: { propertyId: string; initialLiked?: boolean }) {
+  const [liked, setLiked] = useState(initialLiked);
   const [loading, setLoading] = useState(false);
 
   const toggle = async (e: React.MouseEvent) => {
@@ -50,10 +50,11 @@ function isNew(createdAt: string) {
   return Date.now() - new Date(createdAt).getTime() < 7 * 24 * 60 * 60 * 1000;
 }
 
-export function PropertyCard({ property }: { property: Property }) {
+export function PropertyCard({ property, favoriteIds }: { property: Property; favoriteIds?: string[] }) {
   const img = property.images?.find((i) => i.isPrimary) ?? property.images?.[0];
   const fresh = isNew(property.createdAt);
   const [quickView, setQuickView] = useState(false);
+  const isLiked = favoriteIds?.includes(property.id) ?? false;
 
   return (
     <>
@@ -82,7 +83,7 @@ export function PropertyCard({ property }: { property: Property }) {
             </div>
 
             {/* Favorite — always visible */}
-            <FavoriteButton propertyId={property.id} />
+            <FavoriteButton propertyId={property.id} initialLiked={isLiked} />
             {/* Quick view — sejajar dengan heart, geser ke kiri */}
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickView(true); }}

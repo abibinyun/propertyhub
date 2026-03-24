@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronRight, Home, SlidersHorizontal, MapPin } from 'lucide-react';
 import { propertiesApi } from '@/lib/api/properties';
+import { serverApi } from '@/lib/server/api';
+import { getToken } from '@/lib/server/auth';
 import { PropertyCard } from '@/components/property/property-card';
 import { PaginationControls } from '@/components/client/pagination-controls';
 import { PropertyFilters } from '@/components/client/property-filters';
@@ -78,14 +80,20 @@ export default async function ListingPage({ params, searchParams }: Props) {
 
   let properties: Property[] = [];
   let meta = { total: 0, page, limit: 12, totalPages: 0 };
+  let favoriteIdsSet = new Set<string>();
 
   try {
-    const result = await propertiesApi.getByCategory(
-      [status, ...(segments ?? [])].join('/'),
-      { page, limit: 12, ...(minPrice && { minPrice: Number(minPrice) }), ...(maxPrice && { maxPrice: Number(maxPrice) }), ...(sort && { sort }), ...(bedrooms && { bedrooms: Number(bedrooms) }), ...(minArea && { minArea: Number(minArea) }), ...(certificate && { certificate }), ...(furnishing && { furnishing }) },
-    );
+    const token = await getToken();
+    const [result, favoriteIds] = await Promise.all([
+      propertiesApi.getByCategory(
+        [status, ...(segments ?? [])].join('/'),
+        { page, limit: 12, ...(minPrice && { minPrice: Number(minPrice) }), ...(maxPrice && { maxPrice: Number(maxPrice) }), ...(sort && { sort }), ...(bedrooms && { bedrooms: Number(bedrooms) }), ...(minArea && { minArea: Number(minArea) }), ...(certificate && { certificate }), ...(furnishing && { furnishing }) },
+      ),
+      token ? serverApi.getFavoriteIds().catch(() => [] as string[]) : Promise.resolve([] as string[]),
+    ]);
     properties = result.data;
     meta = result.meta;
+    favoriteIdsSet = new Set(favoriteIds);
   } catch { /* render empty */ }
 
   const breadcrumbs = buildBreadcrumbs(parsed);
@@ -180,7 +188,7 @@ export default async function ListingPage({ params, searchParams }: Props) {
                 <>
                   <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5">
                     {properties.map((property: Property) => (
-                      <PropertyCard key={property.id} property={property} />
+                      <PropertyCard key={property.id} property={property} favoriteIds={[...favoriteIdsSet]} />
                     ))}
                   </div>
 

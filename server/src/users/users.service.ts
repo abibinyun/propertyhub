@@ -51,14 +51,23 @@ export class UsersService {
   }
 
   async getStats(userId: string) {
-    const [propertyCount, leadCount] = await Promise.all([
-      this.prisma.property.count({ where: { userId } }),
-      this.prisma.lead.count({ where: { userId } }),
+    const [propertyCount, receivedLeads, favorites, viewsAgg, receivedFavorites] = await Promise.all([
+      this.prisma.property.count({ where: { userId, status: 'ACTIVE' } }),
+      this.prisma.lead.count({ where: { property: { userId } } }),
+      this.prisma.favorite.count({ where: { userId } }),
+      this.prisma.property.aggregate({
+        where: { userId },
+        _sum: { viewsCount: true },
+      }),
+      this.prisma.favorite.count({ where: { property: { userId } } }),
     ]);
 
     return {
       properties: propertyCount,
-      leads: leadCount,
+      leads: receivedLeads,
+      favorites,
+      views: viewsAgg._sum.viewsCount ?? 0,
+      receivedFavorites,
     };
   }
 }

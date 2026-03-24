@@ -2,6 +2,8 @@
 
 Platform listing properti fullstack — jual, beli, dan sewa properti di Indonesia.
 
+**Last Updated:** 2026-03-24 | **Status:** Production-ready (minus deployment)
+
 ## Stack
 
 | Layer | Tech |
@@ -17,6 +19,18 @@ Platform listing properti fullstack — jual, beli, dan sewa properti di Indones
 
 - **Backend**: [propertyweb-nestjs](https://github.com/abibinyun/propertyweb-nestjs)
 - **Frontend**: [propertyweb-nextjs](https://github.com/abibinyun/propertyweb-nextjs)
+
+## Fitur Utama
+
+- Listing properti dengan SEO URL hierarki 5 level
+- Filter, sort, pagination di listing dan dashboard
+- Detail page: gallery premium, specs, properti serupa, sticky contact
+- Leads system: anti-spam, rate limit, dashboard dua sisi (pengirim & penerima)
+- Favorites: per-user, count per properti, load more
+- Dashboard: sidebar, stats real-time, sort properti (views/leads/favorites/rank)
+- Access control: views tidak increment untuk pemilik, self-favorite/lead dicegah
+- Auth: JWT cookie, redirect balik ke halaman asal setelah login
+- Admin: moderation queue, approve/reject/flag
 
 ## Struktur Monorepo
 

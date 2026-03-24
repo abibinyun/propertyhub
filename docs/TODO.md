@@ -8,8 +8,9 @@
 
 - [ ] Footer redesign
 - [ ] Auth pages styling (login/register form)
-- [ ] Dashboard overhaul (stats cards, tabel properti milik agen)
-- [ ] Email notifications — agen dapat email saat ada lead baru (Resend/Nodemailer)
+- [ ] Search header fungsional (autocomplete ke listing)
+- [ ] Profile page (edit nama, telepon, company)
+- [ ] Email notifications — agen dapat email saat ada lead baru
 
 ---
 

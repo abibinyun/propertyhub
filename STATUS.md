@@ -1,6 +1,6 @@
 # PropertyHub — Project Status
 
-**Last Updated:** 2026-03-24 18:30 WIB  
+**Last Updated:** 2026-03-24 20:00 WIB  
 **Status:** ✅ Production-ready (minus deployment)
 
 ---
@@ -10,14 +10,19 @@
 - NestJS + PostgreSQL + Prisma
 - Auth: JWT cookie-based (`httpOnly`)
 - Modules: auth, users, properties, leads, favorites, admin, cloudinary
-- 46 API endpoints, 9 DB tables, 5 migrations
-- Seed: **100 properties**, 4 users, 8 kota, 6 tipe properti, koordinat realistis
+- 49 API endpoints, 9 DB tables, 5 migrations
+- Seed: 100 properties, 4 users, 8 kota, 6 tipe properti, koordinat realistis
 - Admin moderation (approve/reject/flag + audit log)
 - Ranking algorithm (quality 35%, freshness 25%, engagement 25%, reputation 15%)
-- Title validation & anti-spam
-- Image upload via Cloudinary
-- **Global rate limiting** via `@nestjs/throttler` (10 req/s, 100 req/min, 500 req/hr)
-- **Leads anti-spam**: duplikat 24 jam, daily limit 10, self-lead prevention, throttle 3/menit
+- Global rate limiting via `@nestjs/throttler`
+- **Leads anti-spam**: duplikat 24 jam, daily limit 10, self-lead prevention
+- **Self-action prevention**: tidak bisa views++/favorite/lead ke properti sendiri
+- **Views**: hanya increment jika bukan pemilik (OptionalJwtAuthGuard)
+- **Favorites**: self-favorite dicegah (ConflictException)
+- **Stats**: views total, leads masuk, favorites diterima, per-properti favorite counts
+- `GET /properties/my` support pagination + search + filter status + sort
+- `GET /favorites/property-counts` — favorite count per properti milik user
+- `GET /leads/unread-count` — count leads NEW untuk bell notif
 
 ## Frontend — 100% ✅
 
@@ -27,59 +32,54 @@
 ### URL Structure
 - Listing: `/(jual|sewa)/[city]/[district]/[type]`
 - Detail: `/properti/[location]/[slug]`
+- Dashboard: `/dashboard/*` dengan sidebar layout
 
 ### Pages
-- Homepage — fetch properti terbaru (Server Component)
-- Listing — filter, sort, pagination, skeleton loading (Server Component)
+- Homepage — fetch properti terbaru + favoriteIds (Server Component)
+- Listing — filter, sort, pagination, skeleton, favoriteIds (Server Component)
 - Detail — gallery premium, specs, contact form, JSON-LD, properti serupa (Server Component)
 - Auth — login, register (dengan redirect balik ke halaman asal)
-- Dashboard — stats, my properties, favorites, leads, profile
+- Dashboard layout — sidebar desktop sticky + mobile FAB Sheet
+- Dashboard overview — stats cards, alert leads baru, leads terbaru, properti terbaru
+- Dashboard properties — stats bar, list view, search + filter status + sort, pagination
+- Dashboard leads — 2 tab (Masuk/Terkirim), search, filter status, pagination
+- Dashboard favorites — grid card, load more
 - Admin — dashboard, moderation queue, properties, users
 
-### UI Components
-- **Header**: mega menu, announcement bar, search, bell notif (real-time unread count)
-- **PropertyCard**: ratio 4/3, badge Baru, FavoriteButton, quick view (Eye icon hover)
-- **PropertyGallery**: grid 2 kolom, lightbox fullscreen, thumbnail strip
-- **PropertyFilters**: kamar tidur, harga preset+manual, luas tanah, sertifikat, furnishing
-- **SortControls**: price_asc/desc, newest, default
-- **PaginationControls**: ellipsis smart, scroll to top
-- **PropertyQuickView**: modal dialog, responsive mobile/desktop
-- **ShareButton**: popover WA/Twitter/Facebook/copy link
-- **MobileStickyContact**: fixed bottom bar, auth-aware
-- **AuthGate**: block kontak jika belum login, redirect dengan `?redirect=` param
-- **ContactForm**: pre-fill dari user, auth-aware, error handling dari backend
-- **SimilarProperties**: server component, 3 properti serupa per kota
-- **LeadsSearchBar**: debounce search, filter status
-- **LeadStatusActions**: dropdown update status lead
+### Dashboard Sidebar
+- Desktop: sticky `w-56` di kiri
+- Mobile: FAB button → Sheet dari kiri
+- Nav: Overview, Properti Saya, Pesan & Leads, Favorit, Profil
+- User info card + Pasang Iklan + Logout
 
-### Leads System
-- Pengirim (pembeli): lihat riwayat pesan terkirim di dashboard
-- Penerima (agen): lihat semua leads masuk, info kontak pengirim, update status
-- Tab "Leads Masuk" + "Pesan Terkirim" dengan badge count
-- Search + filter status + pagination di kedua tab
-- Bell notif di header menampilkan jumlah leads NEW yang belum ditangani
+### Stats yang Benar
+- `properties` = properti ACTIVE milik user
+- `views` = total viewsCount dari semua properti (aggregate sum)
+- `leads` = leads masuk ke properti milik user (bukan yang dikirim)
+- `favorites` = properti yang user favoritkan
+- `receivedFavorites` = berapa kali properti user di-favoritkan orang lain
 
-### Auth Flow
-- Login/register → `setUser()` langsung update context tanpa full reload
-- Redirect balik ke halaman asal setelah login (`?redirect=` param)
-- `AuthGate` component untuk block aksi yang butuh login
+### Access Control
+| Aksi | Public | User Login | Pemilik |
+|---|---|---|---|
+| Lihat detail | ✅ Views +1 | ✅ Views +1 | ✅ Views tidak bertambah |
+| Favoritkan | ❌ 401 | ✅ | ❌ ConflictException |
+| Kirim lead | ❌ 401 + prompt login | ✅ | ❌ ConflictException |
 
 ### SEO
-- `generateMetadata()` di semua halaman (title, description, canonical, OG, Twitter card)
-- JSON-LD `RealEstateListing` di detail page
-- JSON-LD `BreadcrumbList` di listing page
-- `sitemap.xml` — static + per-kota + semua properti
-- `robots.txt` — block `/dashboard/`, `/admin/`
+- `generateMetadata()` di semua halaman
+- JSON-LD `RealEstateListing` + `BreadcrumbList`
+- `sitemap.xml`, `robots.txt`
 
 ---
 
 ## Backlog
 
-- [ ] Email notifications (Resend/Nodemailer) — agen dapat email saat ada lead baru
 - [ ] Footer redesign
-- [ ] Auth pages styling (login/register form)
-- [ ] Dashboard overhaul (stats cards, tabel properti)
-- [ ] Advanced filter pages (`/harga-1m-2m`, `/3-kamar`)
+- [ ] Auth pages styling
+- [ ] Email notifications (Resend/Nodemailer)
+- [ ] Search header fungsional (autocomplete)
+- [ ] Profile page (edit nama, telepon, company)
 - [ ] Email verification saat register
 - [ ] Docker production setup
 - [ ] CI/CD pipeline

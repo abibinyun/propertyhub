@@ -10,8 +10,10 @@ export class FavoritesService {
       where: { id: propertyId },
     });
 
-    if (!property) {
-      throw new NotFoundException('Property not found');
+    if (!property) throw new NotFoundException('Property not found');
+
+    if (property.userId === userId) {
+      throw new ConflictException('Tidak dapat memfavoritkan properti sendiri');
     }
 
     const existing = await this.prisma.favorite.findUnique({
@@ -69,6 +71,23 @@ export class FavoritesService {
       },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  async getFavoriteIds(userId: string): Promise<string[]> {
+    const favs = await this.prisma.favorite.findMany({
+      where: { userId },
+      select: { propertyId: true },
+    });
+    return favs.map((f) => f.propertyId);
+  }
+
+  async getPropertyFavoriteCounts(userId: string): Promise<Record<string, number>> {
+    const counts = await this.prisma.favorite.groupBy({
+      by: ['propertyId'],
+      where: { property: { userId } },
+      _count: { propertyId: true },
+    });
+    return Object.fromEntries(counts.map((c) => [c.propertyId, c._count.propertyId]));
   }
 
   async isFavorite(userId: string, propertyId: string) {

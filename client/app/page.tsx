@@ -7,6 +7,8 @@ import {
   ShieldCheck, TrendingUp, Headphones, Star,
 } from 'lucide-react';
 import { propertiesApi } from '@/lib/api/properties';
+import { serverApi } from '@/lib/server/api';
+import { getToken } from '@/lib/server/auth';
 import { PropertyCard } from '@/components/property/property-card';
 import { HomeSearch } from '@/components/client/home-search';
 
@@ -41,7 +43,11 @@ const FEATURED_CITIES = [
 ];
 
 export default async function HomePage() {
-  const { data: featured, meta } = await propertiesApi.getAll({ limit: 6, page: 1 });
+  const token = await getToken();
+  const [{ data: featured, meta }, favoriteIds] = await Promise.all([
+    propertiesApi.getAll({ limit: 6, page: 1 }),
+    token ? serverApi.getFavoriteIds().catch(() => [] as string[]) : Promise.resolve([] as string[]),
+  ]);
 
   return (
     <div className="flex flex-col">
@@ -150,13 +156,13 @@ export default async function HomePage() {
             <div className="md:hidden flex gap-4 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pb-2 -mx-4 px-4">
               {featured.map((property) => (
                 <div key={property.id} className="flex-shrink-0 w-72">
-                  <PropertyCard property={property} />
+                  <PropertyCard property={property} favoriteIds={favoriteIds} />
                 </div>
               ))}
             </div>
             <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {featured.map((property) => (
-                <PropertyCard key={property.id} property={property} />
+                <PropertyCard key={property.id} property={property} favoriteIds={favoriteIds} />
               ))}
             </div>
           </div>

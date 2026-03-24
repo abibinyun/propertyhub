@@ -17,6 +17,7 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const favoritesApi = {
   getAll: (): Promise<FavoriteItem[]> => apiFetch('/favorites'),
+  getIds: (): Promise<string[]> => apiFetch('/favorites/ids'),
   add: (propertyId: string): Promise<FavoriteItem> => apiFetch(`/favorites/${propertyId}`, { method: 'POST' }),
   remove: (propertyId: string): Promise<void> => apiFetch(`/favorites/${propertyId}`, { method: 'DELETE' }),
   check: (propertyId: string): Promise<{ isFavorited: boolean }> => apiFetch(`/favorites/check/${propertyId}`),

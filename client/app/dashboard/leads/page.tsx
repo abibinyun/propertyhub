@@ -163,7 +163,7 @@ export default async function LeadsPage({ searchParams }: Props) {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-3xl">
+    <div className="py-2 max-w-3xl">
       <div className="flex items-center gap-3 mb-6">
         <MessageSquare className="h-5 w-5 text-primary" />
         <h1 className="text-2xl font-bold">Pesan & Leads</h1>

@@ -116,7 +116,7 @@ export class PropertiesService {
     };
   }
 
-  async findOne(slug: string) {
+  async findOne(slug: string, viewerUserId?: string) {
     const property = await this.prisma.property.findUnique({
       where: { slug },
       include: {
@@ -130,14 +130,14 @@ export class PropertiesService {
       throw new NotFoundException('Property not found');
     }
 
-    // Increment views and update engagement score
-    await this.prisma.property.update({
-      where: { id: property.id },
-      data: { viewsCount: { increment: 1 } },
-    });
-
-    // Update ranking (async, don't wait)
-    this.rankingService.updatePropertyRanking(property.id).catch(() => {});
+    // Increment views hanya jika bukan pemilik properti
+    if (!viewerUserId || viewerUserId !== property.userId) {
+      await this.prisma.property.update({
+        where: { id: property.id },
+        data: { viewsCount: { increment: 1 } },
+      });
+      this.rankingService.updatePropertyRanking(property.id).catch(() => {});
+    }
 
     return property;
   }
@@ -186,14 +186,50 @@ export class PropertiesService {
     return { message: 'Property deleted successfully' };
   }
 
-  async findMyProperties(userId: string) {
-    return this.prisma.property.findMany({
-      where: { userId },
-      include: {
-        images: { where: { isPrimary: true }, take: 1 },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+  async findMyProperties(userId: string, query: { page?: number; limit?: number; search?: string; status?: string; sort?: string } = {}) {
+    const page = Math.max(1, query.page || 1);
+    const limit = Math.min(50, query.limit || 10);
+    const skip = (page - 1) * limit;
+
+    const where: any = { userId };
+    if (query.status) where.status = query.status;
+    if (query.search) {
+      where.OR = [
+        { title: { contains: query.search, mode: 'insensitive' } },
+        { city: { contains: query.search, mode: 'insensitive' } },
+        { district: { contains: query.search, mode: 'insensitive' } },
+      ];
+    }
+
+    const orderBy: any =
+      query.sort === 'views'     ? { viewsCount: 'desc' } :
+      query.sort === 'leads'     ? { leadsCount: 'desc' } :
+      query.sort === 'rank'      ? { rankScore: 'desc' } :
+      query.sort === 'favorites' ? { createdAt: 'desc' } : // handled post-query
+      { createdAt: 'desc' };
+
+    let [data, total] = await Promise.all([
+      this.prisma.property.findMany({
+        where,
+        include: {
+          images: { where: { isPrimary: true }, take: 1 },
+          ...(query.sort === 'favorites' && { _count: { select: { favorites: true } } }),
+        },
+        orderBy,
+        skip: query.sort === 'favorites' ? 0 : skip,
+        take: query.sort === 'favorites' ? undefined : limit,
+      }),
+      this.prisma.property.count({ where }),
+    ]);
+
+    // Sort by favorites count post-query (Prisma tidak support orderBy relation count langsung)
+    if (query.sort === 'favorites') {
+      data = (data as any[])
+        .sort((a, b) => (b._count?.favorites ?? 0) - (a._count?.favorites ?? 0))
+        .slice(skip, skip + limit);
+    }
+
+    return { data, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
   }
 
   async findByCategory(filters: any) {

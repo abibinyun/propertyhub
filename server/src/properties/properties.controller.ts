@@ -4,6 +4,7 @@ import { PropertiesService } from './properties.service';
 import { CreatePropertyDto, UpdatePropertyDto } from './dto/property.dto';
 import { UploadImageDto } from './dto/upload-image.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 const LISTING_TYPES = ['jual', 'sewa'];
@@ -65,13 +66,27 @@ export class PropertiesController {
 
   @Get('my')
   @UseGuards(JwtAuthGuard)
-  findMyProperties(@CurrentUser() user: any) {
-    return this.propertiesService.findMyProperties(user.id);
+  findMyProperties(
+    @CurrentUser() user: any,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+    @Query('status') status?: string,
+    @Query('sort') sort?: string,
+  ) {
+    return this.propertiesService.findMyProperties(user.id, {
+      page: page ? +page : 1,
+      limit: limit ? +limit : 10,
+      search,
+      status,
+      sort,
+    });
   }
 
   @Get('properti/detail/:slug')
-  findBySlug(@Param('slug') slug: string) {
-    return this.propertiesService.findOne(slug);
+  @UseGuards(OptionalJwtAuthGuard)
+  findBySlug(@Param('slug') slug: string, @CurrentUser() user?: any) {
+    return this.propertiesService.findOne(slug, user?.id);
   }
 
   /**
