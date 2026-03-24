@@ -13,12 +13,18 @@ Platform listing properti fullstack — jual, beli, dan sewa properti di Indones
 | Runtime | Bun |
 | Auth | JWT cookie-based (httpOnly) |
 | Storage | Cloudinary |
-| Maps | Leaflet + OpenStreetMap |
+| Maps | Leaflet + OpenStreetMap + data wilayah offline |
 
 ## Repositories
 
 - **Backend**: [propertyweb-nestjs](https://github.com/abibinyun/propertyweb-nestjs)
 - **Frontend**: [propertyweb-nextjs](https://github.com/abibinyun/propertyweb-nextjs)
+
+> Monorepo ini di-push ke dua repo terpisah via `git subtree`:
+> ```bash
+> git subtree push --prefix=client fe main
+> git subtree push --prefix=server be main
+> ```
 
 ## Fitur Utama
 
@@ -68,6 +74,10 @@ bun run dev
 - Admin: moderasi, approve/reject, statistik
 - Ranking algorithm (quality, freshness, engagement, reputation)
 - SEO: generateMetadata, JSON-LD, sitemap.xml, robots.txt
+- **Data wilayah offline** — dropdown Provinsi→Kota→Kecamatan tanpa API eksternal
+  - Sumber: [ibnux/data-indonesia](https://github.com/ibnux/data-indonesia)
+  - Pilih wilayah → peta otomatis pindah ke koordinat wilayah tersebut
+  - Search pin via Nominatim (OpenStreetMap) untuk presisi lokasi
 
 ## Env Variables
 
