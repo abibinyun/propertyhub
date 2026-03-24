@@ -37,7 +37,8 @@ export const serverApi = {
   getFavorites: () => serverFetch<FavoriteItem[]>('/favorites'),
 
   // Leads
-  getMyLeads: () => serverFetch<Lead[]>('/leads/my'),
+  getMyLeads: (params?: string) => serverFetch<{ data: Lead[]; meta: { total: number; page: number; limit: number; totalPages: number } }>(`/leads/my${params ? '?' + params : ''}`),
+  getReceivedLeads: (params?: string) => serverFetch<{ data: Lead[]; meta: { total: number; page: number; limit: number; totalPages: number } }>(`/leads/received${params ? '?' + params : ''}`),
 
   // Admin
   getAdminStats: () => serverFetch<AdminStats>('/admin/stats'),

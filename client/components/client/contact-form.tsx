@@ -34,8 +34,9 @@ export function ContactForm({ propertyId }: { propertyId: string }) {
     try {
       await leadsApi.create({ ...form, email: user?.email ?? '', propertyId });
       setSent(true);
-    } catch {
-      setError('Gagal mengirim. Coba lagi.');
+    } catch (err: unknown) {
+      const msg = (err as { message?: string })?.message;
+      setError(msg || 'Gagal mengirim. Coba lagi.');
     } finally {
       setLoading(false);
     }

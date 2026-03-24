@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
@@ -13,10 +15,12 @@ import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: '.env',
-    }),
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
+    ThrottlerModule.forRoot([
+      { name: 'short', ttl: 1000, limit: 10 },       // 10 req/detik
+      { name: 'medium', ttl: 60000, limit: 100 },     // 100 req/menit
+      { name: 'long', ttl: 3600000, limit: 500 },     // 500 req/jam
+    ]),
     PrismaModule,
     CloudinaryModule,
     AuthModule,
@@ -27,6 +31,9 @@ import { AdminModule } from './admin/admin.module';
     AdminModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    { provide: APP_GUARD, useClass: ThrottlerGuard }, // global rate limit
+  ],
 })
 export class AppModule {}

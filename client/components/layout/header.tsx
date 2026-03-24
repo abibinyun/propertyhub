@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { leadsApi } from '@/lib/api/leads';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context/auth-context';
@@ -288,7 +289,12 @@ export function Header() {
   };
 
   // Leads count badge — hanya tampil jika user punya leads baru (placeholder)
-  const hasNotif = user?.role === 'USER';
+  const [unreadCount, setUnreadCount] = useState(0);
+  useEffect(() => {
+    if (!user) return;
+    leadsApi.getUnreadCount().then(r => setUnreadCount(r.count)).catch(() => {});
+  }, [user]);
+  const hasNotif = unreadCount > 0;
 
   return (
     <div className="sticky top-0 z-50 w-full">
@@ -412,7 +418,9 @@ export function Header() {
                     <Link href="/dashboard/leads">
                       <Bell className="h-4 w-4" />
                       {hasNotif && (
-                        <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive ring-2 ring-background" />
+                        <span className="absolute top-1 right-1 h-4 min-w-4 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center px-0.5 ring-2 ring-background">
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
                       )}
                     </Link>
                   </Button>

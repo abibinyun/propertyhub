@@ -13,7 +13,7 @@
 - **Auth:** 3 endpoints
 - **Users:** 3 endpoints
 - **Properties:** 14 endpoints (including SEO routes)
-- **Leads:** 4 endpoints
+- **Leads:** 6 endpoints
 - **Favorites:** 4 endpoints
 - **Admin:** 12 endpoints (including moderation)
 - **System:** 3 endpoints
@@ -347,7 +347,10 @@ Authorization: Bearer <token>
 
 ### Leads
 
-#### Create Lead (Contact Property Owner)
+> **Rate Limiting:** POST /leads dibatasi 3 request/menit dan 10/hari per user.  
+> **Anti-spam:** Duplikat ke properti yang sama dalam 24 jam ditolak. Tidak bisa kirim ke properti sendiri.
+
+#### Create Lead
 ```http
 POST /leads
 Authorization: Bearer <token>
@@ -359,48 +362,48 @@ Content-Type: application/json
   "email": "buyer@example.com",
   "phone": "+6281234567890",
   "message": "Saya tertarik dengan properti ini",
-  "source": "website" // optional
+  "source": "website"
 }
 ```
 
-**Response:**
-```json
-{
-  "id": "uuid",
-  "propertyId": "uuid",
-  "userId": "uuid",
-  "name": "Buyer Name",
-  "email": "buyer@example.com",
-  "phone": "+6281234567890",
-  "message": "Saya tertarik...",
-  "status": "NEW",
-  "source": "website",
-  "property": {
-    "title": "Rumah Minimalis Modern",
-    "slug": "rumah-minimalis-modern-...",
-    "city": "Jakarta Selatan"
-  },
-  "createdAt": "2026-03-23T..."
-}
-```
+**Error responses:**
+- `409` — Sudah kirim ke properti ini dalam 24 jam
+- `409` — Tidak bisa kirim ke properti sendiri
+- `429` — Daily limit (10/hari) atau throttle (3/menit) tercapai
 
-#### Get My Leads (Buyer Perspective)
+#### Get My Leads (Buyer — pesan terkirim)
 ```http
-GET /leads/my
+GET /leads/my?page=1&limit=10&search=&status=
 Authorization: Bearer <token>
 ```
 
-**Response:** Array of leads with property details
+**Response:** `{ data: Lead[], meta: { total, page, limit, totalPages } }`
 
-#### Get Property Leads (Owner Perspective)
+#### Get Received Leads (Agen — leads masuk)
+```http
+GET /leads/received?page=1&limit=10&search=&status=
+Authorization: Bearer <token>
+```
+
+Returns semua leads dari semua properti milik user yang login.  
+Search: nama, email, HP, pesan, judul properti.  
+**Response:** `{ data: Lead[], meta: { total, page, limit, totalPages } }`
+
+#### Get Unread Count (untuk bell notif)
+```http
+GET /leads/unread-count
+Authorization: Bearer <token>
+```
+
+**Response:** `{ count: number }` — jumlah leads dengan status NEW di properti milik user.
+
+#### Get Property Leads
 ```http
 GET /leads/property/:propertyId
 Authorization: Bearer <token>
 ```
 
-**Note:** Only property owner can access
-
-**Response:** Array of leads for that property
+Hanya bisa diakses oleh pemilik properti.
 
 #### Update Lead Status
 ```http
@@ -409,11 +412,11 @@ Authorization: Bearer <token>
 Content-Type: application/json
 
 {
-  "status": "CONTACTED" // NEW, CONTACTED, QUALIFIED, CLOSED, LOST
+  "status": "CONTACTED" // NEW | CONTACTED | QUALIFIED | CLOSED | LOST
 }
 ```
 
-**Note:** Only property owner can update
+Hanya bisa diakses oleh pemilik properti terkait.
 
 ---
 
@@ -511,8 +514,10 @@ GET /stats
 
 ### Leads
 - Only authenticated users can create leads
-- Users can view their own leads (buyer perspective)
-- Property owners can view leads for their properties
+- Users can view their own leads (buyer perspective) — paginated, searchable
+- Property owners can view all received leads — paginated, searchable
+- Anti-spam: 1 lead per properti per 24 jam, max 10 leads/hari, tidak bisa kirim ke properti sendiri
+- Rate limit: 3 POST /leads per menit, 10 per hari (via @nestjs/throttler)
 
 ### Favorites
 - Only authenticated users can manage favorites

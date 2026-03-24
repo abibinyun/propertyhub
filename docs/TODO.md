@@ -1,39 +1,22 @@
 # TODO - PropertyHub
 
-**Last Updated:** 2026-03-23 20:05 WIB
+**Last Updated:** 2026-03-24 18:30 WIB
 
 ---
 
-## 🔥 Frontend — Prioritas Sekarang
+## 🔥 Prioritas Sekarang
 
-### Bug Kritis
-- [ ] `next.config.ts` — tambah domain Cloudinary (`res.cloudinary.com`) agar `next/image` bisa load gambar
-
-### Halaman yang Belum Ada
-- [ ] Edit property form (`/dashboard/properties/[id]/edit`)
-- [ ] Upload gambar di form properti (dengan preview)
-- [ ] Favorites page (`/dashboard/favorites`)
-- [ ] Leads page (`/dashboard/leads`)
-- [ ] Profile page (`/dashboard/profile`)
-- [ ] Lead/contact form di property detail page
-- [ ] Admin panel UI (dashboard, users, moderation queue)
-
-### Fitur yang Belum Berfungsi
-- [ ] Homepage — fetch properti featured/terbaru dari API (sekarang static)
-- [ ] Filter & search di listing page (tombol ada, belum berfungsi)
-- [ ] Dashboard stats — fetch data real dari API (sekarang hardcoded 0)
-- [ ] Pagination pakai `router.push` bukan `window.location.href` (full reload)
+- [ ] Footer redesign
+- [ ] Auth pages styling (login/register form)
+- [ ] Dashboard overhaul (stats cards, tabel properti milik agen)
+- [ ] Email notifications — agen dapat email saat ada lead baru (Resend/Nodemailer)
 
 ---
 
 ## 📈 SEO Enhancement
 
-- [ ] Meta tags & Open Graph per properti (title, description, image)
-- [ ] Structured data JSON-LD (Property schema)
-- [ ] Canonical URLs
-- [ ] Sitemap generation (`/sitemap.xml`)
-- [ ] `robots.txt`
-- [ ] Filter pages SEO (`/properties/jual/rumah?harga=1m-2m`, `/properties/jual/rumah?kamar=3`)
+- [ ] Filter pages SEO (`/jual/rumah?harga=1m-2m`, `/jual/rumah?kamar=3`)
+- [ ] Structured data untuk listing page (BreadcrumbList sudah ada)
 
 ---
 
@@ -41,7 +24,7 @@
 
 - [ ] Refresh token (access 15min + refresh 7 days)
 - [ ] Password reset via email
-- [ ] Email verification
+- [ ] Email verification saat register
 - [ ] OAuth (Google)
 
 ---
@@ -65,26 +48,33 @@
 
 ---
 
-## ✅ Sudah Selesai (Backend)
+## ✅ Sudah Selesai
 
-- [x] SEO URL structure (5 level hierarki)
-- [x] Title validation & anti-spam
-- [x] Ranking algorithm (quality, freshness, engagement, reputation)
-- [x] Admin moderation system (approve/reject/flag, audit log, ban)
-- [x] Semua CRUD (properties, leads, favorites, users)
-- [x] Image upload (Cloudinary)
-- [x] JWT authentication & RBAC
-- [x] Database seed (50 properties, 4 users)
+### Backend
+- [x] NestJS + Prisma + PostgreSQL, 46 endpoints
+- [x] JWT cookie-based auth
+- [x] Properties CRUD + SEO URL (5 level hierarki)
+- [x] Leads system + anti-spam (duplikat 24 jam, daily limit, self-lead prevention)
+- [x] Global rate limiting (@nestjs/throttler)
+- [x] GET /leads/received (paginated, search, filter)
+- [x] GET /leads/unread-count
+- [x] Favorites, Admin, Cloudinary
+- [x] Ranking algorithm
+- [x] Seeder 100 properti, 8 kota, 6 tipe
 
-## ✅ Sudah Selesai (Frontend)
-
-- [x] Setup (Next.js 16, Tailwind v4, shadcn/ui, React Query)
-- [x] Auth context & protected routes
-- [x] Header & Footer
-- [x] Homepage (static)
-- [x] Property listing page (SEO URLs, pagination)
-- [x] Property detail page (gallery, specs, agent info)
-- [x] Login & Register
-- [x] Dashboard (stats placeholder)
-- [x] My Properties (list, delete)
-- [x] Add Property form
+### Frontend
+- [x] Homepage, Listing, Detail page
+- [x] Detail page redesign (gallery premium, specs, properti serupa, sticky sidebar)
+- [x] PropertyGallery — grid + lightbox
+- [x] PropertyQuickView — modal dari listing card
+- [x] ShareButton — WA/Twitter/Facebook/copy
+- [x] MobileStickyContact — auth-aware
+- [x] AuthGate — block kontak jika belum login
+- [x] ContactForm — pre-fill, auth-aware, error handling
+- [x] Auth redirect — balik ke halaman asal setelah login
+- [x] Bell notif — real unread count
+- [x] Leads dashboard — 2 tab, search, filter, pagination
+- [x] SEO: generateMetadata, JSON-LD, sitemap, robots.txt
+- [x] Maps: Leaflet (picker + view)
+- [x] Dashboard: properties, favorites, leads, profile
+- [x] Admin panel UI

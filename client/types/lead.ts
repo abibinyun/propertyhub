@@ -10,6 +10,12 @@ export interface Lead {
   status: LeadStatus;
   source?: string;
   createdAt: string;
+  property?: {
+    title: string;
+    slug: string;
+    city: string;
+    district: string;
+  };
 }
 
 export interface CreateLeadDto {

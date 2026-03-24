@@ -13,6 +13,9 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const leadsApi = {
+  getUnreadCount: (): Promise<{ count: number }> =>
+    apiFetch('/leads/unread-count'),
+
   create: (data: CreateLeadDto): Promise<Lead> =>
     apiFetch('/leads', { method: 'POST', body: JSON.stringify(data) }),
 
