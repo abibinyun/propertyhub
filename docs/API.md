@@ -1,22 +1,34 @@
 # PropertyHub API Documentation
 
-**Base URL:** `http://localhost:3001`  
-**Version:** 1.0.0  
-**Last Updated:** 2026-03-24 20:00 WIB
+**Base URL:** `http://localhost:3001`
+**Version:** 1.0.0
+**Last Updated:** 2026-03-25 WIB
 
-**Total Endpoints:** 49
+**Total Endpoints:** 53
 
 ---
 
 ## 📊 Summary
 
-- **Auth:** 3 endpoints
+- **Auth:** 5 endpoints (+ verify-email, resend-verification)
 - **Users:** 3 endpoints
-- **Properties:** 14 endpoints (including SEO routes)
+- **Properties:** 15 endpoints (+ set primary image)
 - **Leads:** 6 endpoints
 - **Favorites:** 6 endpoints
-- **Admin:** 12 endpoints (including moderation)
+- **Admin:** 13 endpoints (+ leads)
 - **System:** 3 endpoints
+
+---
+
+## 🆕 Endpoint Baru (2026-03-25)
+
+| Method | Path | Deskripsi |
+|---|---|---|
+| GET | /auth/verify-email?token=xxx | Verifikasi email via token |
+| POST | /auth/resend-verification | Kirim ulang email verifikasi (auth, rate-limit 5 menit) |
+| PATCH | /properties/images/:imageId/primary | Set foto utama properti (auth, pemilik) |
+| GET | /admin/leads | Semua leads — filter status, pagination (ADMIN) |
+
 
 ---
 

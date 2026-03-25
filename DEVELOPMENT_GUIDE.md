@@ -1,124 +1,176 @@
-# Development Guide - PropertyHub
+# Development Guide — PropertyHub
 
-**Last Updated:** 2026-03-23 20:05 WIB  
-**Status:** Backend 100% ✅ | Frontend 58% 🚧
+**Last Updated:** 2026-03-25 WIB
+**Status:** Backend ✅ | Frontend ✅ | Deployment ⏳
 
 ---
 
 ## 🚀 Menjalankan Project
 
+### Prasyarat
+- Bun >= 1.0
+- PostgreSQL (bisa via Docker)
+- Node.js >= 20 (untuk tooling)
+
 ### Backend
 ```bash
 cd server
-bun run start:dev   # http://localhost:3001
+cp .env.example .env   # isi semua variabel
+bun install
+bunx prisma migrate deploy
+bunx prisma db seed
+bun run start:dev      # http://localhost:3001
 ```
 
 ### Frontend
 ```bash
 cd client
-bun run dev         # http://localhost:3000
+cp .env.example .env.local
+bun install
+bun run dev            # http://localhost:3000 (Turbopack)
 ```
 
-### Database (jika belum jalan)
+### Database via Docker
 ```bash
-docker start postgres   # atau sesuai nama container
+docker run -d --name postgres \
+  -e POSTGRES_DB=property \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -p 5432:5432 postgres:15-alpine
 ```
 
 ---
 
-## 📁 Struktur Penting
+## 📁 Struktur Project
 
 ```
-property-webapp/
-├── server/src/
-│   ├── auth/           # JWT, register, login
-│   ├── users/          # Profile management
-│   ├── properties/     # CRUD + SEO slug + ranking
-│   │   ├── dto/        # Validation DTOs
-│   │   ├── validators/ # Custom title validator
-│   │   └── ranking.service.ts
-│   ├── leads/          # Contact forms
-│   ├── favorites/      # Bookmarks
-│   ├── admin/          # Admin + moderation
-│   └── cloudinary/     # Image upload
+property-webapp/          ← Monorepo
+├── server/               ← NestJS backend (port 3001)
+│   ├── src/
+│   │   ├── auth/         ← JWT, register, login, email verification
+│   │   ├── email/        ← EmailService modular (log/resend)
+│   │   ├── users/        ← Profile management
+│   │   ├── properties/   ← CRUD, SEO slug, ranking, image upload
+│   │   ├── leads/        ← Contact forms, anti-spam
+│   │   ├── favorites/    ← Bookmarks
+│   │   ├── admin/        ← Moderation, stats, charts
+│   │   └── cloudinary/   ← Image upload service
+│   └── prisma/
+│       ├── schema.prisma
+│       ├── migrations/
+│       └── seed.ts
 │
-├── client/
-│   ├── app/            # Next.js App Router pages
-│   ├── components/     # UI components
-│   └── lib/
-│       ├── api/        # Axios services
-│       ├── context/    # Auth context
-│       └── providers/  # React Query
+├── client/               ← Next.js frontend (port 3000)
+│   ├── app/              ← App Router pages (Server Components)
+│   │   ├── (listing)/    ← /jual, /sewa, /jual/[city]/...
+│   │   ├── properti/     ← /properti/[location]/[slug]
+│   │   ├── dashboard/    ← User dashboard
+│   │   ├── admin/        ← Admin panel
+│   │   ├── verify-email/ ← Email verification page
+│   │   └── login|register/
+│   ├── components/
+│   │   ├── client/       ← 'use client' components
+│   │   ├── property/     ← Shared property components
+│   │   └── ui/           ← shadcn/ui components
+│   ├── lib/
+│   │   ├── api/          ← Client-side API wrappers
+│   │   └── server/       ← Server-side fetchers (cookies)
+│   ├── public/
+│   │   └── wilayah/      ← Data wilayah Indonesia offline
+│   └── types/            ← TypeScript interfaces
 │
-└── docs/               # Dokumentasi
+└── docs/                 ← Dokumentasi teknis
 ```
 
 ---
 
-## 🔑 Akun Development
+## 🔑 Akun Development (Seeder)
 
-| Role  | Email                      | Password  |
-|-------|----------------------------|-----------|
-| Admin | admin@propertyhub.com      | admin123  |
-| Agent | agent1@propertyhub.com     | admin123  |
-| Agent | agent2@propertyhub.com     | admin123  |
-| User  | user@propertyhub.com       | admin123  |
+| Role  | Email | Password |
+|---|---|---|
+| Admin | admin@propertyhub.com | admin123 |
+| Agent | agent1@propertyhub.com | admin123 |
+| Agent | agent2@propertyhub.com | admin123 |
+| User  | user@propertyhub.com | admin123 |
 
 ---
 
-## 🌐 API Endpoints Utama
+## ⚙️ Environment Variables
 
-```
-POST   /auth/register
-POST   /auth/login
-GET    /auth/me
+### Backend (`server/.env`)
+```env
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/property
+JWT_SECRET=your-secret-key-min-32-chars
+JWT_EXPIRES_IN=7d
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+APP_URL=http://localhost:3000
+NODE_ENV=development
 
-GET    /properties              # List dengan filter
-GET    /properties/jual         # SEO category
-GET    /properties/jual/rumah   # SEO category
-GET    /properties/my           # Properti milik user
-POST   /properties              # Buat properti (auth)
-PATCH  /properties/:slug        # Update (auth, owner)
-DELETE /properties/:slug        # Hapus (auth, owner)
-POST   /properties/:id/images   # Upload gambar (auth)
-
-POST   /leads                   # Kirim pertanyaan
-GET    /leads/my                # Pertanyaan saya
-GET    /leads/property/:id      # Leads properti saya
-
-POST   /favorites/:propertyId   # Tambah favorit
-DELETE /favorites/:propertyId   # Hapus favorit
-GET    /favorites               # Daftar favorit
-
-GET    /admin/stats             # (ADMIN only)
-GET    /admin/moderation/queue  # Review queue
-PATCH  /admin/moderation/:id/approve
-PATCH  /admin/moderation/:id/reject
-PATCH  /admin/moderation/:id/flag
+# Email (default: log ke console)
+EMAIL_PROVIDER=log          # log | resend
+RESEND_API_KEY=             # isi jika EMAIL_PROVIDER=resend
+EMAIL_FROM=PropertyHub <noreply@propertyhub.id>
 ```
 
-Dokumentasi lengkap: [docs/API.md](./docs/API.md)
+### Frontend (`client/.env.local`)
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
 
 ---
 
-## ⚠️ Yang Perlu Diperhatikan
+## 🏗️ Arsitektur Penting
 
-1. **Property baru** dibuat dengan status `DRAFT` dan `moderationStatus: PENDING` — tidak muncul di listing publik sampai di-approve admin
-2. **Gambar** di-upload ke Cloudinary. `next/image` butuh domain `res.cloudinary.com` di-whitelist di `next.config.ts` (belum dikonfigurasi)
-3. **Slug** format: `jual-rumah-jakarta-selatan-kebayoran-baru-judul-properti`
-4. **Ranking** dihitung otomatis saat create/update/view
+### Server Components vs Client Components
+- **Default:** Server Component — fetch data di server, tidak ada JS di client
+- **`'use client'`:** hanya untuk interaksi (form, map, filter, button dengan state)
+- **API calls dari server:** lewat `lib/server/api.ts` (pakai cookie dari `next/headers`)
+- **API calls dari client:** lewat `lib/api/*.ts` (pakai `credentials: 'include'`)
+
+### Email System
+```
+EmailService (factory)
+├── LogEmailProvider    ← default, log ke console
+└── ResendEmailProvider ← aktif via EMAIL_PROVIDER=resend
+```
+Untuk tambah provider baru: implement `EmailProvider` interface di `server/src/email/`.
+
+### Data Wilayah
+- `public/wilayah/provinsi-kabupaten.json` — load saat form dibuka
+- `public/wilayah/kecamatan.json` — lazy load + in-memory cache
+- Sumber: [ibnux/data-indonesia](https://github.com/ibnux/data-indonesia)
+
+### Git Workflow (Monorepo → 2 Repo)
+```bash
+# Push frontend
+git subtree push --prefix=client fe main
+
+# Push backend
+git subtree push --prefix=server be main
+```
 
 ---
 
-## 📋 Sisa Pekerjaan Frontend
+## ⚠️ Hal Penting
 
-Lihat [TASKS.md](./TASKS.md) dan [docs/TODO.md](./docs/TODO.md) untuk detail lengkap.
+1. **Properti baru** → status `DRAFT`, `moderationStatus: PENDING` → tidak muncul di listing sampai admin approve
+2. **Email verification** → development: cek log terminal backend untuk link verifikasi
+3. **Ranking** → dihitung otomatis saat create/update/view properti
+4. **Route ordering** di NestJS — specific routes harus di atas wildcard (sudah difix)
+5. **Turbopack** aktif di dev — build production tetap pakai webpack standar
 
-Prioritas:
-1. Fix `next.config.ts` — whitelist Cloudinary domain
-2. Homepage fetch data real
-3. Filter & search di listing
-4. Edit property + upload gambar
-5. Dashboard stats real
-6. Favorites, Leads, Profile page
-7. Admin panel UI
+---
+
+## 📚 Dokumentasi Lain
+
+| File | Isi |
+|---|---|
+| [docs/API.md](docs/API.md) | 53 API endpoints lengkap |
+| [docs/ERD.md](docs/ERD.md) | Database schema & relasi |
+| [docs/TODO.md](docs/TODO.md) | Backlog + cara lanjutkan |
+| [TASKS.md](TASKS.md) | Task tracker (TASK-001~099) |
+| [STATUS.md](STATUS.md) | Status per fitur |
+| [RULES_FE.md](RULES_FE.md) | Aturan coding frontend |

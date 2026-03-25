@@ -1,81 +1,108 @@
 # TODO - PropertyHub
 
-**Last Updated:** 2026-03-24 18:30 WIB
+**Last Updated:** 2026-03-25 WIB
 
 ---
 
-## 🔥 Prioritas Sekarang
+## 🔥 Prioritas Sekarang (Quick Wins)
 
-- [ ] Footer redesign
-- [ ] Auth pages styling (login/register form)
-- [ ] Search header fungsional (autocomplete ke listing)
-- [ ] Profile page (edit nama, telepon, company)
-- [ ] Email notifications — agen dapat email saat ada lead baru
-
----
-
-## 📈 SEO Enhancement
-
-- [ ] Filter pages SEO (`/jual/rumah?harga=1m-2m`, `/jual/rumah?kamar=3`)
-- [ ] Structured data untuk listing page (BreadcrumbList sudah ada)
+- [ ] **Footer** — tambah footer dengan link navigasi, sosmed, copyright
+- [ ] **Auth pages styling** — login/register form yang lebih polished
+- [ ] **Search header fungsional** — autocomplete ke listing page
+- [ ] **Email notifikasi lead** — trigger `emailService.sendLeadNotification()` saat lead baru masuk (EmailService sudah siap, tinggal tambah method + trigger di leads.service.ts)
+- [ ] **Password reset** — `POST /auth/forgot-password` + `POST /auth/reset-password?token=xxx`
 
 ---
 
-## 🔐 Auth Enhancements (Future)
+## 📈 Fitur Lanjutan
 
-- [ ] Refresh token (access 15min + refresh 7 days)
-- [ ] Password reset via email
-- [ ] Email verification saat register
-- [ ] OAuth (Google)
+### Analytics
+- [ ] Chart views/leads per hari di dashboard properti pemilik
+- [ ] Export data leads ke CSV
+
+### Featured Listing
+- [ ] Tipe: BASIC / PREMIUM / ULTIMATE dengan harga berbeda
+- [ ] Badge "Featured" di listing card
+- [ ] Auto-expire setelah periode berakhir
+- [ ] Payment via Midtrans
+
+### Auth
+- [ ] OAuth Google (`passport-google-oauth20`)
+- [ ] Refresh token (access 15min + refresh 7d)
 
 ---
 
-## 💰 Monetization (Future)
+## 🚀 Deployment
 
-- [ ] Payment integration (Midtrans)
-- [ ] Featured listing management (BASIC/PREMIUM/ULTIMATE)
-- [ ] Auto-expire featured listings
-- [ ] Analytics dashboard untuk pemilik properti
+### Docker
+```
+docker-compose.prod.yml
+├── traefik (reverse proxy)
+├── postgres
+├── redis (session cache)
+├── backend (NestJS)
+└── frontend (Next.js)
+```
+
+- [ ] `Dockerfile` untuk backend (multi-stage)
+- [ ] `Dockerfile` untuk frontend (multi-stage, standalone output)
+- [ ] `docker-compose.prod.yml`
+- [ ] Environment secrets via Docker secrets / `.env.prod`
+
+### CI/CD (GitHub Actions)
+- [ ] Workflow: push ke `main` → test → build → deploy
+- [ ] Separate workflow untuk BE dan FE (monorepo path filter)
+
+### Monitoring
+- [ ] Sentry error tracking (BE + FE)
+- [ ] Uptime monitoring
+- [ ] Database backup harian otomatis
 
 ---
 
-## 🚀 Deployment (Future)
+## 💡 Cara Lanjutkan Project
 
-- [ ] Docker setup production
-- [ ] CI/CD pipeline
-- [ ] SSL & domain configuration
-- [ ] Monitoring (Sentry, uptime)
-- [ ] Database backup otomatis
+### Setup Development
+```bash
+# Clone
+git clone https://github.com/abibinyun/propertyweb-nestjs server
+git clone https://github.com/abibinyun/propertyweb-nextjs client
+
+# Backend
+cd server && cp .env.example .env
+bun install
+bunx prisma migrate deploy
+bunx prisma db seed
+bun run start:dev
+
+# Frontend
+cd client && cp .env.example .env.local
+bun install
+bun run dev
+```
+
+### Tambah Email Provider Baru
+1. Buat file `server/src/email/smtp.provider.ts` implement `EmailProvider`
+2. Tambah case di `EmailService` constructor
+3. Set `EMAIL_PROVIDER=smtp` di `.env`
+
+### Tambah Endpoint Admin Baru
+1. Tambah method di `admin.service.ts`
+2. Tambah route di `admin.controller.ts` (sudah ada `@Roles('ADMIN')` guard)
+3. Tambah di `lib/api/admin.ts` (client) dan `lib/server/api.ts` (server)
+
+### Deploy ke Homelab
+Lihat `/home/abibinyun/data/homelab/docs/DEPLOY_GUIDE.md` dan `EXAMPLE_DEPLOY.md`
 
 ---
 
 ## ✅ Sudah Selesai
 
-### Backend
-- [x] NestJS + Prisma + PostgreSQL, 46 endpoints
-- [x] JWT cookie-based auth
-- [x] Properties CRUD + SEO URL (5 level hierarki)
-- [x] Leads system + anti-spam (duplikat 24 jam, daily limit, self-lead prevention)
-- [x] Global rate limiting (@nestjs/throttler)
-- [x] GET /leads/received (paginated, search, filter)
-- [x] GET /leads/unread-count
-- [x] Favorites, Admin, Cloudinary
-- [x] Ranking algorithm
-- [x] Seeder 100 properti, 8 kota, 6 tipe
+Lihat [TASKS.md](../TASKS.md) untuk daftar lengkap (TASK-001 s/d TASK-099).
 
-### Frontend
-- [x] Homepage, Listing, Detail page
-- [x] Detail page redesign (gallery premium, specs, properti serupa, sticky sidebar)
-- [x] PropertyGallery — grid + lightbox
-- [x] PropertyQuickView — modal dari listing card
-- [x] ShareButton — WA/Twitter/Facebook/copy
-- [x] MobileStickyContact — auth-aware
-- [x] AuthGate — block kontak jika belum login
-- [x] ContactForm — pre-fill, auth-aware, error handling
-- [x] Auth redirect — balik ke halaman asal setelah login
-- [x] Bell notif — real unread count
-- [x] Leads dashboard — 2 tab, search, filter, pagination
-- [x] SEO: generateMetadata, JSON-LD, sitemap, robots.txt
-- [x] Maps: Leaflet (picker + view)
-- [x] Dashboard: properties, favorites, leads, profile
-- [x] Admin panel UI
+Ringkasan:
+- Backend: 51 endpoints, 9 tabel, auth + email verification + properties + leads + favorites + admin
+- Frontend: 15+ halaman, dashboard lengkap, admin panel enterprise-grade
+- Data wilayah offline (ibnux/data-indonesia) — dropdown + map sync
+- Email system modular (log default, resend via config)
+- Admin panel: dashboard dengan charts, properties/users/moderation/leads table
