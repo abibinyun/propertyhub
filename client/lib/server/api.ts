@@ -65,6 +65,11 @@ export const serverApi = {
   getAdminLeads: (params?: string) => serverFetch<PaginatedResponse<AdminLead>>(`/admin/leads${params ? '?' + params : ''}`),
   getReports: (resolved?: string) => serverFetch<any[]>(`/reports${resolved !== undefined ? `?resolved=${resolved}` : ''}`),
   getSavedSearches: () => serverFetch<any[]>('/saved-searches'),
-  getAgentProfile: (handle: string) => serverFetch<any>(`/users/${handle}/public`),
+  getAgentProfile: (handle: string, query?: Record<string, any>) => {
+    const qs = query ? '?' + new URLSearchParams(
+      Object.fromEntries(Object.entries(query).filter(([, v]) => v !== undefined && v !== '' && v !== null).map(([k, v]) => [k, String(v)]))
+    ).toString() : '';
+    return serverFetch<any>(`/users/${handle}/public${qs}`);
+  },
   getAgentReviews: (agentId: string) => serverFetch<any>(`/reviews/agent/${agentId}`),
 };

@@ -2,15 +2,18 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { BadgeCheck, Building2, Calendar, Star, Phone, Mail, MessageCircle, Share2 } from 'lucide-react';
-import { PropertyCard } from '@/components/property/property-card';
+import { BadgeCheck, Building2, Calendar, Star, Phone, Mail, MessageCircle } from 'lucide-react';
 import { AgentReviews } from '@/components/client/agent-reviews';
+import { AgentListings } from '@/components/client/agent-listings';
 import { ShareButton } from '@/components/client/share-button';
 import { serverApi } from '@/lib/server/api';
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-interface Props { params: Promise<{ handle: string }> }
+interface Props {
+  params: Promise<{ handle: string }>;
+  searchParams: Promise<{ propertyType?: string; listingType?: string; sort?: string; page?: string }>;
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { handle } = await params;
@@ -19,11 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title: `${user.name} — Agen Properti`,
       description: user.bio || `${user.name} memiliki ${user._count?.properties ?? 0} listing properti aktif.`,
-      openGraph: {
-        title: user.name,
-        description: user.bio || '',
-        images: user.avatar ? [user.avatar] : [],
-      },
+      openGraph: { title: user.name, description: user.bio || '', images: user.avatar ? [user.avatar] : [] },
       alternates: { canonical: `${BASE_URL}/agen/${user.username ?? user.id}` },
     };
   } catch {
@@ -31,15 +30,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function AgentProfilePage({ params }: Props) {
+export default async function AgentProfilePage({ params, searchParams }: Props) {
   const { handle } = await params;
+  const sp = await searchParams;
+  const propertyType = sp.propertyType || '';
+  const listingType = sp.listingType || '';
+  const sort = sp.sort || 'rank';
+  const page = Number(sp.page) || 1;
+
   let data: any;
   let reviewData: any = { reviews: [], avgRating: null, totalReviews: 0 };
 
-  try { data = await serverApi.getAgentProfile(handle); } catch { notFound(); }
+  try {
+    data = await serverApi.getAgentProfile(handle, { propertyType, listingType, sort, page, limit: 12 });
+  } catch { notFound(); }
   try { reviewData = await serverApi.getAgentReviews(data.user.id); } catch {}
 
-  const { user, properties } = data;
+  const { user, properties, meta } = data;
   const profileUrl = `${BASE_URL}/agen/${user.username ?? user.id}`;
 
   return (
@@ -132,18 +139,15 @@ export default async function AgentProfilePage({ params }: Props) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Listings */}
           <div className="lg:col-span-2">
-            <h2 className="font-semibold mb-4">Listing Aktif ({properties.length})</h2>
-            {properties.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-border/60 py-12 text-center text-muted-foreground text-sm">
-                Belum ada listing aktif
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {properties.map((p: any) => (
-                  <PropertyCard key={p.id} property={p} />
-                ))}
-              </div>
-            )}
+            <h2 className="font-semibold mb-4">Listing Aktif ({meta.total})</h2>
+            <AgentListings
+              properties={properties}
+              meta={meta}
+              initialPropertyType={propertyType}
+              initialListingType={listingType}
+              initialSort={sort}
+              initialPage={page}
+            />
           </div>
 
           {/* Reviews */}

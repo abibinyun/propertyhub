@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Post, Body, Param, UseGuards, BadRequestException, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator, ConflictException } from '@nestjs/common';
+import { Controller, Get, Patch, Post, Body, Param, Query, UseGuards, BadRequestException, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator, ConflictException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from './users.service';
@@ -83,7 +83,7 @@ export class UsersPublicController {
   // Lookup by username atau UUID
   @Get(':handle/public')
   @UseGuards(OptionalJwtAuthGuard)
-  getPublicProfile(@Param('handle') handle: string) {
-    return this.usersService.getPublicProfile(handle);
+  getPublicProfile(@Param('handle') handle: string, @Query() query: any) {
+    return this.usersService.getPublicProfile(handle, query);
   }
 }
