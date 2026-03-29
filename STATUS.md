@@ -26,8 +26,11 @@
 | Favorites | ✅ | Self-favorite dicegah, count per properti |
 | Featured Listing | ✅ | BASIC/PREMIUM/ULTIMATE, modular payment |
 | Payment (Modular) | ✅ | LogProvider default, Midtrans via env |
+| Featured Auto-Expire | ✅ | Cron setiap jam, featured=false + ranking recalculate |
+| Featured Fairness | ✅ | Boost berbeda per tier (1.3x/1.5x/2x), freshness freeze saat featured |
+| Harga Featured dari DB | ✅ | PaymentService baca dari SiteSettings, bukan hardcode |
 | Admin Panel | ✅ | Moderation, stats, charts, ban user |
-| Ranking Algorithm | ✅ | quality/freshness/engagement/reputation |
+| Ranking Algorithm | ✅ | quality/freshness/engagement/reputation, boost per tier |
 | Auto-flag Listing | ✅ | Foto<3 / deskripsi<50char / harga<10jt |
 | Reviews & Rating | ✅ | Rating 1-5, komentar, avg per agen, self-review dicegah |
 | Notifications | ✅ | In-app bell, leads/approve/reject |

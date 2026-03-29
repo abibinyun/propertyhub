@@ -117,7 +117,10 @@ NEXT_PUBLIC_MIDTRANS_CLIENT_KEY=        # jika PAYMENT_PROVIDER=midtrans
 ## Dokumentasi
 
 - [docs/API.md](docs/API.md) — 77 API endpoints
-- [docs/ERD.md](docs/ERD.md) — Database schema
+- [docs/ERD.md](docs/ERD.md) — Database schema (17 tabel)
+- [docs/FEATURED_RANKING.md](docs/FEATURED_RANKING.md) — Featured listing & ranking algorithm
+- [docs/ANALYTICS.md](docs/ANALYTICS.md) — Setup Umami + built-in analytics
+- [docs/SITE_SETTINGS_THEME_PLAN.md](docs/SITE_SETTINGS_THEME_PLAN.md) — Rencana site settings & theme
 - [docs/ARCHITECTURE_DECISION.md](docs/ARCHITECTURE_DECISION.md) — Keputusan arsitektur
 - [STATUS.md](STATUS.md) — Status pengerjaan
 - [docs/TODO.md](docs/TODO.md) — Backlog & deployment checklist
