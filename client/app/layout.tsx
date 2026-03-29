@@ -30,6 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
     keywords: ['jual rumah', 'sewa apartemen', 'properti indonesia', 'beli tanah', 'listing properti'],
     authors: [{ name: settings.siteName }],
     creator: settings.siteName,
+    icons: settings.faviconUrl ? { icon: settings.faviconUrl, shortcut: settings.faviconUrl } : undefined,
     openGraph: {
       type: 'website',
       locale: 'id_ID',

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { serverApi } from '@/lib/server/api';
 import { getToken } from '@/lib/server/auth';
+import { getSettings } from '@/lib/server/settings';
 import { PropertyList } from '@/components/client/property-list';
 import { Button } from '@/components/ui/button';
 import { Plus, Building2, Eye, MessageSquare, TrendingUp } from 'lucide-react';
@@ -27,11 +28,12 @@ export default async function MyPropertiesPage({ searchParams }: Props) {
   if (status) params.set('status', status);
   if (sort) params.set('sort', sort);
 
-  const [{ data: properties, meta }, userStats, allForCount, favoriteCounts] = await Promise.all([
+  const [{ data: properties, meta }, userStats, allForCount, favoriteCounts, settings] = await Promise.all([
     serverApi.getMyProperties(params.toString()),
     serverApi.getUserStats(),
     serverApi.getMyProperties('limit=1000&page=1'),
     serverApi.getPropertyFavoriteCounts().catch(() => ({} as Record<string, number>)),
+    getSettings(),
   ]);
 
   const activeCount = userStats.properties;
@@ -81,6 +83,7 @@ export default async function MyPropertiesPage({ searchParams }: Props) {
         initialStatus={status}
         initialSort={sort}
         favoriteCounts={favoriteCounts}
+        prices={{ priceBasic: settings.priceBasic, pricePremium: settings.pricePremium, priceUltimate: settings.priceUltimate }}
       />
     </div>
   );

@@ -24,10 +24,19 @@ export interface FeaturedPaymentResult {
 }
 
 export const FEATURED_TIERS = [
-  { type: 'BASIC', label: 'Basic', price: 50000, duration: '1 minggu', perks: ['Muncul di atas hasil pencarian', '2x lebih banyak dilihat'] },
-  { type: 'PREMIUM', label: 'Premium', price: 100000, duration: '1 minggu', perks: ['Tampil di homepage', '5x lebih banyak dilihat', 'Badge Unggulan'] },
-  { type: 'ULTIMATE', label: 'Ultimate', price: 200000, duration: '1 bulan', perks: ['Posisi teratas di mana saja', '10x lebih banyak dilihat', 'Badge Premium', 'Prioritas support'] },
+  { type: 'BASIC', label: 'Basic', price: 99000, duration: '1 minggu', perks: ['Muncul di atas hasil pencarian', '2x lebih banyak dilihat'] },
+  { type: 'PREMIUM', label: 'Premium', price: 299000, duration: '1 minggu', perks: ['Tampil di homepage', '5x lebih banyak dilihat', 'Badge Unggulan'] },
+  { type: 'ULTIMATE', label: 'Ultimate', price: 599000, duration: '1 bulan', perks: ['Posisi teratas di mana saja', '10x lebih banyak dilihat', 'Badge Premium', 'Prioritas support'] },
 ] as const;
+
+export function getFeaturedTiers(prices?: { priceBasic: number; pricePremium: number; priceUltimate: number }) {
+  if (!prices) return FEATURED_TIERS.map((t) => ({ ...t }));
+  return [
+    { ...FEATURED_TIERS[0], price: prices.priceBasic },
+    { ...FEATURED_TIERS[1], price: prices.pricePremium },
+    { ...FEATURED_TIERS[2], price: prices.priceUltimate },
+  ];
+}
 
 export const paymentsApi = {
   createFeatured: (propertyId: string, featuredType: string): Promise<FeaturedPaymentResult> =>

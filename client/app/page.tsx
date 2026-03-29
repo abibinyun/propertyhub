@@ -10,6 +10,7 @@ import {
 import { propertiesApi } from '@/lib/api/properties';
 import { serverApi } from '@/lib/server/api';
 import { getToken } from '@/lib/server/auth';
+import { getSettings } from '@/lib/server/settings';
 import { PropertyCard } from '@/components/property/property-card';
 import { HomeSearch } from '@/components/client/home-search';
 
@@ -63,10 +64,11 @@ export default async function HomePage() {
   const token = await getToken();
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-  const [{ data: featured, meta }, favoriteIds, siteStats] = await Promise.all([
+  const [{ data: featured, meta }, favoriteIds, siteStats, settings] = await Promise.all([
     propertiesApi.getAll({ limit: 6, page: 1 }).catch(() => ({ data: [], meta: { total: 0, page: 1, limit: 6, totalPages: 0 } })),
     token ? serverApi.getFavoriteIds().catch(() => [] as string[]) : Promise.resolve([] as string[]),
     fetch(`${API_URL}/stats`, { cache: 'no-store' }).then((r) => r.json()).catch(() => ({ properties: 0, agents: 0, leads: 0 })),
+    getSettings(),
   ]);
 
   return (
@@ -93,13 +95,11 @@ export default async function HomePage() {
             </Badge>
 
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.1] tracking-tight">
-              Temukan Rumah<br />
-              <span className="text-primary">Impian Anda</span><br />
-              di Sini
+              {settings.heroTitle}
             </h1>
 
             <p className="text-base md:text-lg text-slate-300 max-w-lg leading-relaxed">
-              Lebih dari {meta.total}+ properti pilihan di seluruh Indonesia.
+              {settings.heroSubtitle}
             </p>
 
             <HomeSearch />

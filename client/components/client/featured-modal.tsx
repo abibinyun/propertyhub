@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { paymentsApi, FEATURED_TIERS } from '@/lib/api/payments';
+import { paymentsApi, getFeaturedTiers } from '@/lib/api/payments';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +13,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  prices?: { priceBasic: number; pricePremium: number; priceUltimate: number };
 }
 
 const IS_LOG_MODE = process.env.NEXT_PUBLIC_PAYMENT_PROVIDER !== 'midtrans';
@@ -21,10 +22,11 @@ function formatPrice(n: number) {
   return `Rp ${n.toLocaleString('id-ID')}`;
 }
 
-export function FeaturedModal({ propertyId, propertyTitle, open, onClose, onSuccess }: Props) {
+export function FeaturedModal({ propertyId, propertyTitle, open, onClose, onSuccess, prices }: Props) {
   const [selected, setSelected] = useState<string>('PREMIUM');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const tiers = getFeaturedTiers(prices);
 
   const handleSubmit = async () => {
     setError('');
@@ -70,7 +72,7 @@ export function FeaturedModal({ propertyId, propertyTitle, open, onClose, onSucc
         )}
 
         <div className="space-y-3">
-          {FEATURED_TIERS.map((tier) => (
+          {tiers.map((tier) => (
             <button
               key={tier.type}
               onClick={() => setSelected(tier.type)}

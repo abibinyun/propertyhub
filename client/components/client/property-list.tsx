@@ -42,9 +42,10 @@ interface Props {
   initialStatus?: string;
   initialSort?: string;
   favoriteCounts?: Record<string, number>;
+  prices?: { priceBasic: number; pricePremium: number; priceUltimate: number };
 }
 
-export function PropertyList({ initialProperties, meta, initialSearch = '', initialStatus = '', initialSort = '', favoriteCounts = {} }: Props) {
+export function PropertyList({ initialProperties, meta, initialSearch = '', initialStatus = '', initialSort = '', favoriteCounts = {}, prices }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
@@ -287,6 +288,7 @@ export function PropertyList({ initialProperties, meta, initialSearch = '', init
           open={!!featuredTarget}
           onClose={() => setFeaturedTarget(null)}
           onSuccess={() => { setFeaturedTarget(null); router.refresh(); }}
+          prices={prices}
         />
       )}
     </>
