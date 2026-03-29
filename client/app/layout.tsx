@@ -11,38 +11,42 @@ import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { serverApi } from '@/lib/server/api';
 import { getToken } from '@/lib/server/auth';
+import { getSettings } from '@/lib/server/settings';
 import { User } from '@/types/auth';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-export const metadata: Metadata = {
-  metadataBase: new URL(BASE_URL),
-  title: {
-    default: 'PropertyHub - Jual Beli Sewa Properti Terpercaya di Indonesia',
-    template: '%s | PropertyHub',
-  },
-  description: 'Temukan rumah, apartemen, tanah, dan properti komersial terbaik di Indonesia. Jual, beli, dan sewa properti dengan mudah di PropertyHub.',
-  keywords: ['jual rumah', 'sewa apartemen', 'properti indonesia', 'beli tanah', 'listing properti'],
-  authors: [{ name: 'PropertyHub' }],
-  creator: 'PropertyHub',
-  openGraph: {
-    type: 'website',
-    locale: 'id_ID',
-    url: BASE_URL,
-    siteName: 'PropertyHub',
-    title: 'PropertyHub - Jual Beli Sewa Properti Terpercaya di Indonesia',
-    description: 'Temukan rumah, apartemen, tanah, dan properti komersial terbaik di Indonesia.',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'PropertyHub - Jual Beli Sewa Properti',
-    description: 'Temukan properti terbaik di Indonesia.',
-  },
-  alternates: { canonical: BASE_URL },
-  robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSettings();
+  return {
+    metadataBase: new URL(BASE_URL),
+    title: {
+      default: `${settings.siteName} - ${settings.tagline}`,
+      template: `%s | ${settings.siteName}`,
+    },
+    description: settings.heroSubtitle,
+    keywords: ['jual rumah', 'sewa apartemen', 'properti indonesia', 'beli tanah', 'listing properti'],
+    authors: [{ name: settings.siteName }],
+    creator: settings.siteName,
+    openGraph: {
+      type: 'website',
+      locale: 'id_ID',
+      url: BASE_URL,
+      siteName: settings.siteName,
+      title: `${settings.siteName} - ${settings.tagline}`,
+      description: settings.heroSubtitle,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${settings.siteName} - ${settings.tagline}`,
+      description: settings.heroSubtitle,
+    },
+    alternates: { canonical: BASE_URL },
+    robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
+  };
+}
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   let initialUser: User | null = null;
@@ -50,15 +54,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   if (token) {
     initialUser = await serverApi.getMe().catch(() => null);
   }
+  const settings = await getSettings();
 
   return (
     <html lang="id" className={cn('h-full antialiased', inter.variable)}>
       <body className="min-h-screen flex flex-col font-sans">
         <AuthProvider initialUser={initialUser}>
           <CompareProvider>
-            <Header />
+            <Header settings={settings} />
             <main className="flex-1">{children}</main>
-            <Footer />
+            <Footer settings={settings} />
             <CompareBar />
           </CompareProvider>
         </AuthProvider>

@@ -399,6 +399,52 @@ model PriceHistory {
   @@map("price_history")
 }
 
+model SiteSettings {
+  id              String   @id @default("default")
+
+  // Branding
+  siteName        String   @default("PropertyHub")
+  tagline         String   @default("Temukan Properti Impian Anda")
+  logoUrl         String?
+  faviconUrl      String?
+
+  // Contact
+  email           String?
+  phone           String?
+  whatsapp        String?
+  address         String?
+
+  // Social Media
+  instagram       String?
+  facebook        String?
+  tiktok          String?
+  youtube         String?
+  twitter         String?
+
+  // Homepage
+  heroTitle       String   @default("Temukan Properti Impian Anda")
+  heroSubtitle    String   @default("Jual, beli, dan sewa properti terpercaya di Indonesia")
+
+  // Featured Pricing (rupiah)
+  priceBasic      Int      @default(99000)
+  pricePremium    Int      @default(299000)
+  priceUltimate   Int      @default(599000)
+
+  // Theme
+  colorTheme      String   @default("modern")
+  homepageLayout  String   @default("hero-search")
+  listingLayout   String   @default("card-grid")
+  detailLayout    String   @default("gallery-top")
+
+  // System
+  maintenanceMode Boolean  @default(false)
+  maintenanceMsg  String   @default("Sedang dalam pemeliharaan")
+
+  updatedAt       DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
 model Review {
   id        String  @id @default(uuid())
   authorId  String

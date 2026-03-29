@@ -23,6 +23,7 @@ import {
   Phone, Search, Bell, X, Megaphone,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { SiteSettings } from '@/lib/server/settings';
 import { SearchBar } from '@/components/client/search-bar';
 import { NotificationBell } from '@/components/client/notification-bell';
 
@@ -259,7 +260,7 @@ function MobileMegaSection({
   );
 }
 
-export function Header() {
+export function Header({ settings }: { settings: SiteSettings }) {
   const { user, logout } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
@@ -313,7 +314,7 @@ export function Header() {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
                   <Home className="h-4 w-4 text-primary-foreground" />
                 </div>
-                <span className="font-bold text-lg tracking-tight">PropertyHub</span>
+                <span className="font-bold text-lg tracking-tight">{settings.siteName}</span>
               </Link>
 
               <NavigationMenu>
@@ -355,7 +356,7 @@ export function Header() {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
                 <Home className="h-4 w-4 text-primary-foreground" />
               </div>
-              <span className="font-bold text-lg tracking-tight">PropertyHub</span>
+              <span className="font-bold text-lg tracking-tight">{settings.siteName}</span>
             </Link>
 
             {/* Right Actions */}
@@ -479,7 +480,7 @@ export function Header() {
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
                         <Home className="h-4 w-4 text-primary-foreground" />
                       </div>
-                      <span className="font-bold text-lg">PropertyHub</span>
+                      <span className="font-bold text-lg">{settings.siteName}</span>
                     </div>
 
                     {/* Mobile search */}

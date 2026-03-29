@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Building2, ShieldCheck, MessageSquare, Flag } from 'lucide-react';
+import { LayoutDashboard, Users, Building2, ShieldCheck, MessageSquare, Flag, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { href: '/admin/users', label: 'Pengguna', icon: Users },
   { href: '/admin/leads', label: 'Leads', icon: MessageSquare },
   { href: '/admin/reports', label: 'Laporan', icon: Flag },
+  { href: '/admin/settings', label: 'Pengaturan', icon: Settings },
 ];
 
 export function AdminSidebarActive() {

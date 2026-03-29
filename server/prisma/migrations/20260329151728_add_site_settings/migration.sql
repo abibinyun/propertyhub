@@ -1,0 +1,31 @@
+-- CreateTable
+CREATE TABLE "site_settings" (
+    "id" TEXT NOT NULL DEFAULT 'default',
+    "siteName" TEXT NOT NULL DEFAULT 'PropertyHub',
+    "tagline" TEXT NOT NULL DEFAULT 'Temukan Properti Impian Anda',
+    "logoUrl" TEXT,
+    "faviconUrl" TEXT,
+    "email" TEXT,
+    "phone" TEXT,
+    "whatsapp" TEXT,
+    "address" TEXT,
+    "instagram" TEXT,
+    "facebook" TEXT,
+    "tiktok" TEXT,
+    "youtube" TEXT,
+    "twitter" TEXT,
+    "heroTitle" TEXT NOT NULL DEFAULT 'Temukan Properti Impian Anda',
+    "heroSubtitle" TEXT NOT NULL DEFAULT 'Jual, beli, dan sewa properti terpercaya di Indonesia',
+    "priceBasic" INTEGER NOT NULL DEFAULT 99000,
+    "pricePremium" INTEGER NOT NULL DEFAULT 299000,
+    "priceUltimate" INTEGER NOT NULL DEFAULT 599000,
+    "colorTheme" TEXT NOT NULL DEFAULT 'modern',
+    "homepageLayout" TEXT NOT NULL DEFAULT 'hero-search',
+    "listingLayout" TEXT NOT NULL DEFAULT 'card-grid',
+    "detailLayout" TEXT NOT NULL DEFAULT 'gallery-top',
+    "maintenanceMode" BOOLEAN NOT NULL DEFAULT false,
+    "maintenanceMsg" TEXT NOT NULL DEFAULT 'Sedang dalam pemeliharaan',
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "site_settings_pkey" PRIMARY KEY ("id")
+);

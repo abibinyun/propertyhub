@@ -19,6 +19,7 @@ import { ReportsModule } from './reports/reports.module';
 import { SavedSearchesModule } from './saved-searches/saved-searches.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { SettingsModule } from './settings/settings.module';
 import { DigestModule } from './digest/digest.module';
 
 @Module({
@@ -45,6 +46,7 @@ import { DigestModule } from './digest/digest.module';
     NotificationsModule,
     ReviewsModule,
     DigestModule,
+    SettingsModule,
   ],
   controllers: [AppController],
   providers: [
