@@ -26,7 +26,8 @@ export function LoginForm() {
     try {
       const result = await authApi.login(fd.get('email') as string, fd.get('password') as string);
       setUser({ ...result.user, verified: false, emailVerified: result.user.emailVerified } as import('@/types/auth').User);
-      router.push(searchParams.get('redirect') || '/dashboard');
+      const redirect = searchParams.get('redirect');
+      router.push(redirect || (result.user.role === 'ADMIN' ? '/admin' : '/dashboard'));
       router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login gagal');

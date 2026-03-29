@@ -106,6 +106,7 @@ export class AuthController {
     const result = await this.authService.googleAuth(req.user as any);
     this.setAuthCookies(res, result.token, result.refreshToken);
     const appUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    res.redirect(`${appUrl}/dashboard`);
+    const dest = result.user?.role === 'ADMIN' ? '/admin' : '/dashboard';
+    res.redirect(`${appUrl}${dest}`);
   }
 }
