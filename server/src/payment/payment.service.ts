@@ -4,11 +4,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { PaymentProvider } from './payment.interface';
 import { LogPaymentProvider } from './log.provider';
 import { MidtransPaymentProvider } from './midtrans.provider';
-import { getConfig } from '../common/config';
+import { NotificationsService } from '../notifications/notifications.service';
 import { randomUUID } from 'crypto';
-
-const FEATURED_PRICE: Record<string, number> = {};
-const FEATURED_DURATION_DAYS: Record<string, number> = {};
 
 @Injectable()
 export class PaymentService {
@@ -17,10 +14,26 @@ export class PaymentService {
   constructor(
     private prisma: PrismaService,
     private config: ConfigService,
+    private notifications: NotificationsService,
   ) {
     this.provider = config.get<string>('PAYMENT_PROVIDER') === 'midtrans'
       ? new MidtransPaymentProvider(config)
       : new LogPaymentProvider();
+  }
+
+  /** Ambil harga dari SiteSettings DB (fallback ke env/default) */
+  private async getFeaturedPrices() {
+    const settings = await this.prisma.siteSettings.findUnique({ where: { id: 'default' } });
+    return {
+      BASIC:    settings?.priceBasic    ?? 99000,
+      PREMIUM:  settings?.pricePremium  ?? 299000,
+      ULTIMATE: settings?.priceUltimate ?? 599000,
+    };
+  }
+
+  private getFeaturedDurationDays(featuredType: string): number {
+    const map: Record<string, number> = { BASIC: 7, PREMIUM: 7, ULTIMATE: 30 };
+    return map[featuredType] ?? 7;
   }
 
   async createFeaturedPayment(userId: string, propertyId: string, featuredType: string) {
@@ -32,11 +45,10 @@ export class PaymentService {
     if (property.userId !== userId) throw new NotFoundException('Properti tidak ditemukan');
 
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    const cfg = getConfig(this.config);
-    const amount = cfg.featuredPrices[featuredType];
+    const prices = await this.getFeaturedPrices();
+    const amount = prices[featuredType];
     const orderId = `FEAT-${randomUUID().slice(0, 8).toUpperCase()}`;
 
-    // Simpan transaksi pending
     await this.prisma.transaction.create({
       data: {
         userId,
@@ -67,27 +79,15 @@ export class PaymentService {
     const fraudStatus = notification.fraud_status;
 
     const isSuccess =
-      transactionStatus === 'capture' && fraudStatus === 'accept' ||
+      (transactionStatus === 'capture' && fraudStatus === 'accept') ||
       transactionStatus === 'settlement';
 
     const transaction = await this.prisma.transaction.findUnique({ where: { orderId } });
     if (!transaction) return { message: 'Transaction not found' };
 
     if (isSuccess) {
-      const featuredType = transaction.type.replace('FEATURED_', ''); // BASIC | PREMIUM | ULTIMATE
-      const days = getConfig(this.config).featuredDurationDays[featuredType] ?? 7;
-      const featuredUntil = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-
-      await Promise.all([
-        this.prisma.transaction.update({
-          where: { orderId },
-          data: { status: 'PAID', paidAt: new Date() },
-        }),
-        this.prisma.property.update({
-          where: { id: transaction.propertyId! },
-          data: { featured: true, featuredUntil, featuredType: featuredType as any },
-        }),
-      ]);
+      await this.activateFeatured(transaction.propertyId!, transaction.type.replace('FEATURED_', ''), transaction.userId);
+      await this.prisma.transaction.update({ where: { orderId }, data: { status: 'PAID', paidAt: new Date() } });
     } else if (['cancel', 'deny', 'expire'].includes(transactionStatus)) {
       await this.prisma.transaction.update({
         where: { orderId },
@@ -98,12 +98,34 @@ export class PaymentService {
     return { message: 'OK' };
   }
 
-  // Untuk log mode: aktifkan featured langsung tanpa payment
+  private async activateFeatured(propertyId: string, featuredType: string, userId: string) {
+    const days = this.getFeaturedDurationDays(featuredType);
+    const property = await this.prisma.property.findUnique({ where: { id: propertyId } });
+    if (!property) return;
+
+    // Jika sudah featured dan belum expired → extend dari featuredUntil
+    const base = property.featured && property.featuredUntil && property.featuredUntil > new Date()
+      ? property.featuredUntil
+      : new Date();
+    const featuredUntil = new Date(base.getTime() + days * 24 * 60 * 60 * 1000);
+
+    await this.prisma.property.update({
+      where: { id: propertyId },
+      data: { featured: true, featuredUntil, featuredType: featuredType as any },
+    });
+
+    // Notifikasi ke owner
+    await this.notifications.create(userId, 'featured_activated',
+      'Featured Listing Aktif!',
+      `Properti "${property.title}" kini tampil sebagai ${featuredType} hingga ${featuredUntil.toLocaleDateString('id-ID')}.`,
+      `/dashboard/properties`,
+    );
+  }
+
   async activateFeaturedDirect(userId: string, propertyId: string, featuredType: string) {
     if (this.config.get<string>('PAYMENT_PROVIDER') === 'midtrans') {
       throw new BadRequestException('Gunakan payment flow untuk aktivasi featured');
     }
-
     const validTypes = ['BASIC', 'PREMIUM', 'ULTIMATE'];
     if (!validTypes.includes(featuredType)) throw new BadRequestException('Tipe featured tidak valid');
 
@@ -111,12 +133,7 @@ export class PaymentService {
     if (!property) throw new NotFoundException('Properti tidak ditemukan');
     if (property.userId !== userId) throw new NotFoundException('Properti tidak ditemukan');
 
-    const days = getConfig(this.config).featuredDurationDays[featuredType];
-    const featuredUntil = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-
-    return this.prisma.property.update({
-      where: { id: propertyId },
-      data: { featured: true, featuredUntil, featuredType: featuredType as any },
-    });
+    await this.activateFeatured(propertyId, featuredType, userId);
+    return this.prisma.property.findUnique({ where: { id: propertyId } });
   }
 }

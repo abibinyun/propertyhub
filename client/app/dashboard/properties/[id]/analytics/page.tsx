@@ -16,7 +16,7 @@ export default async function PropertyAnalyticsPage({ params }: Props) {
 
   const { id } = await params;
 
-  let analytics: any;
+  let analytics: Awaited<ReturnType<typeof serverApi.getPropertyAnalytics>>;
   try {
     analytics = await serverApi.getPropertyAnalytics(id);
   } catch {
@@ -29,7 +29,7 @@ export default async function PropertyAnalyticsPage({ params }: Props) {
     { icon: Eye, label: 'Views 30 Hari', value: summary.views30d.toLocaleString('id-ID'), sub: `Total: ${property.viewsCount.toLocaleString('id-ID')}`, color: 'text-violet-500' },
     { icon: MessageSquare, label: 'Leads 30 Hari', value: summary.leads30d, sub: `Total: ${property.leadsCount}`, color: 'text-emerald-500' },
     { icon: Percent, label: 'Conversion Rate', value: `${summary.conversionRate}%`, sub: 'Views → Leads (30 hari)', color: 'text-blue-500' },
-    { icon: TrendingUp, label: 'Rank Score', value: Number(property.rankScore ?? 0).toFixed(1), sub: property.featured ? `Featured hingga ${new Date(property.featuredUntil).toLocaleDateString('id-ID')}` : 'Tidak featured', color: 'text-amber-500' },
+    { icon: TrendingUp, label: 'Rank Score', value: Number(property.rankScore ?? 0).toFixed(1), sub: property.featured && property.featuredUntil ? `Featured hingga ${new Date(property.featuredUntil).toLocaleDateString('id-ID')}` : 'Tidak featured', color: 'text-amber-500' },
   ];
 
   return (
@@ -99,7 +99,7 @@ export default async function PropertyAnalyticsPage({ params }: Props) {
               <div className="flex items-center gap-2 text-sm">
                 <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
                 <span className="font-medium">Aktif</span>
-                <span className="text-xs text-muted-foreground">s/d {new Date(property.featuredUntil).toLocaleDateString('id-ID')}</span>
+                <span className="text-xs text-muted-foreground">s/d {property.featuredUntil ? new Date(property.featuredUntil).toLocaleDateString('id-ID') : '-'}</span>
               </div>
             ) : (
               <div className="flex items-center gap-2">

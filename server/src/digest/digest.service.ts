@@ -1,7 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { RankingService } from '../properties/ranking.service';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -11,6 +13,8 @@ export class DigestService {
   constructor(
     private prisma: PrismaService,
     private email: EmailService,
+    private notifications: NotificationsService,
+    private ranking: RankingService,
     private config: ConfigService,
   ) {}
 
@@ -106,5 +110,37 @@ export class DigestService {
     }
 
     this.logger.log(`Weekly digest sent to ${users.length} users`);
+  }
+
+  // Setiap jam — expire featured yang sudah lewat
+  @Cron('0 * * * *')
+  async expireFeaturedListings() {
+    const expired = await this.prisma.property.findMany({
+      where: { featured: true, featuredUntil: { lt: new Date() } },
+      select: { id: true, title: true, userId: true },
+    });
+
+    if (expired.length === 0) return;
+
+    await this.prisma.property.updateMany({
+      where: { id: { in: expired.map((p) => p.id) } },
+      data: { featured: false, featuredType: null },
+    });
+
+    // Recalculate ranking + notifikasi per properti
+    for (const p of expired) {
+      // Recalculate ranking (featured=false sekarang, rank score turun)
+      await this.ranking.updatePropertyRanking(p.id).catch(() => {});
+
+      await this.notifications.create(
+        p.userId,
+        'featured_expired',
+        'Featured Listing Berakhir',
+        `Featured listing "${p.title}" telah berakhir. Perpanjang sekarang untuk tetap tampil di posisi teratas.`,
+        `/dashboard/properties`,
+      ).catch(() => {});
+    }
+
+    this.logger.log(`Expired ${expired.length} featured listings`);
   }
 }

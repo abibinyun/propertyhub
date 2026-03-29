@@ -41,8 +41,10 @@ export const serverApi = {
   // Properties
   getMyProperties: (params?: string) => serverFetch<{ data: Property[]; meta: { total: number; page: number; limit: number; totalPages: number } }>(`/properties/my${params ? '?' + params : ''}`),
   getPropertyAnalytics: (propertyId: string) => serverFetch<{
-    property: { id: string; title: string; viewsCount: number; leadsCount: number };
-    data: { date: string; label: string; leads: number }[];
+    property: { id: string; title: string; viewsCount: number; leadsCount: number; rankScore: number; featured: boolean; featuredUntil: string | null };
+    summary: { views30d: number; leads30d: number; conversionRate: number };
+    topReferrers: { referrer: string; count: number }[];
+    data: { date: string; label: string; leads: number; views: number }[];
   }>(`/properties/my/analytics/${propertyId}`),
 
   // Favorites
