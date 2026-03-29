@@ -101,6 +101,9 @@ export default async function ModerationPage({ searchParams }: Props) {
                       {status !== 'PENDING' && property.moderationNotes && (
                         <p className="text-xs text-muted-foreground italic">Catatan: {property.moderationNotes}</p>
                       )}
+                      {property.flagReason && (
+                        <p className="text-xs text-amber-600 font-medium bg-amber-50 px-2 py-1 rounded-lg">⚠ {property.flagReason}</p>
+                      )}
                     </div>
                   </div>
                 </div>

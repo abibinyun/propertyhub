@@ -9,7 +9,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const token = await getToken();
   if (!token) redirect('/login');
 
-  const user = await serverApi.getMe();
+  let user;
+  try {
+    user = await serverApi.getMe();
+  } catch {
+    redirect('/login');
+  }
   if (user.role !== 'ADMIN') redirect('/');
 
   return (

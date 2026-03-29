@@ -1,33 +1,39 @@
 # Development Guide — PropertyHub
 
-**Last Updated:** 2026-03-25 WIB
+**Last Updated:** 2026-03-28 WIB
 **Status:** Backend ✅ | Frontend ✅ | Deployment ⏳
 
 ---
 
 ## 🚀 Menjalankan Project
 
-### Prasyarat
-- Bun >= 1.0
-- PostgreSQL (bisa via Docker)
-- Node.js >= 20 (untuk tooling)
+### Cara Tercepat
+```bash
+cd ~/data/LATIHAN/property-webapp
+./dev.sh
+# Backend  → http://localhost:3001
+# Frontend → http://localhost:3000
+# Ctrl+C untuk stop keduanya
+```
 
-### Backend
+### Manual
+
+#### Backend
 ```bash
 cd server
 cp .env.example .env   # isi semua variabel
 bun install
 bunx prisma migrate deploy
 bunx prisma db seed
-bun run start:dev      # http://localhost:3001
+bun run start:dev
 ```
 
-### Frontend
+#### Frontend
 ```bash
 cd client
 cp .env.example .env.local
 bun install
-bun run dev            # http://localhost:3000 (Turbopack)
+bun run dev
 ```
 
 ### Database via Docker
@@ -44,14 +50,16 @@ docker run -d --name postgres \
 ## 📁 Struktur Project
 
 ```
-property-webapp/          ← Monorepo
+property-webapp/
+├── dev.sh                ← jalankan backend + frontend sekaligus
 ├── server/               ← NestJS backend (port 3001)
 │   ├── src/
-│   │   ├── auth/         ← JWT, register, login, email verification
+│   │   ├── auth/         ← JWT, register, login, OAuth Google, password reset
 │   │   ├── email/        ← EmailService modular (log/resend)
+│   │   ├── payment/      ← PaymentService modular (log/midtrans)
 │   │   ├── users/        ← Profile management
-│   │   ├── properties/   ← CRUD, SEO slug, ranking, image upload
-│   │   ├── leads/        ← Contact forms, anti-spam
+│   │   ├── properties/   ← CRUD, SEO slug, ranking, analytics, image upload
+│   │   ├── leads/        ← Contact forms, anti-spam, email notifikasi
 │   │   ├── favorites/    ← Bookmarks
 │   │   ├── admin/        ← Moderation, stats, charts
 │   │   └── cloudinary/   ← Image upload service
@@ -61,12 +69,14 @@ property-webapp/          ← Monorepo
 │       └── seed.ts
 │
 ├── client/               ← Next.js frontend (port 3000)
-│   ├── app/              ← App Router pages (Server Components)
+│   ├── app/
 │   │   ├── (listing)/    ← /jual, /sewa, /jual/[city]/...
 │   │   ├── properti/     ← /properti/[location]/[slug]
 │   │   ├── dashboard/    ← User dashboard
+│   │   │   └── properties/[id]/analytics/ ← Analitik per properti
 │   │   ├── admin/        ← Admin panel
-│   │   ├── verify-email/ ← Email verification page
+│   │   ├── forgot-password/ ← Reset password step 1
+│   │   ├── reset-password/  ← Reset password step 2
 │   │   └── login|register/
 │   ├── components/
 │   │   ├── client/       ← 'use client' components
@@ -75,9 +85,7 @@ property-webapp/          ← Monorepo
 │   ├── lib/
 │   │   ├── api/          ← Client-side API wrappers
 │   │   └── server/       ← Server-side fetchers (cookies)
-│   ├── public/
-│   │   └── wilayah/      ← Data wilayah Indonesia offline
-│   └── types/            ← TypeScript interfaces
+│   └── types/
 │
 └── docs/                 ← Dokumentasi teknis
 ```
@@ -102,22 +110,41 @@ property-webapp/          ← Monorepo
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/property
 JWT_SECRET=your-secret-key-min-32-chars
 JWT_EXPIRES_IN=7d
+NODE_ENV=development
+
+# URL
+APP_URL=http://localhost:3001
+FRONTEND_URL=http://localhost:3000
+
+# Storage
 CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
-APP_URL=http://localhost:3000
-NODE_ENV=development
+
+# OAuth Google
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+# Google Console → Authorized redirect URI: http://localhost:3001/auth/google/callback
 
 # Email (default: log ke console)
 EMAIL_PROVIDER=log          # log | resend
 RESEND_API_KEY=             # isi jika EMAIL_PROVIDER=resend
-EMAIL_FROM=PropertyHub <noreply@propertyhub.id>
+
+# Payment (default: log ke console, featured langsung aktif)
+PAYMENT_PROVIDER=log        # log | midtrans
+MIDTRANS_SERVER_KEY=        # isi jika PAYMENT_PROVIDER=midtrans
+MIDTRANS_CLIENT_KEY=        # isi jika PAYMENT_PROVIDER=midtrans
+MIDTRANS_IS_PRODUCTION=false
 ```
 
 ### Frontend (`client/.env.local`)
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:3001
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Payment (default: log)
+NEXT_PUBLIC_PAYMENT_PROVIDER=log        # log | midtrans
+NEXT_PUBLIC_MIDTRANS_CLIENT_KEY=        # isi jika PAYMENT_PROVIDER=midtrans
 ```
 
 ---
@@ -125,42 +152,62 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ## 🏗️ Arsitektur Penting
 
 ### Server Components vs Client Components
-- **Default:** Server Component — fetch data di server, tidak ada JS di client
-- **`'use client'`:** hanya untuk interaksi (form, map, filter, button dengan state)
+- **Default:** Server Component — fetch data di server
+- **`'use client'`:** hanya untuk interaksi (form, map, filter, state)
 - **API calls dari server:** lewat `lib/server/api.ts` (pakai cookie dari `next/headers`)
 - **API calls dari client:** lewat `lib/api/*.ts` (pakai `credentials: 'include'`)
 
-### Email System
+### Email System (Modular)
 ```
-EmailService (factory)
+EmailService
 ├── LogEmailProvider    ← default, log ke console
 └── ResendEmailProvider ← aktif via EMAIL_PROVIDER=resend
 ```
-Untuk tambah provider baru: implement `EmailProvider` interface di `server/src/email/`.
+Tambah provider baru: implement `EmailProvider` interface di `server/src/email/`.
+
+### Payment System (Modular)
+```
+PaymentService
+├── LogPaymentProvider      ← default, log ke console, featured langsung aktif
+└── MidtransPaymentProvider ← aktif via PAYMENT_PROVIDER=midtrans
+```
+Tambah provider baru: implement `PaymentProvider` interface di `server/src/payment/`.
+
+### OAuth Google Flow
+```
+User klik "Login Google"
+  → frontend: window.location.href = /auth/google (backend)
+  → backend redirect ke Google
+  → Google callback ke /auth/google/callback
+  → backend set JWT cookie
+  → backend redirect ke FRONTEND_URL/dashboard
+```
 
 ### Data Wilayah
 - `public/wilayah/provinsi-kabupaten.json` — load saat form dibuka
 - `public/wilayah/kecamatan.json` — lazy load + in-memory cache
-- Sumber: [ibnux/data-indonesia](https://github.com/ibnux/data-indonesia)
-
-### Git Workflow (Monorepo → 2 Repo)
-```bash
-# Push frontend
-git subtree push --prefix=client fe main
-
-# Push backend
-git subtree push --prefix=server be main
-```
 
 ---
 
 ## ⚠️ Hal Penting
 
 1. **Properti baru** → status `DRAFT`, `moderationStatus: PENDING` → tidak muncul di listing sampai admin approve
-2. **Email verification** → development: cek log terminal backend untuk link verifikasi
-3. **Ranking** → dihitung otomatis saat create/update/view properti
-4. **Route ordering** di NestJS — specific routes harus di atas wildcard (sudah difix)
-5. **Turbopack** aktif di dev — build production tetap pakai webpack standar
+2. **Email development** → cek log terminal backend untuk link verifikasi & reset password
+3. **Payment development** → `PAYMENT_PROVIDER=log` → featured langsung aktif tanpa bayar
+4. **Ranking** → dihitung otomatis saat create/update/view properti
+5. **APP_URL** di backend = URL backend itu sendiri (3001), bukan frontend
+
+---
+
+## 🤖 Cara Lanjutkan dengan AI (Kiro)
+
+Jika ingin melanjutkan development dengan AI, share file-file ini:
+1. `STATUS.md` — status fitur saat ini
+2. `docs/TODO.md` — backlog & prioritas
+3. `RULES_FE.md` — aturan coding frontend (wajib dipatuhi AI)
+4. `DEVELOPMENT_GUIDE.md` — file ini
+
+Lalu katakan: *"Lanjutkan development PropertyHub. Baca semua file konteks yang saya share."*
 
 ---
 
@@ -168,9 +215,8 @@ git subtree push --prefix=server be main
 
 | File | Isi |
 |---|---|
-| [docs/API.md](docs/API.md) | 53 API endpoints lengkap |
+| [docs/API.md](docs/API.md) | Semua API endpoints |
 | [docs/ERD.md](docs/ERD.md) | Database schema & relasi |
-| [docs/TODO.md](docs/TODO.md) | Backlog + cara lanjutkan |
-| [TASKS.md](TASKS.md) | Task tracker (TASK-001~099) |
+| [docs/TODO.md](docs/TODO.md) | Backlog + prioritas |
 | [STATUS.md](STATUS.md) | Status per fitur |
-| [RULES_FE.md](RULES_FE.md) | Aturan coding frontend |
+| [RULES_FE.md](RULES_FE.md) | Aturan coding frontend (wajib) |

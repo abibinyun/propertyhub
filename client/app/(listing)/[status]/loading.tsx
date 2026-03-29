@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 function CardSkeleton() {
   return (
     <div className="rounded-2xl overflow-hidden bg-white border border-border/60">
-      <Skeleton className="aspect-[4/3] w-full rounded-none" />
+      <Skeleton className="aspect-4/3 w-full rounded-none" />
       <div className="p-4 space-y-3">
         <Skeleton className="h-4 w-3/4" />
         <Skeleton className="h-3 w-1/2" />
@@ -33,7 +33,7 @@ export default function Loading() {
         <div className="container mx-auto px-4 py-6">
           <div className="flex gap-6">
             {/* Sidebar skeleton */}
-            <div className="hidden lg:block w-64 flex-shrink-0">
+            <div className="hidden lg:block w-64 shrink-0">
               <div className="bg-white rounded-2xl border border-border/60 p-5 space-y-4">
                 <Skeleton className="h-4 w-24" />
                 <div className="flex gap-2 flex-wrap">

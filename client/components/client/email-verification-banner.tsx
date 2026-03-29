@@ -8,16 +8,21 @@ export function EmailVerificationBanner({ email }: { email: string }) {
   const [dismissed, setDismissed] = useState(false);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState('');
 
   if (dismissed) return null;
 
   const resend = async () => {
     setSending(true);
+    setError('');
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/resend-verification`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/resend-verification`, {
         method: 'POST', credentials: 'include',
       });
+      if (!res.ok) throw new Error('Gagal mengirim');
       setSent(true);
+    } catch {
+      setError('Gagal mengirim email. Coba lagi.');
     } finally {
       setSending(false);
     }
@@ -30,6 +35,8 @@ export function EmailVerificationBanner({ email }: { email: string }) {
         Email <span className="font-medium">{email}</span> belum diverifikasi.{' '}
         {sent
           ? <span className="text-emerald-700 font-medium">Email verifikasi telah dikirim!</span>
+          : error
+          ? <span className="text-destructive">{error} <button onClick={resend} className="underline font-medium">Coba lagi</button></span>
           : <button onClick={resend} disabled={sending} className="underline font-medium hover:no-underline disabled:opacity-50">
               {sending ? 'Mengirim...' : 'Kirim ulang email verifikasi'}
             </button>

@@ -73,7 +73,7 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
                       <div className="flex items-center gap-3">
                         <div className="relative w-12 h-9 rounded-lg overflow-hidden bg-slate-100 flex-shrink-0">
                           {img
-                            ? <Image src={img.url} alt="" fill className="object-cover" />
+                            ? <Image src={img.url} alt={`Foto ${p.title}`} fill className="object-cover" />
                             : <Building2 className="h-4 w-4 text-slate-300 m-auto absolute inset-0" />
                           }
                         </div>

@@ -41,7 +41,7 @@ export function PropertyGallery({ images, title }: Props) {
             className="hidden md:block relative cursor-pointer group"
             onClick={() => { setCurrent(i + 1); setLightbox(true); }}
           >
-            <Image src={img.url} alt="" fill className="object-cover group-hover:brightness-95 transition-all" sizes="25vw" />
+            <Image src={img.url} alt={`Foto ${i + 2} properti`} fill className="object-cover group-hover:brightness-95 transition-all" sizes="25vw" />
             {/* "Lihat semua" overlay on last thumb */}
             {i === 3 && remaining > 0 && (
               <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-white gap-1">
@@ -88,7 +88,7 @@ export function PropertyGallery({ images, title }: Props) {
           <div className="flex gap-2 px-4 py-3 overflow-x-auto flex-shrink-0">
             {sorted.map((img, i) => (
               <button key={img.id} onClick={() => setCurrent(i)} className={cn('relative h-14 w-20 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all', current === i ? 'border-white' : 'border-transparent opacity-50 hover:opacity-80')}>
-                <Image src={img.url} alt="" fill className="object-cover" sizes="80px" />
+                <Image src={img.url} alt={`Thumbnail foto ${i + 1}`} fill className="object-cover" sizes="80px" />
               </button>
             ))}
           </div>

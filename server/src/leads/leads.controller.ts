@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards, Res } from '@nestjs/common';
+import type { Response } from 'express';
 import { Throttle } from '@nestjs/throttler';
 import { LeadsService } from './leads.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
@@ -20,6 +21,25 @@ export class LeadsController {
   @Get('unread-count')
   getUnreadCount(@CurrentUser() user: any) {
     return this.leadsService.getUnreadCount(user.id);
+  }
+
+  @Get('received/export')
+  async exportReceivedLeads(@CurrentUser() user: any, @Res() res: Response) {
+    const { data } = await this.leadsService.findReceivedLeads(user.id, { limit: 10000 });
+    const header = 'Nama,Email,Telepon,Pesan,Properti,Status,Tanggal\n';
+    const rows = data.map((l) => [
+      `"${l.name}"`,
+      `"${l.email}"`,
+      `"${l.phone}"`,
+      `"${l.message.replace(/"/g, '""')}"`,
+      `"${(l.property as any)?.title ?? ''}"`,
+      `"${l.status}"`,
+      `"${new Date(l.createdAt).toLocaleDateString('id-ID')}"`,
+    ].join(',')).join('\n');
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="leads-${Date.now()}.csv"`);
+    res.send('\uFEFF' + header + rows); // BOM untuk Excel
   }
 
   @Get('received')

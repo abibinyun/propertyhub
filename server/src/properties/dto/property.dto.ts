@@ -94,6 +94,10 @@ export class CreatePropertyDto {
   @IsNumber()
   @Type(() => Number)
   longitude?: number;
+
+  @IsOptional()
+  @IsString()
+  videoUrl?: string;
 }
 
 export class UpdatePropertyDto {
@@ -199,4 +203,8 @@ export class UpdatePropertyDto {
   @IsArray()
   @IsString({ each: true })
   features?: string[];
+
+  @IsOptional()
+  @IsString()
+  videoUrl?: string;
 }

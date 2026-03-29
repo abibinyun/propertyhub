@@ -1,18 +1,21 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ConfigService } from '@nestjs/config';
+import { Throttle } from '@nestjs/throttler';
 import { PropertiesService } from './properties.service';
 import { CreatePropertyDto, UpdatePropertyDto } from './dto/property.dto';
 import { UploadImageDto } from './dto/upload-image.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { getConfig } from '../common/config';
 
 const LISTING_TYPES = ['jual', 'sewa'];
 const PROPERTY_TYPES = ['rumah', 'apartemen', 'tanah', 'komersial', 'villa', 'gudang'];
 
 @Controller('properties')
 export class PropertiesController {
-  constructor(private propertiesService: PropertiesService) {}
+  constructor(private propertiesService: PropertiesService, private configService: ConfigService) {}
 
   // ─── Mutations ────────────────────────────────────────────────────────────
 
@@ -25,6 +28,7 @@ export class PropertiesController {
   @Post(':id/images')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('file'))
+  @Throttle({ default: { ttl: 600000, limit: 20 } }) // 20 uploads per 10 menit
   uploadImage(
     @CurrentUser() user: any,
     @Param('id') propertyId: string,
@@ -51,6 +55,29 @@ export class PropertiesController {
     return this.propertiesService.deleteImage(user.id, imageId);
   }
 
+  @Post(':id/floor-plan')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('file'))
+  @Throttle({ default: { ttl: 600000, limit: 10 } })
+  uploadFloorPlan(
+    @CurrentUser() user: any,
+    @Param('id') propertyId: string,
+    @UploadedFile(new ParseFilePipe({
+      validators: [
+        new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+        new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp|pdf)$/ }),
+      ],
+    })) file: Express.Multer.File,
+  ) {
+    return this.propertiesService.uploadFloorPlan(user.id, propertyId, file);
+  }
+
+  @Delete(':id/floor-plan')
+  @UseGuards(JwtAuthGuard)
+  deleteFloorPlan(@CurrentUser() user: any, @Param('id') propertyId: string) {
+    return this.propertiesService.deleteFloorPlan(user.id, propertyId);
+  }
+
   @Patch(':slug')
   @UseGuards(JwtAuthGuard)
   update(@CurrentUser() user: any, @Param('slug') slug: string, @Body() dto: UpdatePropertyDto) {
@@ -70,10 +97,27 @@ export class PropertiesController {
     return this.propertiesService.findAll(query);
   }
 
+  @Get('my/analytics/:propertyId')
+  @UseGuards(JwtAuthGuard)
+  getAnalytics(@CurrentUser() user: any, @Param('propertyId') propertyId: string) {
+    return this.propertiesService.getAnalytics(user.id, propertyId);
+  }
+
+  @Get('my/price-history/:propertyId')
+  @UseGuards(JwtAuthGuard)
+  getPriceHistory(@CurrentUser() user: any, @Param('propertyId') propertyId: string) {
+    return this.propertiesService.getPriceHistory(user.id, propertyId);
+  }
+
+  @Get('price-history/:slug')
+  @UseGuards(OptionalJwtAuthGuard)
+  getPriceHistoryBySlug(@Param('slug') slug: string) {
+    return this.propertiesService.getPriceHistoryBySlug(slug);
+  }
+
   @Get('my')
   @UseGuards(JwtAuthGuard)
-  findMyProperties(
-    @CurrentUser() user: any,
+  findMyProperties(    @CurrentUser() user: any,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('search') search?: string,

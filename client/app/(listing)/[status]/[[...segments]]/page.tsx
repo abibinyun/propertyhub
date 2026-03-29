@@ -3,12 +3,16 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronRight, Home, SlidersHorizontal, MapPin } from 'lucide-react';
 import { propertiesApi } from '@/lib/api/properties';
+
+export const revalidate = 30; // ISR — revalidate setiap 30 detik
 import { serverApi } from '@/lib/server/api';
 import { getToken } from '@/lib/server/auth';
 import { PropertyCard } from '@/components/property/property-card';
 import { PaginationControls } from '@/components/client/pagination-controls';
 import { PropertyFilters } from '@/components/client/property-filters';
 import { SortControls } from '@/components/client/sort-controls';
+import { SaveSearchButton } from '@/components/client/save-search-button';
+import { NearMeButton } from '@/components/client/near-me-button';
 import { Property } from '@/types/property';
 
 interface Props {
@@ -165,7 +169,8 @@ export default async function ListingPage({ params, searchParams }: Props) {
             </div>
 
             {/* Mobile filter */}
-            <div className="lg:hidden flex-shrink-0">
+            <div className="lg:hidden shrink-0 flex gap-2">
+              <NearMeButton />
               <PropertyFilters initialMinPrice={minPrice} initialMaxPrice={maxPrice} initialBedrooms={bedrooms} initialMinArea={minArea} initialCertificate={certificate} initialFurnishing={furnishing} mobile />
             </div>
           </div>
@@ -178,7 +183,10 @@ export default async function ListingPage({ params, searchParams }: Props) {
           <div className="flex gap-6 items-start">
 
             {/* Sidebar */}
-            <aside className="hidden lg:block w-64 flex-shrink-0 sticky top-20">
+            <aside className="hidden lg:block w-64 shrink-0 sticky top-20">
+              <div className="mb-3">
+                <NearMeButton className="w-full" variant="outline" />
+              </div>
               <PropertyFilters initialMinPrice={minPrice} initialMaxPrice={maxPrice} initialBedrooms={bedrooms} initialMinArea={minArea} initialCertificate={certificate} initialFurnishing={furnishing} />
             </aside>
 
@@ -190,6 +198,7 @@ export default async function ListingPage({ params, searchParams }: Props) {
                   Menampilkan <span className="font-semibold text-foreground">{properties.length}</span> dari <span className="font-semibold text-foreground">{meta.total.toLocaleString('id-ID')}</span> properti
                 </p>
                 <div className="flex items-center gap-2">
+                  <SaveSearchButton label={pageTitle} />
                   <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
                   <SortControls />
                 </div>

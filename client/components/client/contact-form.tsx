@@ -7,10 +7,10 @@ import { leadsApi } from '@/lib/api/leads';
 import { useAuth } from '@/lib/context/auth-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, CheckCircle, Send, Lock } from 'lucide-react';
+import { Loader2, CheckCircle, Send, Lock, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export function ContactForm({ propertyId }: { propertyId: string }) {
+export function ContactForm({ propertyId, agentPhone }: { propertyId: string; agentPhone?: string }) {
   const { user } = useAuth();
   const pathname = usePathname();
   const loginUrl = `/login?redirect=${encodeURIComponent(pathname)}`;
@@ -66,10 +66,18 @@ export function ContactForm({ propertyId }: { propertyId: string }) {
 
   if (sent) {
     return (
-      <div className="text-center py-4 space-y-2">
+      <div className="text-center py-4 space-y-3">
         <CheckCircle className="h-10 w-10 text-emerald-500 mx-auto" />
         <p className="font-semibold text-sm">Pesan terkirim!</p>
         <p className="text-xs text-muted-foreground">Agen akan menghubungi Anda segera.</p>
+        {agentPhone && (
+          <a href={`https://wa.me/${agentPhone.replace(/\D/g, '')}?text=${encodeURIComponent('Halo, saya tertarik dengan properti ini.')}`} target="_blank" rel="noopener noreferrer" className="block">
+            <Button variant="outline" className="w-full gap-2 rounded-xl text-emerald-600 border-emerald-200 hover:bg-emerald-50">
+              <MessageCircle className="h-4 w-4" />
+              Chat WhatsApp Langsung
+            </Button>
+          </a>
+        )}
       </div>
     );
   }
@@ -87,6 +95,14 @@ export function ContactForm({ propertyId }: { propertyId: string }) {
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
         {loading ? 'Mengirim...' : 'Kirim Pesan'}
       </Button>
+      {agentPhone && (
+        <a href={`https://wa.me/${agentPhone.replace(/\D/g, '')}?text=${encodeURIComponent(form.message)}`} target="_blank" rel="noopener noreferrer" className="block">
+          <Button type="button" variant="outline" className="w-full gap-2 rounded-xl text-emerald-600 border-emerald-200 hover:bg-emerald-50">
+            <MessageCircle className="h-4 w-4" />
+            WhatsApp Langsung
+          </Button>
+        </a>
+      )}
     </form>
   );
 }

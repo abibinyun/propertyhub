@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { Building2, Heart, MessageSquare, User, LayoutDashboard, Plus, Menu, LogOut, ChevronRight } from 'lucide-react';
+import { Building2, Heart, MessageSquare, User, LayoutDashboard, Plus, Menu, LogOut, ChevronRight, Bookmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/lib/context/auth-context';
@@ -15,6 +15,7 @@ const NAV = [
   { href: '/dashboard/properties', label: 'Properti Saya', icon: Building2 },
   { href: '/dashboard/leads', label: 'Pesan & Leads', icon: MessageSquare },
   { href: '/dashboard/favorites', label: 'Favorit', icon: Heart },
+  { href: '/dashboard/saved-searches', label: 'Pencarian Tersimpan', icon: Bookmark },
   { href: '/dashboard/profile', label: 'Profil', icon: User },
 ];
 

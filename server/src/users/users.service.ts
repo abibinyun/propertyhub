@@ -19,6 +19,7 @@ export class UsersService {
         company: true,
         license: true,
         verified: true,
+        emailVerified: true,
         createdAt: true,
       },
     });
@@ -44,13 +45,40 @@ export class UsersService {
         company: true,
         license: true,
         verified: true,
+        emailVerified: true,
       },
     });
 
     return user;
   }
 
-  async getStats(userId: string) {
+  async getPublicProfile(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        avatar: true,
+        company: true,
+        license: true,
+        verified: true,
+        createdAt: true,
+        _count: { select: { properties: true } },
+      },
+    });
+    if (!user) throw new NotFoundException('User not found');
+
+    const properties = await this.prisma.property.findMany({
+      where: { userId, status: 'ACTIVE', moderationStatus: 'APPROVED' },
+      include: { images: { where: { isPrimary: true }, take: 1 } },
+      orderBy: [{ featured: 'desc' }, { rankScore: 'desc' }],
+      take: 20,
+    });
+
+    return { user, properties };
+  }
+
+  async getDashboardStats(userId: string) {
     const [propertyCount, receivedLeads, favorites, viewsAgg, receivedFavorites] = await Promise.all([
       this.prisma.property.count({ where: { userId, status: 'ACTIVE' } }),
       this.prisma.lead.count({ where: { property: { userId } } }),

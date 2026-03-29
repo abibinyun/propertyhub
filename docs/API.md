@@ -1,864 +1,281 @@
 # PropertyHub API Documentation
 
 **Base URL:** `http://localhost:3001`
-**Version:** 1.0.0
-**Last Updated:** 2026-03-25 WIB
+**Version:** 1.5.0
+**Last Updated:** 2026-03-29 WIB
+**Swagger UI:** `http://localhost:3001/api/docs` (dev only)
 
-**Total Endpoints:** 53
+**Total Endpoints:** 77
 
 ---
 
 ## 📊 Summary
 
-- **Auth:** 5 endpoints (+ verify-email, resend-verification)
-- **Users:** 3 endpoints
-- **Properties:** 15 endpoints (+ set primary image)
-- **Leads:** 6 endpoints
-- **Favorites:** 6 endpoints
-- **Admin:** 13 endpoints (+ leads)
-- **System:** 3 endpoints
-
----
-
-## 🆕 Endpoint Baru (2026-03-25)
-
-| Method | Path | Deskripsi |
-|---|---|---|
-| GET | /auth/verify-email?token=xxx | Verifikasi email via token |
-| POST | /auth/resend-verification | Kirim ulang email verifikasi (auth, rate-limit 5 menit) |
-| PATCH | /properties/images/:imageId/primary | Set foto utama properti (auth, pemilik) |
-| GET | /admin/leads | Semua leads — filter status, pagination (ADMIN) |
-
+| Module | Endpoints |
+|---|---|
+| Auth | 11 |
+| Users | 5 |
+| Properties | 19 |
+| Leads | 7 |
+| Favorites | 6 |
+| Payment | 3 |
+| Reviews | 2 |
+| Reports | 3 |
+| Saved Searches | 3 |
+| Notifications | 3 |
+| Admin | 13 |
+| System | 2 |
 
 ---
 
 ## 🔐 Authentication
 
-All protected endpoints require JWT token in Authorization header:
-```
-Authorization: Bearer <token>
-```
+All protected endpoints require JWT cookie (`token`, httpOnly).
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | /auth/register | - | Register user baru |
+| POST | /auth/login | - | Login, set httpOnly cookie (access 15min + refresh 7d) |
+| POST | /auth/logout | ✅ | Hapus cookie + revoke refresh token |
+| POST | /auth/refresh | - | Refresh access token via `refresh_token` cookie |
+| GET | /auth/me | ✅ | Get current user |
+| GET | /auth/google | - | Redirect ke Google OAuth |
+| GET | /auth/google/callback | - | Callback Google, set cookie, redirect ke `/dashboard` |
+| GET | /auth/verify-email | - | Verifikasi email via token query param |
+| POST | /auth/resend-verification | ✅ | Kirim ulang email verifikasi |
+| POST | /auth/forgot-password | - | Kirim email reset password |
+| POST | /auth/reset-password | - | Reset password dengan token |
 
 ---
 
-## 📋 Endpoints
+## 👤 Users
 
-### System
-
-#### Health Check
-```http
-GET /
-```
-
-#### Stats
-```http
-GET /stats
-```
-
-**Response:**
-```json
-{
-  "users": 3,
-  "properties": 10,
-  "message": "PropertyHub API is running!"
-}
-```
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | /users/profile | ✅ | Get profil sendiri |
+| PATCH | /users/profile | ✅ | Update profil (name, phone, company, avatar) |
+| PATCH | /users/password | ✅ | Ganti password (butuh currentPassword) |
+| GET | /users/stats | ✅ | Dashboard stats (properties/leads/favorites/views) |
+| GET | /users/:id/public | - | Profil publik agen (listing aktif + avg rating) |
 
 ---
 
-### Auth
+## 🏠 Properties
 
-#### Register
-```http
-POST /auth/register
-Content-Type: application/json
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | /properties | ✅ | Buat listing baru |
+| PATCH | /properties/:slug | ✅ | Update listing (owner/admin) |
+| DELETE | /properties/:slug | ✅ | Hapus listing (owner/admin) |
+| GET | /properties | - | List semua properti (filter/sort/pagination) |
+| GET | /properties/my | ✅ | Listing milik sendiri (search/filter/sort/pagination) |
+| GET | /properties/my/analytics/:propertyId | ✅ | Leads per hari 30 hari terakhir |
+| GET | /properties/my/price-history/:propertyId | ✅ | Riwayat harga (owner) |
+| GET | /properties/price-history/:slug | - | Riwayat harga (public) |
+| GET | /properties/properti/detail/:slug | - | Detail by slug (views+1 kecuali owner) |
+| GET | /properties/properti/:location/:slug | - | Detail by location+slug (SEO URL) |
+| GET | /properties/:status/:city/:district/:type | - | List by kota+kecamatan+tipe |
+| GET | /properties/:status/:city/:type | - | List by kota+tipe |
+| GET | /properties/:status/:type | - | List by tipe |
+| GET | /properties/:status | - | List by status (jual/sewa) |
+| POST | /properties/:id/images | ✅ | Upload foto (max 5MB, rate limit: 20/10mnt) |
+| PATCH | /properties/images/:imageId/primary | ✅ | Set foto utama |
+| DELETE | /properties/images/:imageId | ✅ | Hapus foto |
+| POST | /properties/:id/floor-plan | ✅ | Upload denah lantai (max 5MB, rate limit: 10/10mnt) |
+| DELETE | /properties/:id/floor-plan | ✅ | Hapus denah lantai |
 
-{
-  "email": "user@example.com",
-  "password": "password123",
-  "name": "John Doe",
-  "phone": "+6281234567890" // optional
-}
-```
-
-**Response:**
-```json
-{
-  "user": {
-    "id": "uuid",
-    "email": "user@example.com",
-    "name": "John Doe",
-    "role": "USER"
-  },
-  "token": "jwt_token"
-}
-```
-
-#### Login
-```http
-POST /auth/login
-Content-Type: application/json
-
-{
-  "email": "user@example.com",
-  "password": "password123"
-}
-```
-
-**Response:** Same as register
-
-#### Get Current User
-```http
-GET /auth/me
-Authorization: Bearer <token>
-```
-
-**Response:**
-```json
-{
-  "id": "uuid",
-  "email": "user@example.com",
-  "name": "John Doe",
-  "role": "USER",
-  "verified": true
-}
-```
+**Query params untuk list endpoints:**
+`page`, `limit`, `sort`, `search`, `minPrice`, `maxPrice`, `bedrooms`, `propertyType`, `listingType`, `city`, `district`, `province`, `lat`, `lng`, `radius`
 
 ---
 
-### Users
+## 📩 Leads
 
-#### Get Profile
-```http
-GET /users/profile
-Authorization: Bearer <token>
-```
-
-**Response:**
-```json
-{
-  "id": "uuid",
-  "email": "user@example.com",
-  "name": "John Doe",
-  "phone": "+6281234567890",
-  "avatar": null,
-  "role": "USER",
-  "company": "ABC Property",
-  "license": "PPAT-12345",
-  "verified": true,
-  "createdAt": "2026-03-23T07:17:18.291Z"
-}
-```
-
-#### Update Profile
-```http
-PATCH /users/profile
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "name": "John Updated",
-  "phone": "+6281111111111",
-  "avatar": "https://...",
-  "company": "XYZ Property",
-  "license": "PPAT-67890"
-}
-```
-
-#### Get User Stats
-```http
-GET /users/stats
-Authorization: Bearer <token>
-```
-
-**Response:**
-```json
-{
-  "properties": 5,
-  "leads": 12
-}
-```
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | /leads | ✅ | Kirim lead/inquiry (rate limit: 3/mnt, 10/hari) |
+| GET | /leads/unread-count | ✅ | Jumlah lead belum dibaca |
+| GET | /leads/received/export | ✅ | Export leads diterima ke CSV |
+| GET | /leads/received | ✅ | Leads yang saya terima (search/filter/pagination) |
+| GET | /leads/my | ✅ | Leads yang saya kirim (search/filter/pagination) |
+| GET | /leads/property/:propertyId | ✅ | Leads untuk properti tertentu (owner) |
+| PATCH | /leads/:id/status | ✅ | Update status lead (NEW/READ/REPLIED/CLOSED) |
 
 ---
 
-### Properties
+## ❤️ Favorites
 
-#### Create Property
-```http
-POST /properties
-Authorization: Bearer <token>
-Content-Type: application/json
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | /favorites/:propertyId | ✅ | Tambah favorit (self-favorite dicegah) |
+| DELETE | /favorites/:propertyId | ✅ | Hapus favorit |
+| GET | /favorites | ✅ | List favorit saya |
+| GET | /favorites/ids | ✅ | Array ID properti favorit |
+| GET | /favorites/property-counts | ✅ | Count favorit per properti milik saya |
+| GET | /favorites/check/:propertyId | ✅ | Cek apakah properti difavoritkan |
 
-{
-  "title": "Rumah Minimalis Modern",
-  "description": "Rumah dengan desain modern...",
-  "propertyType": "HOUSE", // HOUSE, APARTMENT, LAND, COMMERCIAL, VILLA, WAREHOUSE
-  "listingType": "SALE", // SALE, RENT
-  "price": 2500000000,
-  "address": "Jl. Raya No. 123",
-  "city": "Jakarta Selatan",
-  "province": "DKI Jakarta",
-  "postalCode": "12520", // optional
-  "landArea": 100, // optional
-  "buildingArea": 120, // optional
-  "bedrooms": 3, // optional
-  "bathrooms": 2, // optional
-  "floors": 2, // optional
-  "garage": 1, // optional
-  "certificateType": "SHM", // optional
-  "yearBuilt": 2022, // optional
-  "furnishing": "SEMI_FURNISHED", // optional: UNFURNISHED, SEMI_FURNISHED, FULLY_FURNISHED
-  "features": ["swimming_pool", "gym", "security_24h"] // optional
-}
-```
+---
 
-**Response:**
+## 💳 Payment
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | /payments/featured/:propertyId/:featuredType | ✅ | Buat transaksi featured (BASIC/PREMIUM/ULTIMATE) |
+| POST | /payments/notification | - | Webhook Midtrans |
+| POST | /payments/featured/:propertyId/:featuredType/activate | ✅ | Dev: aktifkan langsung (log mode) |
+
+---
+
+## ⭐ Reviews
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | /reviews/agent/:agentId | ✅ | Beri review ke agen (1x per agen, self-review dicegah) |
+| GET | /reviews/agent/:agentId | - | List review + avg rating agen |
+
+---
+
+## 🚩 Reports
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | /reports | ✅ | Laporkan listing (spam/scam/dll) |
+| GET | /reports | ADMIN | Semua laporan (filter resolved) |
+| PATCH | /reports/:id/resolve | ADMIN | Resolve laporan |
+
+---
+
+## 🔔 Notifications
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | /notifications | ✅ | List notifikasi (leads/approve/reject) |
+| PATCH | /notifications/:id/read | ✅ | Tandai satu notifikasi dibaca |
+| PATCH | /notifications/read-all | ✅ | Tandai semua notifikasi dibaca |
+
+---
+
+## 🔖 Saved Searches
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | /saved-searches | ✅ | List saved searches |
+| POST | /saved-searches | ✅ | Simpan filter pencarian (name + url) |
+| DELETE | /saved-searches/:id | ✅ | Hapus saved search |
+
+---
+
+## 🛡️ Admin
+
+Semua endpoint admin butuh role `ADMIN`.
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | /admin/stats | ADMIN | KPI stats + charts (properti/user/leads/kota) |
+| GET | /admin/users | ADMIN | List users (filter/search/pagination) |
+| PATCH | /admin/users/:id | ADMIN | Update user (role/verified) |
+| PATCH | /admin/users/:id/ban | ADMIN | Ban user dengan alasan |
+| GET | /admin/properties | ADMIN | List semua properti |
+| PATCH | /admin/properties/:id/status | ADMIN | Update status properti |
+| DELETE | /admin/properties/:id | ADMIN | Hapus properti |
+| GET | /admin/moderation/queue | ADMIN | Antrian moderasi (filter status) |
+| GET | /admin/moderation/logs | ADMIN | Log moderasi |
+| PATCH | /admin/moderation/:id/approve | ADMIN | Approve listing |
+| PATCH | /admin/moderation/:id/reject | ADMIN | Reject listing (butuh reason) |
+| PATCH | /admin/moderation/:id/flag | ADMIN | Flag listing (butuh reason) |
+| GET | /admin/leads | ADMIN | Semua leads |
+
+---
+
+## 🖥️ System
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | /health | - | Health check (`{ status: 'ok', timestamp }`) |
+| GET | /stats | - | Social proof stats (properties/agents/leads/users) |
+
+---
+
+## 📝 Request/Response Examples
+
+### POST /auth/login
 ```json
-{
-  "id": "uuid",
-  "title": "Rumah Minimalis Modern",
-  "slug": "rumah-minimalis-modern-1774252124679",
-  "status": "DRAFT",
-  "price": "2500000000",
-  "city": "Jakarta Selatan",
-  "features": [
-    { "id": "uuid", "feature": "swimming_pool" }
-  ],
-  "images": [],
-  "createdAt": "2026-03-23T..."
-}
+// Request
+{ "email": "user@example.com", "password": "password123" }
+
+// Response 200
+{ "id": "uuid", "email": "user@example.com", "name": "John", "role": "USER", "emailVerified": true }
+// Sets httpOnly cookies: token (15min) + refresh_token (7d)
 ```
 
-#### List Properties (with filters)
-```http
-GET /properties?city=Jakarta&propertyType=HOUSE&listingType=SALE&minPrice=1000000&maxPrice=5000000000&page=1&limit=10
-```
-
-**Query Parameters:**
-- `city` (string, optional): Filter by city (case-insensitive)
-- `propertyType` (string, optional): HOUSE, APARTMENT, LAND, etc.
-- `listingType` (string, optional): SALE or RENT
-- `minPrice` (number, optional): Minimum price
-- `maxPrice` (number, optional): Maximum price
-- `page` (number, default: 1): Page number
-- `limit` (number, default: 10): Items per page
-
-**Response:**
+### POST /properties
 ```json
+// Request
 {
-  "data": [
-    {
-      "id": "uuid",
-      "title": "Rumah Minimalis Modern",
-      "slug": "rumah-minimalis-modern-...",
-      "price": "2500000000",
-      "city": "Jakarta Selatan",
-      "propertyType": "HOUSE",
-      "listingType": "SALE",
-      "status": "ACTIVE",
-      "images": [
-        {
-          "url": "https://...",
-          "isPrimary": true
-        }
-      ],
-      "user": {
-        "name": "John Doe",
-        "phone": "+6281234567890",
-        "company": "ABC Property"
-      }
-    }
-  ],
-  "meta": {
-    "total": 25,
-    "page": 1,
-    "limit": 10,
-    "totalPages": 3
-  }
-}
-```
-
-#### Get My Properties
-```http
-GET /properties/my
-Authorization: Bearer <token>
-```
-
-**Response:** Array of properties (same structure as list)
-
-#### Get Property Detail
-```http
-GET /properties/:slug
-```
-
-**Response:**
-```json
-{
-  "id": "uuid",
-  "title": "Rumah Minimalis Modern",
-  "slug": "rumah-minimalis-modern-...",
-  "description": "Full description...",
-  "price": "2500000000",
+  "title": "Rumah Modern 3KT di Kebayoran",
+  "description": "Rumah minimalis modern...",
   "propertyType": "HOUSE",
   "listingType": "SALE",
-  "address": "Jl. Raya No. 123",
+  "price": 2500000000,
+  "address": "Jl. Melati No. 5",
   "city": "Jakarta Selatan",
+  "district": "Kebayoran Baru",
   "province": "DKI Jakarta",
-  "landArea": 100,
+  "landArea": 150,
   "buildingArea": 120,
   "bedrooms": 3,
   "bathrooms": 2,
-  "status": "ACTIVE",
-  "viewsCount": 42,
-  "leadsCount": 5,
-  "images": [
+  "videoUrl": "https://youtube.com/watch?v=xxx",
+  "features": ["swimming_pool", "security_24h"]
+}
+```
+
+### GET /reviews/agent/:agentId
+```json
+// Response 200
+{
+  "reviews": [
     {
       "id": "uuid",
-      "url": "https://...",
-      "isPrimary": true,
-      "order": 0
+      "rating": 5,
+      "comment": "Agen sangat responsif",
+      "createdAt": "2026-03-29T...",
+      "author": { "name": "Budi", "avatar": null }
     }
   ],
-  "features": [
-    { "id": "uuid", "feature": "swimming_pool" }
-  ],
-  "user": {
-    "name": "John Doe",
-    "phone": "+6281234567890",
-    "email": "john@example.com",
-    "company": "ABC Property"
-  },
-  "createdAt": "2026-03-23T..."
+  "avgRating": 4.8,
+  "totalReviews": 12
 }
 ```
-
-#### Update Property
-```http
-PATCH /properties/:slug
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "title": "Updated Title",
-  "price": 2800000000,
-  "status": "ACTIVE" // DRAFT, ACTIVE, SOLD, RENTED, INACTIVE
-}
-```
-
-**Note:** Only property owner can update
-
-#### Delete Property
-```http
-DELETE /properties/:slug
-Authorization: Bearer <token>
-```
-
-**Note:** Only property owner can delete
-
----
-
-### Leads
-
-> **Rate Limiting:** POST /leads dibatasi 3 request/menit dan 10/hari per user.  
-> **Anti-spam:** Duplikat ke properti yang sama dalam 24 jam ditolak. Tidak bisa kirim ke properti sendiri.
-
-#### Create Lead
-```http
-POST /leads
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "propertyId": "uuid",
-  "name": "Buyer Name",
-  "email": "buyer@example.com",
-  "phone": "+6281234567890",
-  "message": "Saya tertarik dengan properti ini",
-  "source": "website"
-}
-```
-
-**Error responses:**
-- `409` — Sudah kirim ke properti ini dalam 24 jam
-- `409` — Tidak bisa kirim ke properti sendiri
-- `429` — Daily limit (10/hari) atau throttle (3/menit) tercapai
-
-#### Get My Leads (Buyer — pesan terkirim)
-```http
-GET /leads/my?page=1&limit=10&search=&status=
-Authorization: Bearer <token>
-```
-
-**Response:** `{ data: Lead[], meta: { total, page, limit, totalPages } }`
-
-#### Get Received Leads (Agen — leads masuk)
-```http
-GET /leads/received?page=1&limit=10&search=&status=
-Authorization: Bearer <token>
-```
-
-Returns semua leads dari semua properti milik user yang login.  
-Search: nama, email, HP, pesan, judul properti.  
-**Response:** `{ data: Lead[], meta: { total, page, limit, totalPages } }`
-
-#### Get Unread Count (untuk bell notif)
-```http
-GET /leads/unread-count
-Authorization: Bearer <token>
-```
-
-**Response:** `{ count: number }` — jumlah leads dengan status NEW di properti milik user.
-
-#### Get Property Leads
-```http
-GET /leads/property/:propertyId
-Authorization: Bearer <token>
-```
-
-Hanya bisa diakses oleh pemilik properti.
-
-#### Update Lead Status
-```http
-PATCH /leads/:id/status
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "status": "CONTACTED" // NEW | CONTACTED | QUALIFIED | CLOSED | LOST
-}
-```
-
-Hanya bisa diakses oleh pemilik properti terkait.
-
----
-
-### Favorites
-
-#### Add to Favorites
-```http
-POST /favorites/:propertyId
-Authorization: Bearer <token>
-```
-
-**Response:**
-```json
-{
-  "id": "uuid",
-  "userId": "uuid",
-  "propertyId": "uuid",
-  "createdAt": "2026-03-23T...",
-  "property": {
-    // Full property details with images
-  }
-}
-```
-
-#### Remove from Favorites
-```http
-DELETE /favorites/:propertyId
-Authorization: Bearer <token>
-```
-
-**Response:**
-```json
-{
-  "message": "Removed from favorites"
-}
-```
-
-#### Get All Favorites
-```http
-GET /favorites
-Authorization: Bearer <token>
-```
-
-**Response:** Array of favorites with property details
-
-#### Check if Favorited
-```http
-GET /favorites/check/:propertyId
-Authorization: Bearer <token>
-```
-
-**Response:**
-```json
-{
-  "isFavorite": true
-}
-```
-
----
-
-### System
-
-#### Health Check
-```http
-GET /
-```
-
-**Response:**
-```
-Hello World!
-```
-
-#### System Stats
-```http
-GET /stats
-```
-
-**Response:**
-```json
-{
-  "users": 3,
-  "properties": 25,
-  "message": "PropertyHub API is running!"
-}
-```
-
----
-
-## 🔒 Authorization Rules
-
-### Properties
-- Anyone can view active properties
-- Only authenticated users can create properties
-- Only property owner can update/delete their properties
-
-### Leads
-- Only authenticated users can create leads
-- Users can view their own leads (buyer perspective) — paginated, searchable
-- Property owners can view all received leads — paginated, searchable
-- Anti-spam: 1 lead per properti per 24 jam, max 10 leads/hari, tidak bisa kirim ke properti sendiri
-- Rate limit: 3 POST /leads per menit, 10 per hari (via @nestjs/throttler)
-
-### Favorites
-- Only authenticated users can manage favorites
-- Users can only access their own favorites
 
 ---
 
 ## ⚠️ Error Responses
 
-### 400 Bad Request
-```json
-{
-  "message": ["email must be an email", "password must be longer than 6 characters"],
-  "error": "Bad Request",
-  "statusCode": 400
-}
-```
+| Status | Description |
+|---|---|
+| 400 | Bad Request — validasi gagal |
+| 401 | Unauthorized — tidak login / token expired |
+| 403 | Forbidden — bukan pemilik / bukan admin |
+| 404 | Not Found |
+| 409 | Conflict — duplikat (favorit, review, dll) |
+| 429 | Too Many Requests — rate limit |
+| 500 | Internal Server Error |
 
-### 401 Unauthorized
 ```json
-{
-  "message": "Unauthorized",
-  "statusCode": 401
-}
-```
-
-### 403 Forbidden
-```json
-{
-  "message": "You can only update your own properties",
-  "error": "Forbidden",
-  "statusCode": 403
-}
-```
-
-### 404 Not Found
-```json
-{
-  "message": "Property not found",
-  "error": "Not Found",
-  "statusCode": 404
-}
-```
-
-### 409 Conflict
-```json
-{
-  "message": "Email already registered",
-  "error": "Conflict",
-  "statusCode": 409
-}
+// Error format
+{ "statusCode": 400, "message": "Minimal 3 foto diperlukan", "error": "Bad Request" }
 ```
 
 ---
 
-## 🧪 Testing
+## 🔒 Rate Limits
 
-### Test Accounts
-```
-Admin:
-- Email: admin@propertyhub.com
-- Password: admin123
-
-Agent:
-- Email: agent@example.com
-- Password: admin123
-
-User:
-- Email: newuser@test.com
-- Password: test123
-```
-
-### Example cURL Commands
-
-**Login:**
-```bash
-curl -X POST http://localhost:3001/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"admin@propertyhub.com","password":"admin123"}'
-```
-
-**Get Properties:**
-```bash
-curl http://localhost:3001/properties?city=Jakarta
-```
-
-**Create Property:**
-```bash
-TOKEN="your_jwt_token"
-curl -X POST http://localhost:3001/properties \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Test Property",
-    "description": "Test description",
-    "propertyType": "HOUSE",
-    "listingType": "SALE",
-    "price": 1000000,
-    "address": "Test Address",
-    "city": "Jakarta",
-    "province": "DKI Jakarta"
-  }'
-```
-
----
-
-**Total Endpoints:** 23  
-**Authentication:** JWT Bearer Token  
-**Rate Limiting:** Not implemented yet  
-**API Version:** v1
-
----
-
-## 🛡️ Admin Moderation
-
-**Role Required:** ADMIN
-
-### Get Moderation Queue
-```http
-GET /admin/moderation/queue?status=PENDING&page=1&limit=20
-Authorization: Bearer <admin_token>
-```
-
-**Query Params:**
-- `status`: PENDING | APPROVED | REJECTED | FLAGGED (default: PENDING)
-- `page`: Page number (default: 1)
-- `limit`: Items per page (default: 20)
-
-**Response:**
-```json
-{
-  "data": [
-    {
-      "id": "uuid",
-      "title": "Property Title",
-      "moderationStatus": "PENDING",
-      "user": {
-        "id": "uuid",
-        "name": "User Name",
-        "email": "user@example.com"
-      },
-      "images": [...],
-      "createdAt": "2026-03-23T10:00:00Z"
-    }
-  ],
-  "meta": {
-    "total": 10,
-    "page": 1,
-    "limit": 20,
-    "totalPages": 1
-  }
-}
-```
-
-### Approve Property
-```http
-PATCH /admin/moderation/:id/approve
-Authorization: Bearer <admin_token>
-Content-Type: application/json
-
-{
-  "notes": "Good quality listing" // optional
-}
-```
-
-**Response:**
-```json
-{
-  "message": "Property approved"
-}
-```
-
-### Reject Property
-```http
-PATCH /admin/moderation/:id/reject
-Authorization: Bearer <admin_token>
-Content-Type: application/json
-
-{
-  "reason": "Spam title detected", // required
-  "notes": "Contains forbidden keywords" // optional
-}
-```
-
-**Response:**
-```json
-{
-  "message": "Property rejected"
-}
-```
-
-### Flag Property
-```http
-PATCH /admin/moderation/:id/flag
-Authorization: Bearer <admin_token>
-Content-Type: application/json
-
-{
-  "reason": "Suspicious pricing", // required
-  "notes": "Price seems too low" // optional
-}
-```
-
-**Response:**
-```json
-{
-  "message": "Property flagged"
-}
-```
-
-### Get Moderation Logs
-```http
-GET /admin/moderation/logs?page=1&limit=50
-Authorization: Bearer <admin_token>
-```
-
-**Query Params:**
-- `propertyId`: Filter by property (optional)
-- `moderatorId`: Filter by moderator (optional)
-- `page`: Page number (default: 1)
-- `limit`: Items per page (default: 50)
-
-**Response:**
-```json
-{
-  "data": [
-    {
-      "id": "uuid",
-      "action": "APPROVED",
-      "reason": null,
-      "notes": "Good quality listing",
-      "property": {
-        "title": "Property Title",
-        "slug": "property-slug"
-      },
-      "moderator": {
-        "name": "Admin Name",
-        "email": "admin@example.com"
-      },
-      "createdAt": "2026-03-23T10:00:00Z"
-    }
-  ],
-  "meta": {
-    "total": 3,
-    "page": 1,
-    "limit": 50,
-    "totalPages": 1
-  }
-}
-```
-
-### Ban User
-```http
-PATCH /admin/users/:id/ban
-Authorization: Bearer <admin_token>
-Content-Type: application/json
-
-{
-  "reason": "Spam account" // required
-}
-```
-
-**Response:**
-```json
-{
-  "message": "User banned and all properties deactivated"
-}
-```
-
----
-
-## 📈 SEO Features
-
-### Hierarchical URL Structure
-
-Properties accessible via SEO-friendly URLs:
-
-```
-/properties/jual                                    → All for sale
-/properties/jual/rumah                              → All houses for sale
-/properties/jual/rumah/jakarta-selatan              → Houses in Jakarta Selatan
-/properties/jual/rumah/jakarta-selatan/kebagusan    → Houses in Kebagusan
-/properties/jual/rumah/jakarta-selatan/kebagusan/rumah-modern-minimalis → Specific property
-```
-
-**Translations:**
-- `jual` = SALE, `sewa` = RENT
-- `rumah` = HOUSE, `apartemen` = APARTMENT, `tanah` = LAND, `komersial` = COMMERCIAL
-
-### Ranking System
-
-Properties automatically ranked by:
-- **Quality Score (35%):** Completeness of listing
-- **Freshness Score (25%):** Recently updated
-- **Engagement Score (25%):** Views, leads, favorites
-- **User Reputation (15%):** Average quality of user's listings
-- **Featured Boost:** +50% for paid ads
-
-All listings sorted by: `featured DESC, rankScore DESC, createdAt DESC`
-
-### Title Validation
-
-Automatic spam detection:
-- ✅ Length: 10-100 characters
-- ✅ No spam keywords (murah banget, gratis, bonus, etc)
-- ✅ No keyword stuffing (max 2 repetitions)
-- ✅ No phone numbers or URLs
-- ✅ Max 50% uppercase
-- ✅ No duplicate titles (30 days)
-
----
-
-## 🔢 Response Codes
-
-- `200` - Success
-- `201` - Created
-- `400` - Bad Request (validation error)
-- `401` - Unauthorized (missing/invalid token)
-- `403` - Forbidden (insufficient permissions)
-- `404` - Not Found
-- `500` - Internal Server Error
-
----
-
-## 📝 Notes
-
-- All timestamps in ISO 8601 format (UTC)
-- Pagination: default page=1, limit=20
-- Prices in IDR (Decimal format)
-- Images via Cloudinary (max 5MB, jpg/jpeg/png/webp)
-- Featured listings require payment (via Midtrans)
-
+| Scope | Limit |
+|---|---|
+| Global (short) | 10 req/detik |
+| Global (medium) | 100 req/menit |
+| Global (long) | 500 req/jam |
+| Upload foto | 20 upload/10 menit |
+| Upload floor plan | 10 upload/10 menit |
+| Kirim lead | 3/menit, 10/hari per user |

@@ -31,7 +31,7 @@ export default async function DashboardPage() {
 
   const [user, stats, recentLeads, recentProperties] = await Promise.all([
     serverApi.getMe(),
-    serverApi.getUserStats(),
+    serverApi.getUserStats().catch(() => ({ properties: 0, leads: 0, favorites: 0, views: 0, receivedFavorites: 0 })),
     serverApi.getReceivedLeads('limit=5').catch(() => ({ data: [] as Lead[], meta: { total: 0, page: 1, limit: 5, totalPages: 0 } })),
     serverApi.getMyProperties('limit=4').catch(() => ({ data: [] as Property[], meta: { total: 0, page: 1, limit: 4, totalPages: 0 } })),
   ]);

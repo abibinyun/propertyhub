@@ -9,19 +9,25 @@ import { Loader2, Upload, X, Star } from 'lucide-react';
 interface Props {
   propertyId: string;
   initialImages: PropertyImage[];
+  onCountChange?: (count: number) => void;
 }
 
-export function ImageUploadSection({ propertyId, initialImages }: Props) {
+export function ImageUploadSection({ propertyId, initialImages, onCountChange }: Props) {
   const [images, setImages] = useState(initialImages);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+
+  const updateImages = (next: PropertyImage[]) => {
+    setImages(next);
+    onCountChange?.(next.length);
+  };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
     setUploading(true); setError('');
     try {
       const newImage = await propertiesApi.uploadImage(propertyId, e.target.files[0], images.length === 0, images.length);
-      setImages((p) => [...p, newImage]);
+      updateImages([...images, newImage]);
     } catch {
       setError('Gagal upload gambar');
     } finally {
@@ -31,8 +37,12 @@ export function ImageUploadSection({ propertyId, initialImages }: Props) {
   };
 
   const handleDelete = async (imageId: string) => {
-    await propertiesApi.deleteImage(imageId);
-    setImages((p) => p.filter((img) => img.id !== imageId));
+    try {
+      await propertiesApi.deleteImage(imageId);
+      updateImages(images.filter((img) => img.id !== imageId));
+    } catch {
+      setError('Gagal menghapus gambar');
+    }
   };
 
   const handleSetPrimary = async (imageId: string) => {
@@ -48,11 +58,16 @@ export function ImageUploadSection({ propertyId, initialImages }: Props) {
   return (
     <div className="space-y-3">
       {error && <p className="text-sm text-destructive">{error}</p>}
-      <p className="text-xs text-muted-foreground">Klik bintang ⭐ untuk jadikan foto utama. Foto utama tampil pertama di listing.</p>
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">Klik bintang ⭐ untuk jadikan foto utama. Foto utama tampil pertama di listing.</p>
+        <span className={`text-xs font-medium ${images.length >= 3 ? 'text-emerald-600' : 'text-amber-600'}`}>
+          {images.length}/3 foto minimum
+        </span>
+      </div>
       <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
         {images.map((img) => (
           <div key={img.id} className={`relative aspect-video rounded-xl overflow-hidden group border-2 transition-colors ${img.isPrimary ? 'border-primary' : 'border-transparent'}`}>
-            <Image src={img.url} alt="" fill className="object-cover" />
+            <Image src={img.url} alt={`Foto properti`} fill className="object-cover" />
             {img.isPrimary && (
               <span className="absolute top-1 left-1 text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded-lg font-medium">Utama</span>
             )}

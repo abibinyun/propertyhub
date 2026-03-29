@@ -54,29 +54,58 @@ export class PropertiesService {
         certificateType: dto.certificateType,
         yearBuilt: dto.yearBuilt,
         furnishing: dto.furnishing as any,
+        videoUrl: dto.videoUrl,
         status: 'DRAFT',
-        features: dto.features
-          ? {
-              create: dto.features.map((feature) => ({ feature })),
-            }
-          : undefined,
+        features: dto.features ? { create: dto.features.map((feature) => ({ feature })) } : undefined,
       },
-      include: {
-        features: true,
-        images: true,
-      },
+      include: { features: true, images: true },
     });
 
-    // Calculate initial ranking
-    await this.rankingService.updatePropertyRanking(property.id);
+    // Auto-flag + ranking in parallel (non-blocking, best-effort)
+    const flagReason = this.getAutoFlagReason({ description: dto.description, price: dto.price, imageCount: 0 });
+    await Promise.all([
+      this.rankingService.updatePropertyRanking(property.id),
+      flagReason
+        ? this.prisma.property.update({ where: { id: property.id }, data: { moderationStatus: 'FLAGGED', flagReason } })
+        : Promise.resolve(),
+    ]);
 
     return property;
   }
 
   async findAll(query: any) {
-    const { city, propertyType, listingType, minPrice, maxPrice, page = 1, limit = 10 } = query;
+    const { city, propertyType, listingType, minPrice, maxPrice, page = 1, limit = 10, lat, lng, radius } = query;
 
-    const where: any = { status: 'ACTIVE' };
+    // Radius search — pakai Haversine, bypass Prisma where
+    if (lat && lng && radius) {
+      const latN = Number(lat), lngN = Number(lng), radiusKm = Math.min(Number(radius), 100);
+      const skip = (page - 1) * limit;
+      const baseWhere = `
+        status = 'ACTIVE'
+        AND "moderationStatus" = 'APPROVED'
+        AND latitude IS NOT NULL AND longitude IS NOT NULL
+        ${propertyType ? `AND "propertyType" = '${propertyType}'` : ''}
+        ${listingType ? `AND "listingType" = '${listingType}'` : ''}
+        ${minPrice ? `AND price >= ${Number(minPrice)}` : ''}
+        ${maxPrice ? `AND price <= ${Number(maxPrice)}` : ''}
+        AND (6371 * acos(cos(radians(${latN})) * cos(radians(latitude)) * cos(radians(longitude) - radians(${lngN})) + sin(radians(${latN})) * sin(radians(latitude)))) <= ${radiusKm}
+      `;
+      const [properties, countResult]: any[] = await Promise.all([
+        this.prisma.$queryRawUnsafe(`
+          SELECT p.*, 
+            (6371 * acos(cos(radians(${latN})) * cos(radians(p.latitude)) * cos(radians(p.longitude) - radians(${lngN})) + sin(radians(${latN})) * sin(radians(p.latitude)))) AS distance_km
+          FROM properties p
+          WHERE ${baseWhere}
+          ORDER BY distance_km ASC
+          LIMIT ${Number(limit)} OFFSET ${skip}
+        `),
+        this.prisma.$queryRawUnsafe(`SELECT COUNT(*) as count FROM properties p WHERE ${baseWhere}`),
+      ]);
+      const total = Number(countResult[0]?.count ?? 0);
+      return { data: properties, meta: { total, page: Number(page), limit: Number(limit), totalPages: Math.ceil(total / Number(limit)) } };
+    }
+
+    const where: any = { status: 'ACTIVE', moderationStatus: 'APPROVED' };
 
     if (city) where.city = { contains: city, mode: 'insensitive' };
     if (propertyType) where.propertyType = propertyType;
@@ -92,7 +121,7 @@ export class PropertiesService {
         where,
         include: {
           images: { where: { isPrimary: true }, take: 1 },
-          user: { select: { name: true, phone: true, company: true } },
+          user: { select: { name: true, phone: true, company: true, verified: true } },
         },
         orderBy: [
           { featured: 'desc' },
@@ -122,7 +151,12 @@ export class PropertiesService {
       include: {
         images: { orderBy: { order: 'asc' } },
         features: true,
-        user: { select: { name: true, phone: true, email: true, company: true } },
+        user: {
+          select: {
+            name: true, phone: true, email: true, company: true, verified: true,
+            _count: { select: { properties: { where: { status: 'ACTIVE', moderationStatus: 'APPROVED' } } } },
+          },
+        },
       },
     });
 
@@ -156,12 +190,32 @@ export class PropertiesService {
     const { features, ...rest } = dto;
     const updateData: any = { ...rest };
 
+    // Enforce minimum 3 photos when publishing
+    if (rest.status === 'ACTIVE') {
+      const imageCount = await this.prisma.propertyImage.count({ where: { propertyId: property.id } });
+      if (imageCount < 3) {
+        throw new BadRequestException('Minimal 3 foto diperlukan sebelum listing dapat dipublikasikan');
+      }
+
+      // Auto-flag suspicious listings before publishing
+      const description = rest.description ?? property.description;
+      const price = rest.price ?? Number(property.price);
+      const flagReason = this.getAutoFlagReason({ description, price, imageCount });
+      if (flagReason) {
+        updateData.moderationStatus = 'FLAGGED';
+        updateData.flagReason = flagReason;
+      }
+    }
+
     if (features !== undefined) {
       updateData.features = {
         deleteMany: {},
         create: features.map((feature) => ({ feature })),
       };
     }
+
+    // Track price change before update
+    const priceChanged = rest.price !== undefined && Number(rest.price) !== Number(property.price);
 
     const updated = await this.prisma.property.update({
       where: { slug },
@@ -172,8 +226,13 @@ export class PropertiesService {
       },
     });
 
-    // Boost ranking when updated
-    await this.rankingService.boostProperty(updated.id);
+    // Price history + ranking boost in parallel
+    await Promise.all([
+      priceChanged
+        ? this.prisma.priceHistory.create({ data: { propertyId: updated.id, price: updated.price } })
+        : Promise.resolve(),
+      this.rankingService.boostProperty(updated.id),
+    ]);
 
     return updated;
   }
@@ -313,6 +372,11 @@ export class PropertiesService {
       throw new ForbiddenException('You can only upload images to your own properties');
     }
 
+    const imageCount = await this.prisma.propertyImage.count({ where: { propertyId } });
+    if (imageCount >= 20) {
+      throw new BadRequestException('Maksimal 20 foto per properti');
+    }
+
     const url = await this.cloudinary.uploadImage(file, 'properties');
 
     if (isPrimary) {
@@ -364,6 +428,25 @@ export class PropertiesService {
     return { message: 'Image deleted successfully' };
   }
 
+  async uploadFloorPlan(userId: string, propertyId: string, file: Express.Multer.File) {
+    const property = await this.prisma.property.findUnique({ where: { id: propertyId } });
+    if (!property) throw new NotFoundException('Property not found');
+    if (property.userId !== userId) throw new ForbiddenException();
+
+    const url = await this.cloudinary.uploadImage(file, 'floor-plans');
+    await this.prisma.property.update({ where: { id: propertyId }, data: { floorPlanUrl: url } });
+    return { floorPlanUrl: url };
+  }
+
+  async deleteFloorPlan(userId: string, propertyId: string) {
+    const property = await this.prisma.property.findUnique({ where: { id: propertyId } });
+    if (!property) throw new NotFoundException('Property not found');
+    if (property.userId !== userId) throw new ForbiddenException();
+    if (property.floorPlanUrl) await this.cloudinary.deleteImage(property.floorPlanUrl);
+    await this.prisma.property.update({ where: { id: propertyId }, data: { floorPlanUrl: null } });
+    return { message: 'Floor plan deleted' };
+  }
+
   private async generateSlug(dto: CreatePropertyDto): Promise<string> {
     const title = this.slugify(dto.title);
     // Format: judul-properti (tanpa prefix status/jenis/kota)
@@ -376,6 +459,75 @@ export class PropertiesService {
       finalSlug = `${baseSlug}-${counter}`;
     }
     return finalSlug;
+  }
+
+  async getAnalytics(userId: string, propertyId: string) {
+    const property = await this.prisma.property.findUnique({ where: { id: propertyId } });
+    if (!property) throw new NotFoundException('Properti tidak ditemukan');
+    if (property.userId !== userId) throw new NotFoundException('Properti tidak ditemukan');
+
+    // Generate 30 hari terakhir
+    const days = Array.from({ length: 30 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (29 - i));
+      d.setHours(0, 0, 0, 0);
+      return d;
+    });
+
+    // Leads per hari
+    const leads = await this.prisma.lead.findMany({
+      where: { propertyId, createdAt: { gte: days[0] } },
+      select: { createdAt: true },
+    });
+
+    const leadsPerDay = new Map<string, number>();
+    leads.forEach((l) => {
+      const key = l.createdAt.toISOString().slice(0, 10);
+      leadsPerDay.set(key, (leadsPerDay.get(key) ?? 0) + 1);
+    });
+
+    const data = days.map((d) => {
+      const key = d.toISOString().slice(0, 10);
+      return {
+        date: key,
+        label: d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
+        leads: leadsPerDay.get(key) ?? 0,
+      };
+    });
+
+    return {
+      property: { id: property.id, title: property.title, viewsCount: property.viewsCount, leadsCount: property.leadsCount },
+      data,
+    };
+  }
+
+  async getPriceHistory(userId: string, propertyId: string) {
+    const property = await this.prisma.property.findUnique({ where: { id: propertyId } });
+    if (!property) throw new NotFoundException('Property not found');
+    if (property.userId !== userId) throw new ForbiddenException();
+    return this.prisma.priceHistory.findMany({
+      where: { propertyId },
+      orderBy: { createdAt: 'asc' },
+      select: { price: true, createdAt: true },
+    });
+  }
+
+  async getPriceHistoryBySlug(slug: string) {
+    const property = await this.prisma.property.findUnique({ where: { slug } });
+    if (!property) throw new NotFoundException('Property not found');
+    return this.prisma.priceHistory.findMany({
+      where: { propertyId: property.id },
+      orderBy: { createdAt: 'asc' },
+      select: { price: true, createdAt: true },
+    });
+  }
+
+  private getAutoFlagReason({ description, price, imageCount }: { description: string; price: number | string; imageCount: number }): string | null {
+    const reasons: string[] = [];
+    if (imageCount < 3) reasons.push('foto kurang dari 3');
+    if ((description ?? '').length < 50) reasons.push('deskripsi terlalu singkat (< 50 karakter)');
+    if (Number(price) < 10_000_000) reasons.push('harga mencurigakan (< Rp 10 juta)');
+    return reasons.length ? `Auto-flag: ${reasons.join(', ')}` : null;
   }
 
   private slugify(text: string): string {

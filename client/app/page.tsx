@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,22 @@ import { serverApi } from '@/lib/server/api';
 import { getToken } from '@/lib/server/auth';
 import { PropertyCard } from '@/components/property/property-card';
 import { HomeSearch } from '@/components/client/home-search';
+
+export const revalidate = 60; // ISR — revalidate setiap 60 detik
+
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+export const metadata: Metadata = {
+  title: 'PropertyHub — Jual, Beli & Sewa Properti di Indonesia',
+  description: 'Temukan rumah, apartemen, tanah, dan properti lainnya di seluruh Indonesia. Ribuan listing terpercaya dengan harga terbaik.',
+  alternates: { canonical: BASE_URL },
+  openGraph: {
+    title: 'PropertyHub — Jual, Beli & Sewa Properti di Indonesia',
+    description: 'Temukan rumah, apartemen, tanah, dan properti lainnya di seluruh Indonesia.',
+    url: BASE_URL,
+    type: 'website',
+  },
+};
 
 const PROPERTY_TYPES = [
   { slug: 'rumah', label: 'Rumah', icon: Home, count: '2.4K+', color: 'bg-blue-50 text-blue-600' },
@@ -44,9 +61,12 @@ const FEATURED_CITIES = [
 
 export default async function HomePage() {
   const token = await getToken();
-  const [{ data: featured, meta }, favoriteIds] = await Promise.all([
-    propertiesApi.getAll({ limit: 6, page: 1 }),
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+  const [{ data: featured, meta }, favoriteIds, siteStats] = await Promise.all([
+    propertiesApi.getAll({ limit: 6, page: 1 }).catch(() => ({ data: [], meta: { total: 0, page: 1, limit: 6, totalPages: 0 } })),
     token ? serverApi.getFavoriteIds().catch(() => [] as string[]) : Promise.resolve([] as string[]),
+    fetch(`${API_URL}/stats`, { cache: 'no-store' }).then((r) => r.json()).catch(() => ({ properties: 0, agents: 0, leads: 0 })),
   ]);
 
   return (
@@ -91,9 +111,9 @@ export default async function HomePage() {
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-3 divide-x divide-white/10">
               {[
-                { value: `${meta.total}+`, label: 'Properti' },
-                { value: '50+', label: 'Kota' },
-                { value: '10K+', label: 'Pengguna' },
+                { value: `${siteStats.properties?.toLocaleString('id-ID') ?? meta.total}+`, label: 'Properti Aktif' },
+                { value: `${siteStats.agents?.toLocaleString('id-ID') ?? '50'}+`, label: 'Agen Terdaftar' },
+                { value: `${siteStats.leads?.toLocaleString('id-ID') ?? '10K'}+`, label: 'Leads Terkirim' },
               ].map((stat) => (
                 <div key={stat.label} className="py-3 md:py-4 px-3 md:px-6 text-center">
                   <div className="text-xl md:text-2xl font-bold text-white">{stat.value}</div>

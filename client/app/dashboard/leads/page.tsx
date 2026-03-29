@@ -5,10 +5,11 @@ import { getToken } from '@/lib/server/auth';
 import { Badge } from '@/components/ui/badge';
 import { LeadStatusActions } from '@/components/client/lead-status-actions';
 import { LeadsSearchBar } from '@/components/client/leads-search-bar';
-import { MessageSquare, Send, Inbox, MapPin, Phone, Mail, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MessageSquare, Send, Inbox, MapPin, Phone, Mail, ExternalLink, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import { Lead, LeadStatus } from '@/types/lead';
 import { propertyDetailUrl } from '@/lib/url';
 import { cn } from '@/lib/utils';
+import { ExportLeadsButton } from '@/components/client/export-leads-button';
 
 interface Props {
   searchParams: Promise<{ tab?: string; page?: string; search?: string; status?: string }>;
@@ -167,6 +168,7 @@ export default async function LeadsPage({ searchParams }: Props) {
       <div className="flex items-center gap-3 mb-6">
         <MessageSquare className="h-5 w-5 text-primary" />
         <h1 className="text-2xl font-bold">Pesan & Leads</h1>
+        {tab === 'received' && <ExportLeadsButton className="ml-auto" />}
       </div>
 
       {/* Tabs */}

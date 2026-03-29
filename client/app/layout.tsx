@@ -1,9 +1,12 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import Script from 'next/script';
 import './globals.css';
 import 'leaflet/dist/leaflet.css';
 import { cn } from '@/lib/utils';
 import { AuthProvider } from '@/lib/context/auth-context';
+import { CompareProvider } from '@/lib/context/compare-context';
+import { CompareBar } from '@/components/client/compare-bar';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { serverApi } from '@/lib/server/api';
@@ -52,10 +55,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="id" className={cn('h-full antialiased', inter.variable)}>
       <body className="min-h-screen flex flex-col font-sans">
         <AuthProvider initialUser={initialUser}>
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
+          <CompareProvider>
+            <Header />
+            <main className="flex-1">{children}</main>
+            <Footer />
+            <CompareBar />
+          </CompareProvider>
         </AuthProvider>
+        {process.env.NEXT_PUBLIC_PAYMENT_PROVIDER === 'midtrans' && (
+          <Script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY} strategy="lazyOnload" />
+        )}
       </body>
     </html>
   );

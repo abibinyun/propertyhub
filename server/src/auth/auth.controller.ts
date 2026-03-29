@@ -1,40 +1,72 @@
-import { Controller, Post, Body, Get, Query, Res, UseGuards } from '@nestjs/common';
-import type { Response } from 'express';
+import { Controller, Post, Body, Get, Query, Res, UseGuards, Req, UnauthorizedException } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { ConfigService } from '@nestjs/config';
+import type { Response, Request } from 'express';
 import { AuthService } from './auth.service';
-import { RegisterDto, LoginDto } from './dto/auth.dto';
+import { RegisterDto, LoginDto, ForgotPasswordDto, ResetPasswordDto } from './dto/auth.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
-
-const COOKIE_OPTIONS = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax' as const,
-  maxAge: 7 * 24 * 60 * 60 * 1000,
-  path: '/',
-};
+import { getConfig } from '../common/config';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService, private configService: ConfigService) {}
+
+  private get cookieOptions() {
+    return {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax' as const,
+      maxAge: 15 * 60 * 1000, // 15 menit
+      path: '/',
+    };
+  }
+
+  private get refreshCookieOptions() {
+    return {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax' as const,
+      maxAge: getConfig(this.configService).refreshTokenExpiryDays * 24 * 60 * 60 * 1000,
+      path: '/',
+    };
+  }
+
+  private setAuthCookies(res: Response, token: string, refreshToken: string) {
+    res.cookie('token', token, this.cookieOptions);
+    res.cookie('refresh_token', refreshToken, this.refreshCookieOptions);
+  }
 
   @Post('register')
   async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) res: Response) {
     const result = await this.authService.register(dto);
-    res.cookie('token', result.token, COOKIE_OPTIONS);
+    this.setAuthCookies(res, result.token, result.refreshToken);
     return result;
   }
 
   @Post('login')
   async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
     const result = await this.authService.login(dto);
-    res.cookie('token', result.token, COOKIE_OPTIONS);
+    this.setAuthCookies(res, result.token, result.refreshToken);
     return result;
   }
 
   @Post('logout')
-  logout(@Res({ passthrough: true }) res: Response) {
+  @UseGuards(JwtAuthGuard)
+  async logout(@CurrentUser() user: any, @Res({ passthrough: true }) res: Response) {
+    await this.authService.revokeRefreshToken(user.id);
     res.clearCookie('token', { path: '/' });
+    res.clearCookie('refresh_token', { path: '/' });
     return { message: 'Logged out' };
+  }
+
+  @Post('refresh')
+  async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const refreshToken = (req as any).cookies?.refresh_token;
+    if (!refreshToken) throw new UnauthorizedException('No refresh token');
+    const { accessToken } = await this.authService.refreshAccessToken(refreshToken);
+    res.cookie('token', accessToken, this.cookieOptions);
+    return { message: 'Token refreshed' };
   }
 
   @Get('me')
@@ -52,5 +84,28 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   resendVerification(@CurrentUser() user: any) {
     return this.authService.resendVerification(user.id);
+  }
+
+  @Post('forgot-password')
+  forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(dto.email);
+  }
+
+  @Post('reset-password')
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto.token, dto.password);
+  }
+
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  googleLogin() { /* redirect handled by passport */ }
+
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  async googleCallback(@Req() req: Request, @Res() res: Response) {
+    const result = await this.authService.googleAuth(req.user as any);
+    this.setAuthCookies(res, result.token, result.refreshToken);
+    const appUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    res.redirect(`${appUrl}/dashboard`);
   }
 }

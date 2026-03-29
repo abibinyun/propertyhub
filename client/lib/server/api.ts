@@ -10,16 +10,24 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 async function serverFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const authHeader = await getAuthHeader();
-  const res = await fetch(`${API_URL}${path}`, {
-    ...init,
-    headers: { ...authHeader, ...init?.headers },
-    cache: 'no-store',
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
+  try {
+    const res = await fetch(`${API_URL}${path}`, {
+      ...init,
+      headers: { ...authHeader, ...init?.headers },
+      cache: 'no-store',
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw err;
+    }
+    return res.json();
+  } catch (err: unknown) {
+    // Network error (BE mati) — wrap jadi error yang bisa dibaca
+    if (err instanceof TypeError && err.message.includes('fetch')) {
+      throw new Error('Tidak dapat terhubung ke server. Pastikan koneksi internet Anda aktif.');
+    }
     throw err;
   }
-  return res.json();
 }
 
 export const serverApi = {
@@ -32,6 +40,10 @@ export const serverApi = {
 
   // Properties
   getMyProperties: (params?: string) => serverFetch<{ data: Property[]; meta: { total: number; page: number; limit: number; totalPages: number } }>(`/properties/my${params ? '?' + params : ''}`),
+  getPropertyAnalytics: (propertyId: string) => serverFetch<{
+    property: { id: string; title: string; viewsCount: number; leadsCount: number };
+    data: { date: string; label: string; leads: number }[];
+  }>(`/properties/my/analytics/${propertyId}`),
 
   // Favorites
   getFavorites: () => serverFetch<FavoriteItem[]>('/favorites'),
@@ -49,4 +61,8 @@ export const serverApi = {
   getModerationQueue: (status = 'PENDING') => serverFetch<PaginatedResponse<Property>>(`/admin/moderation/queue?status=${status}`),
   getModerationLogs: () => serverFetch<PaginatedResponse<ModerationLog>>('/admin/moderation/logs'),
   getAdminLeads: (params?: string) => serverFetch<PaginatedResponse<AdminLead>>(`/admin/leads${params ? '?' + params : ''}`),
+  getReports: (resolved?: string) => serverFetch<any[]>(`/reports${resolved !== undefined ? `?resolved=${resolved}` : ''}`),
+  getSavedSearches: () => serverFetch<any[]>('/saved-searches'),
+  getAgentProfile: (id: string) => serverFetch<any>(`/users/${id}/public`),
+  getAgentReviews: (agentId: string) => serverFetch<any>(`/reviews/agent/${agentId}`),
 };

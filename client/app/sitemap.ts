@@ -11,6 +11,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const staticUrls: MetadataRoute.Sitemap = [
     { url: BASE_URL, lastModified: now, priority: 1, changeFrequency: 'daily' },
+    { url: `${BASE_URL}/about`, lastModified: now, priority: 0.5, changeFrequency: 'monthly' },
+    { url: `${BASE_URL}/contact`, lastModified: now, priority: 0.5, changeFrequency: 'monthly' },
+    { url: `${BASE_URL}/privacy`, lastModified: now, priority: 0.3, changeFrequency: 'monthly' },
+    { url: `${BASE_URL}/terms`, lastModified: now, priority: 0.3, changeFrequency: 'monthly' },
     ...STATUSES.map(s => ({ url: `${BASE_URL}/${s}`, lastModified: now, priority: 0.9, changeFrequency: 'daily' as const })),
     ...STATUSES.flatMap(s => TYPES.map(t => ({ url: `${BASE_URL}/${s}/${t}`, lastModified: now, priority: 0.8, changeFrequency: 'daily' as const }))),
   ];

@@ -15,14 +15,22 @@ export interface PropertyQuery {
   limit?: number;
 }
 
+// Server-safe fetch (no auto-refresh, used in Server Components)
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
-    ...init,
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...init?.headers },
-  });
-  if (!res.ok) throw await res.json();
-  return res.json();
+  try {
+    const res = await fetch(`${API_URL}${path}`, {
+      ...init,
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', ...init?.headers },
+    });
+    if (!res.ok) throw await res.json();
+    return res.json();
+  } catch (err: unknown) {
+    if (err instanceof TypeError && err.message.includes('fetch')) {
+      throw new Error('Tidak dapat terhubung ke server. Coba lagi nanti.');
+    }
+    throw err;
+  }
 }
 
 export const propertiesApi = {
@@ -43,6 +51,22 @@ export const propertiesApi = {
 
   getBySlug: (slug: string): Promise<Property> =>
     apiFetch(`/properties/properti/detail/${slug}`, { cache: 'no-store' } as RequestInit),
+
+  getPriceHistory: (slug: string): Promise<{ price: number; createdAt: string }[]> =>
+    apiFetch(`/properties/price-history/${slug}`, { cache: 'no-store' } as RequestInit),
+
+  uploadFloorPlan: async (propertyId: string, file: File): Promise<{ floorPlanUrl: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch(`${API_URL}/properties/${propertyId}/floor-plan`, {
+      method: 'POST', credentials: 'include', body: formData,
+    });
+    if (!res.ok) throw await res.json();
+    return res.json();
+  },
+
+  deleteFloorPlan: (propertyId: string): Promise<{ message: string }> =>
+    apiFetch(`/properties/${propertyId}/floor-plan`, { method: 'DELETE' }),
 
   getMy: (): Promise<Property[]> => apiFetch('/properties/my'),
 
@@ -66,12 +90,17 @@ export const propertiesApi = {
     formData.append('file', file);
     formData.append('isPrimary', String(isPrimary));
     formData.append('order', String(order));
-    const res = await fetch(`${API_URL}/properties/${propertyId}/images`, {
-      method: 'POST',
-      credentials: 'include',
-      body: formData,
-    });
-    if (!res.ok) throw await res.json();
-    return res.json();
+    try {
+      const res = await fetch(`${API_URL}/properties/${propertyId}/images`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+      if (!res.ok) throw await res.json();
+      return res.json();
+    } catch (err: unknown) {
+      if (err instanceof TypeError && err.message.includes('fetch')) throw new Error('Tidak dapat terhubung ke server.');
+      throw err;
+    }
   },
 };

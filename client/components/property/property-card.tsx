@@ -4,11 +4,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Bed, Bath, Maximize2, Heart, Eye } from 'lucide-react';
+import { MapPin, Bed, Bath, Maximize2, Heart, Eye, BadgeCheck, GitCompare, Clock } from 'lucide-react';
 import { Property } from '@/types/property';
-import { formatPrice, cn } from '@/lib/utils';
+import { formatPrice, cn, timeAgo } from '@/lib/utils';
 import { propertyDetailUrl } from '@/lib/url';
 import { favoritesApi } from '@/lib/api/favorites';
+import { useCompare } from '@/lib/context/compare-context';
 import { PropertyQuickView } from '@/components/client/property-quick-view';
 
 function FavoriteButton({ propertyId, initialLiked = false }: { propertyId: string; initialLiked?: boolean }) {
@@ -55,6 +56,8 @@ export function PropertyCard({ property, favoriteIds }: { property: Property; fa
   const fresh = isNew(property.createdAt);
   const [quickView, setQuickView] = useState(false);
   const isLiked = favoriteIds?.includes(property.id) ?? false;
+  const { add, remove, has } = useCompare();
+  const inCompare = has(property.id);
 
   return (
     <>
@@ -84,12 +87,20 @@ export function PropertyCard({ property, favoriteIds }: { property: Property; fa
 
             {/* Favorite — always visible */}
             <FavoriteButton propertyId={property.id} initialLiked={isLiked} />
-            {/* Quick view — sejajar dengan heart, geser ke kiri */}
+            {/* Quick view */}
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuickView(true); }}
               className="absolute top-3 right-12 h-8 w-8 rounded-full bg-white/80 hover:bg-white text-slate-600 hover:text-primary flex items-center justify-center shadow backdrop-blur-sm transition-all duration-200 md:opacity-0 md:group-hover:opacity-100"
             >
               <Eye className="h-4 w-4" />
+            </button>
+            {/* Compare */}
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); inCompare ? remove(property.id) : add(property); }}
+              className={cn('absolute top-3 right-[84px] h-8 w-8 rounded-full bg-white/80 hover:bg-white flex items-center justify-center shadow backdrop-blur-sm transition-all duration-200 md:opacity-0 md:group-hover:opacity-100', inCompare ? 'text-primary' : 'text-slate-600 hover:text-primary')}
+              title={inCompare ? 'Hapus dari perbandingan' : 'Tambah ke perbandingan'}
+            >
+              <GitCompare className="h-4 w-4" />
             </button>
 
             {/* Price overlay */}
@@ -125,10 +136,17 @@ export function PropertyCard({ property, favoriteIds }: { property: Property; fa
                   </div>
                 )}
                 {property.user?.name && (
-                  <span className="ml-auto text-xs text-muted-foreground truncate max-w-[80px]">{property.user.name}</span>
+                  <span className="ml-auto text-xs text-muted-foreground truncate max-w-[80px] flex items-center gap-1">
+                    {property.user.verified && <BadgeCheck className="h-3 w-3 text-primary flex-shrink-0" />}
+                    {property.user.name}
+                  </span>
                 )}
               </div>
             )}
+            <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground/70">
+              <Clock className="h-3 w-3" />
+              <span>Diperbarui {timeAgo(property.updatedAt)}</span>
+            </div>
           </div>
         </div>
       </Link>

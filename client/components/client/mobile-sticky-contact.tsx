@@ -10,9 +10,10 @@ interface Props {
   phone?: string;
   name?: string;
   price: string;
+  propertyTitle?: string;
 }
 
-export function MobileStickyContact({ phone, name, price }: Props) {
+export function MobileStickyContact({ phone, name, price, propertyTitle }: Props) {
   const { user } = useAuth();
   const pathname = usePathname();
   const loginUrl = `/login?redirect=${encodeURIComponent(pathname)}`;
@@ -34,7 +35,7 @@ export function MobileStickyContact({ phone, name, price }: Props) {
             </a>
           )}
           {phone && (
-            <a href={`https://wa.me/${phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">
+            <a href={`https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Halo, saya tertarik dengan properti "${propertyTitle ?? 'ini'}". Mohon info lebih lanjut.`)}`} target="_blank" rel="noopener noreferrer">
               <Button className="gap-2 rounded-xl font-semibold flex-shrink-0">
                 <MessageCircle className="h-4 w-4" />
                 WhatsApp

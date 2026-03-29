@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Search, MapPin, Home, Building2, Trees, Store } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getKotaList, searchKota } from '@/lib/wilayah';
 
 const TABS = [
   { label: 'Beli', value: 'jual' },
@@ -39,9 +40,25 @@ export function HomeSearch() {
   const router = useRouter();
   const [tab, setTab] = useState('jual');
   const [query, setQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [kotaList, setKotaList] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
-  const handleSearch = () => {
-    const slug = query.trim().toLowerCase().replace(/\s+/g, '-');
+  useEffect(() => {
+    getKotaList().then(setKotaList).catch(() => {});
+  }, []);
+
+  const updateSuggestions = useCallback((q: string) => {
+    setSuggestions(q.trim() ? searchKota(kotaList, q, 6) : []);
+  }, [kotaList]);
+
+  useEffect(() => {
+    updateSuggestions(query);
+  }, [query, updateSuggestions]);
+
+  const handleSearch = (kota?: string) => {
+    const slug = (kota ?? query).trim().toLowerCase().replace(/\s+/g, '-');
+    setShowSuggestions(false);
     router.push(slug ? `/${tab}/${slug}` : `/${tab}`);
   };
 
@@ -66,25 +83,48 @@ export function HomeSearch() {
       </div>
 
       {/* Search box */}
-      <div className="flex items-center bg-white rounded-b-2xl rounded-tr-2xl shadow-2xl ring-1 ring-black/5 overflow-hidden">
-        <div className="flex-1 flex items-center gap-2 md:gap-3 px-3 md:px-5 py-1">
-          <Search className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground flex-shrink-0" />
-          <input
-            className="flex-1 py-3 text-sm md:text-base bg-transparent outline-none placeholder:text-muted-foreground"
-            placeholder="Cari kota atau area..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-          />
+      <div className="relative">
+        <div className="flex items-center bg-white rounded-b-2xl rounded-tr-2xl shadow-2xl ring-1 ring-black/5 overflow-hidden">
+          <div className="flex-1 flex items-center gap-2 md:gap-3 px-3 md:px-5 py-1">
+            <Search className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground flex-shrink-0" />
+            <input
+              className="flex-1 py-3 text-sm md:text-base bg-transparent outline-none placeholder:text-muted-foreground"
+              placeholder="Cari kota atau area..."
+              value={query}
+              onChange={(e) => { setQuery(e.target.value); setShowSuggestions(true); }}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              onFocus={() => setShowSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+              autoComplete="off"
+            />
+          </div>
+          <div className="p-1.5 md:p-2">
+            <Button size="sm" className="px-4 md:px-8 h-10 md:h-11 rounded-xl font-semibold" onClick={() => handleSearch()}>
+              Cari
+            </Button>
+          </div>
         </div>
-        <div className="p-1.5 md:p-2">
-          <Button size="sm" className="px-4 md:px-8 h-10 md:h-11 rounded-xl font-semibold" onClick={handleSearch}>
-            Cari
-          </Button>
-        </div>
+
+        {/* Autocomplete dropdown */}
+        {showSuggestions && suggestions.length > 0 && (
+          <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl border shadow-lg z-50 overflow-hidden">
+            {suggestions.map((kota) => (
+              <button
+                key={kota}
+                type="button"
+                onMouseDown={() => handleSearch(kota)}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left hover:bg-slate-50 transition-colors"
+              >
+                <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <span>{kota}</span>
+                <span className="ml-auto text-xs text-muted-foreground">Kota / Kabupaten</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Quick filters — scrollable on mobile */}
+      {/* Quick filters */}
       <div className="flex items-center gap-2 mt-3 overflow-x-auto pb-0.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <span className="text-xs text-white/70 whitespace-nowrap flex-shrink-0">Populer:</span>
         {POPULAR.map((city) => (

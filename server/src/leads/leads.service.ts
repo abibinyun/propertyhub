@@ -1,6 +1,10 @@
 import { Injectable, NotFoundException, ConflictException, HttpException, HttpStatus } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
+import { EmailService } from '../email/email.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
+import { getConfig } from '../common/config';
 import { Prisma } from '@prisma/client';
 
 export interface LeadQuery {
@@ -19,7 +23,12 @@ const PROPERTY_SELECT = {
 
 @Injectable()
 export class LeadsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private emailService: EmailService,
+    private notificationsService: NotificationsService,
+    private configService: ConfigService,
+  ) {}
 
   async create(userId: string, dto: CreateLeadDto) {
     const property = await this.prisma.property.findUnique({
@@ -44,15 +53,16 @@ export class LeadsService {
       throw new ConflictException('Anda sudah mengirim pesan ke properti ini dalam 24 jam terakhir');
     }
 
-    // Cek daily limit: max 10 leads per hari
+    // Cek daily limit
+    const dailyLimit = getConfig(this.configService).leadDailyLimit;
     const todayCount = await this.prisma.lead.count({
       where: {
         userId,
         createdAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) },
       },
     });
-    if (todayCount >= 10) {
-      throw new HttpException('Batas pengiriman pesan harian (10) telah tercapai', HttpStatus.TOO_MANY_REQUESTS);
+    if (todayCount >= dailyLimit) {
+      throw new HttpException(`Batas pengiriman pesan harian (${dailyLimit}) telah tercapai`, HttpStatus.TOO_MANY_REQUESTS);
     }
 
     const lead = await this.prisma.lead.create({
@@ -73,18 +83,22 @@ export class LeadsService {
       data: { leadsCount: { increment: 1 } },
     });
 
-    // Email notification — log ke console (ganti dengan email service nanti)
-    const ownerEmail = await this.prisma.user.findUnique({
+    // Email notification ke pemilik properti
+    const owner = await this.prisma.user.findUnique({
       where: { id: (lead.property as any).userId },
       select: { email: true, name: true },
     });
-    if (ownerEmail) {
-      console.log(`\n📧 [LEAD NOTIFICATION]`);
-      console.log(`To: ${ownerEmail.name} <${ownerEmail.email}>`);
-      console.log(`Subject: Lead baru untuk properti "${lead.property.title}"`);
-      console.log(`From: ${lead.name} (${lead.phone})`);
-      console.log(`Message: ${lead.message}`);
-      console.log(`---\n`);
+    if (owner) {
+      await this.emailService.sendLeadNotificationEmail(owner.email, owner.name, lead.property.title, {
+        name: lead.name, phone: lead.phone, email: lead.email, message: lead.message,
+      });
+      this.notificationsService.create(
+        (lead.property as any).userId,
+        'lead_received',
+        'Pesan baru masuk',
+        `${lead.name} mengirim pesan untuk "${lead.property.title}"`,
+        '/dashboard/leads',
+      ).catch(() => {});
     }
 
     return lead;

@@ -98,12 +98,25 @@ model User {
   verificationToken       String?   @unique
   verificationTokenExpiry DateTime?
 
+  // Password reset
+  resetToken       String?   @unique
+  resetTokenExpiry DateTime?
+
+  // Refresh token
+  refreshToken       String?   @unique
+  refreshTokenExpiry DateTime?
+
   // Relations
   properties   Property[]
   leads        Lead[]
   transactions Transaction[]
   favorites    Favorite[]
   moderationLogs ModerationLog[]
+  reports      Report[]
+  savedSearches SavedSearch[]
+  notifications Notification[]
+  reviewsGiven    Review[] @relation("ReviewAuthor")
+  reviewsReceived Review[] @relation("ReviewAgent")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -183,6 +196,10 @@ model Property {
   metaTitle       String?
   metaDescription String?
 
+  // Media
+  videoUrl     String?
+  floorPlanUrl String?
+
   // Relations
   images       PropertyImage[]
   features     PropertyFeature[]
@@ -190,6 +207,8 @@ model Property {
   transactions Transaction[]
   favorites    Favorite[]
   moderationLogs ModerationLog[]
+  reports      Report[]
+  priceHistory PriceHistory[]
 
   publishedAt DateTime?
   createdAt   DateTime  @default(now())
@@ -321,4 +340,76 @@ model Favorite {
   @@index([userId])
   @@index([propertyId])
   @@map("favorites")
+}
+
+model Report {
+  id         String   @id @default(uuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reason     String
+  notes      String?  @db.Text
+  resolved   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, propertyId])
+  @@index([propertyId])
+  @@index([resolved])
+  @@map("reports")
+}
+
+model SavedSearch {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  url       String   // path + query string, e.g. "/jual/jakarta/rumah?minPrice=500000000"
+  lastSentAt DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("saved_searches")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // lead_received | property_approved | property_rejected | property_flagged
+  title     String
+  body      String
+  url       String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model PriceHistory {
+  id         String   @id @default(uuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  price      Decimal  @db.Decimal(15, 2)
+  createdAt  DateTime @default(now())
+
+  @@index([propertyId, createdAt])
+  @@map("price_history")
+}
+
+model Review {
+  id        String  @id @default(uuid())
+  authorId  String
+  author    User    @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  agentId   String
+  agent     User    @relation("ReviewAgent", fields: [agentId], references: [id], onDelete: Cascade)
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  @@unique([authorId, agentId])
+  @@index([agentId])
+  @@map("reviews")
 }

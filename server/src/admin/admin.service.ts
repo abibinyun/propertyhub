@@ -1,9 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class AdminService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notifications: NotificationsService,
+  ) {}
 
   // Users Management
   async getAllUsers(query: any) {
@@ -248,6 +252,7 @@ export class AdminService {
         include: {
           user: { select: { id: true, name: true, email: true } },
           images: { where: { isPrimary: true }, take: 1 },
+          _count: { select: { images: true } },
         },
         orderBy: { createdAt: 'asc' },
         skip: (page - 1) * limit,
@@ -292,6 +297,13 @@ export class AdminService {
       }),
     ]);
 
+    this.notifications.create(
+      property.userId, 'property_approved',
+      'Listing disetujui ✅',
+      `"${property.title}" telah disetujui dan sekarang aktif`,
+      `/dashboard/properties`,
+    ).catch(() => {});
+
     return { message: 'Property approved' };
   }
 
@@ -312,15 +324,16 @@ export class AdminService {
         },
       }),
       this.prisma.moderationLog.create({
-        data: {
-          propertyId,
-          moderatorId,
-          action: 'REJECTED',
-          reason,
-          notes,
-        },
+        data: { propertyId, moderatorId, action: 'REJECTED', reason, notes },
       }),
     ]);
+
+    this.notifications.create(
+      property.userId, 'property_rejected',
+      'Listing ditolak ❌',
+      `"${property.title}" ditolak: ${reason}`,
+      `/dashboard/properties`,
+    ).catch(() => {});
 
     return { message: 'Property rejected' };
   }
@@ -341,15 +354,16 @@ export class AdminService {
         },
       }),
       this.prisma.moderationLog.create({
-        data: {
-          propertyId,
-          moderatorId,
-          action: 'FLAGGED',
-          reason,
-          notes,
-        },
+        data: { propertyId, moderatorId, action: 'FLAGGED', reason, notes },
       }),
     ]);
+
+    this.notifications.create(
+      property.userId, 'property_flagged',
+      'Listing ditandai ⚠️',
+      `"${property.title}" ditandai untuk ditinjau: ${reason}`,
+      `/dashboard/properties`,
+    ).catch(() => {});
 
     return { message: 'Property flagged' };
   }

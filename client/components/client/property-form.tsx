@@ -11,6 +11,7 @@ import { Loader2, Info } from 'lucide-react';
 import { LocationSection } from './form-sections/location';
 import { FeaturesSection } from './form-sections/features';
 import { ImageUploadSection } from './form-sections/image-upload';
+import { FloorPlanUpload } from './floor-plan-upload';
 import { cn, formatPrice } from '@/lib/utils';
 
 interface FormState {
@@ -19,13 +20,14 @@ interface FormState {
   postalCode: string; landArea: string; buildingArea: string; bedrooms: string;
   bathrooms: string; floors: string; garage: string; certificateType: string; yearBuilt: string;
   furnishing: Furnishing; latitude?: number; longitude?: number; features: string[];
+  videoUrl: string;
 }
 
 const DEFAULT: FormState = {
   title: '', description: '', propertyType: 'HOUSE', listingType: 'SALE',
   price: '', address: '', city: '', district: '', province: '', postalCode: '',
   landArea: '', buildingArea: '', bedrooms: '', bathrooms: '', floors: '', garage: '',
-  certificateType: '', yearBuilt: '', furnishing: 'UNFURNISHED', features: [],
+  certificateType: '', yearBuilt: '', furnishing: 'UNFURNISHED', features: [], videoUrl: '',
 };
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
@@ -59,6 +61,7 @@ export function PropertyForm({ property }: { property?: Property }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [createdId, setCreatedId] = useState<string | null>(property?.id ?? null);
+  const [imageCount, setImageCount] = useState(property?.images?.length ?? 0);
   const [form, setForm] = useState<FormState>({
     title: property?.title ?? DEFAULT.title,
     description: property?.description ?? DEFAULT.description,
@@ -82,6 +85,7 @@ export function PropertyForm({ property }: { property?: Property }) {
     features: property?.features?.map((f: { feature: string }) => f.feature) ?? [],
     latitude: property?.latitude,
     longitude: property?.longitude,
+    videoUrl: property?.videoUrl ?? DEFAULT.videoUrl,
   });
 
   const set = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
@@ -104,6 +108,7 @@ export function PropertyForm({ property }: { property?: Property }) {
         latitude: form.latitude,
         longitude: form.longitude,
         features: form.features,
+        videoUrl: form.videoUrl || undefined,
       };
       if (isEdit) {
         await propertiesApi.update(property.slug, payload);
@@ -136,16 +141,32 @@ export function PropertyForm({ property }: { property?: Property }) {
           </div>
         </div>
 
-        <ImageUploadSection propertyId={createdId} initialImages={[]} />
+        <ImageUploadSection propertyId={createdId} initialImages={[]} onCountChange={setImageCount} />
+
+        <div className="bg-white rounded-2xl border border-border/60 overflow-hidden">
+          <div className="px-6 py-4 border-b border-border/50">
+            <h2 className="font-semibold text-sm">Denah Lantai <span className="text-muted-foreground font-normal">(opsional)</span></h2>
+          </div>
+          <div className="p-6">
+            <FloorPlanUpload propertyId={createdId} />
+          </div>
+        </div>
 
         <div className="flex gap-3">
-          <Button onClick={() => { router.push('/dashboard/properties'); router.refresh(); }} className="flex-1 rounded-xl">
-            Selesai
+          <Button
+            onClick={() => { router.push('/dashboard/properties'); router.refresh(); }}
+            className="flex-1 rounded-xl"
+            disabled={imageCount < 3}
+          >
+            Selesai {imageCount < 3 && `(${imageCount}/3 foto)`}
           </Button>
           <Button variant="outline" onClick={() => router.push('/dashboard/properties')} className="rounded-xl">
             Lewati
           </Button>
         </div>
+        {imageCount < 3 && (
+          <p className="text-xs text-amber-600 text-center">Minimal 3 foto diperlukan agar listing lebih menarik</p>
+        )}
       </div>
     );
   }
@@ -238,6 +259,13 @@ export function PropertyForm({ property }: { property?: Property }) {
             />
           </SectionCard>
 
+          {/* Video */}
+          <SectionCard title="Video / Virtual Tour">
+            <FormField label="URL Video YouTube" hint="Tempel link YouTube, contoh: https://youtube.com/watch?v=...">
+              <Input name="videoUrl" value={form.videoUrl} onChange={set} placeholder="https://youtube.com/watch?v=..." className="rounded-xl" />
+            </FormField>
+          </SectionCard>
+
           {/* Image upload untuk edit */}
           {isEdit && property.images && (
             <div className="bg-white rounded-2xl border border-border/60 overflow-hidden">
@@ -245,7 +273,19 @@ export function PropertyForm({ property }: { property?: Property }) {
                 <h2 className="font-semibold text-sm">Foto Properti</h2>
               </div>
               <div className="p-6">
-                <ImageUploadSection propertyId={property.id} initialImages={property.images} />
+                <ImageUploadSection propertyId={property.id} initialImages={property.images} onCountChange={setImageCount} />
+              </div>
+            </div>
+          )}
+
+          {/* Floor plan upload untuk edit */}
+          {isEdit && (
+            <div className="bg-white rounded-2xl border border-border/60 overflow-hidden">
+              <div className="px-6 py-4 border-b border-border/50">
+                <h2 className="font-semibold text-sm">Denah Lantai</h2>
+              </div>
+              <div className="p-6">
+                <FloorPlanUpload propertyId={property.id} initialUrl={property.floorPlanUrl} />
               </div>
             </div>
           )}

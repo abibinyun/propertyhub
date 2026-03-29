@@ -2,7 +2,7 @@
 
 Platform listing properti fullstack — jual, beli, dan sewa properti di Indonesia.
 
-**Last Updated:** 2026-03-24 | **Status:** Production-ready (minus deployment)
+**Last Updated:** 2026-03-29 | **Status:** Production-ready (minus deployment)
 
 ## Stack
 
@@ -11,8 +11,9 @@ Platform listing properti fullstack — jual, beli, dan sewa properti di Indones
 | Backend | NestJS + PostgreSQL + Prisma |
 | Frontend | Next.js 16 + Tailwind v4 + shadcn/ui |
 | Runtime | Bun |
-| Auth | JWT cookie-based (httpOnly) |
+| Auth | JWT cookie-based (httpOnly) + OAuth Google |
 | Storage | Cloudinary |
+| Payment | Midtrans (modular, log default) |
 | Maps | Leaflet + OpenStreetMap + data wilayah offline |
 
 ## Repositories
@@ -30,13 +31,14 @@ Platform listing properti fullstack — jual, beli, dan sewa properti di Indones
 
 - Listing properti dengan SEO URL hierarki 5 level
 - Filter, sort, pagination di listing dan dashboard
-- Detail page: gallery premium, specs, properti serupa, sticky contact
-- Leads system: anti-spam, rate limit, dashboard dua sisi (pengirim & penerima)
+- Detail page: gallery premium, specs, floor plan, price history chart, video, properti serupa, sticky contact
+- Leads system: anti-spam, rate limit, dashboard dua sisi (pengirim & penerima), export CSV
 - Favorites: per-user, count per properti, load more
-- Dashboard: sidebar, stats real-time, sort properti (views/leads/favorites/rank)
-- Access control: views tidak increment untuk pemilik, self-favorite/lead dicegah
-- Auth: JWT cookie, redirect balik ke halaman asal setelah login
-- Admin: moderation queue, approve/reject/flag
+- Dashboard: sidebar, stats real-time, sort properti (views/leads/favorites/rank), analitik per properti
+- Access control: views tidak increment untuk pemilik, self-favorite/lead/review dicegah
+- Auth: JWT cookie, refresh token, redirect balik ke halaman asal setelah login
+- Admin: moderation queue, approve/reject/flag, ban user, reports
+- Notifikasi in-app (bell icon), reviews & rating agen, perbandingan properti, KPR calculator
 
 ## Struktur Monorepo
 
@@ -50,9 +52,14 @@ property-webapp/
 ## Quick Start
 
 ```bash
+# Jalankan keduanya sekaligus
+./dev.sh
+
+# Atau manual:
+
 # Backend
 cd server
-cp .env.example .env   # isi DATABASE_URL, JWT_SECRET, CLOUDINARY_*
+cp .env.example .env   # isi DATABASE_URL, JWT_SECRET, CLOUDINARY_*, GOOGLE_*
 bun install
 bunx prisma migrate dev
 bunx prisma db seed
@@ -69,15 +76,15 @@ bun run dev
 
 - Listing properti dengan URL SEO-friendly (`/jual/jakarta-selatan/rumah`)
 - Detail properti dengan peta interaktif (Leaflet)
-- Auth: register, login, JWT cookie
-- Dashboard: kelola properti, favorit, leads
+- Auth: register, login, JWT cookie, **OAuth Google**
+- **Password reset** via email
+- Dashboard: kelola properti, favorit, leads, **analitik per properti**
+- **Featured listing** — BASIC/PREMIUM/ULTIMATE, payment modular (Midtrans)
+- **Email notifikasi** — lead baru langsung dikirim ke pemilik properti
 - Admin: moderasi, approve/reject, statistik
 - Ranking algorithm (quality, freshness, engagement, reputation)
 - SEO: generateMetadata, JSON-LD, sitemap.xml, robots.txt
 - **Data wilayah offline** — dropdown Provinsi→Kota→Kecamatan tanpa API eksternal
-  - Sumber: [ibnux/data-indonesia](https://github.com/ibnux/data-indonesia)
-  - Pilih wilayah → peta otomatis pindah ke koordinat wilayah tersebut
-  - Search pin via Nominatim (OpenStreetMap) untuk presisi lokasi
 
 ## Env Variables
 
@@ -85,21 +92,32 @@ bun run dev
 ```env
 DATABASE_URL=postgresql://user:pass@localhost:5432/propertyhub
 JWT_SECRET=
+APP_URL=http://localhost:3001
+FRONTEND_URL=http://localhost:3000
 CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
-APP_URL=http://localhost:3000
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+EMAIL_PROVIDER=log          # log | resend
+RESEND_API_KEY=             # jika EMAIL_PROVIDER=resend
+PAYMENT_PROVIDER=log        # log | midtrans
+MIDTRANS_SERVER_KEY=        # jika PAYMENT_PROVIDER=midtrans
+MIDTRANS_CLIENT_KEY=        # jika PAYMENT_PROVIDER=midtrans
 ```
 
 ### Frontend (`client/.env.local`)
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:3001
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_PAYMENT_PROVIDER=log        # log | midtrans
+NEXT_PUBLIC_MIDTRANS_CLIENT_KEY=        # jika PAYMENT_PROVIDER=midtrans
 ```
 
 ## Dokumentasi
 
-- [docs/API.md](docs/API.md) — 43 API endpoints
+- [docs/API.md](docs/API.md) — 77 API endpoints
 - [docs/ERD.md](docs/ERD.md) — Database schema
 - [docs/ARCHITECTURE_DECISION.md](docs/ARCHITECTURE_DECISION.md) — Keputusan arsitektur
 - [STATUS.md](STATUS.md) — Status pengerjaan
+- [docs/TODO.md](docs/TODO.md) — Backlog & deployment checklist

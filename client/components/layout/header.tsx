@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { leadsApi } from '@/lib/api/leads';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context/auth-context';
@@ -24,6 +23,8 @@ import {
   Phone, Search, Bell, X, Megaphone,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { SearchBar } from '@/components/client/search-bar';
+import { NotificationBell } from '@/components/client/notification-bell';
 
 const JUAL_MENU = {
   types: [
@@ -266,8 +267,6 @@ export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [announcement, setAnnouncement] = useState(true);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 8);
@@ -275,34 +274,8 @@ export function Header() {
     return () => window.removeEventListener('scroll', handler);
   }, []);
 
-  useEffect(() => {
-    if (searchOpen) setTimeout(() => searchRef.current?.focus(), 50);
-  }, [searchOpen]);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
-    const q = searchQuery.trim().toLowerCase();
-    const slug = q.replace(/\s+/g, '-');
-    const TYPES = ['rumah', 'apartemen', 'tanah', 'komersial', 'villa', 'gudang'];
-    // Kalau query adalah tipe properti → /jual/rumah
-    if (TYPES.includes(slug)) {
-      router.push(`/jual/${slug}`);
-    } else {
-      // Anggap sebagai kota → /jual/{kota}
-      router.push(`/jual/${slug}`);
-    }
-    setSearchOpen(false);
-    setSearchQuery('');
-  };
-
   // Leads count badge — hanya tampil jika user punya leads baru (placeholder)
-  const [unreadCount, setUnreadCount] = useState(0);
-  useEffect(() => {
-    if (!user) return;
-    leadsApi.getUnreadCount().then(r => setUnreadCount(r.count)).catch(() => {});
-  }, [user]);
-  const hasNotif = unreadCount > 0;
+  const hasNotif = false;
 
   return (
     <div className="sticky top-0 z-50 w-full">
@@ -388,25 +361,14 @@ export function Header() {
             {/* Right Actions */}
             <div className="flex items-center gap-1.5 flex-shrink-0">
 
-              {/* Search — desktop inline, mobile icon */}
+              {/* Search — desktop */}
               <div className="hidden lg:flex items-center">
                 {searchOpen ? (
-                  <form onSubmit={handleSearch} className="flex items-center gap-2 animate-in fade-in slide-in-from-right-4 duration-200">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        ref={searchRef}
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Cari kota, area, properti..."
-                        className="pl-9 h-9 w-64 text-sm"
-                      />
-                    </div>
-                    <Button type="submit" size="sm">Cari</Button>
-                    <Button type="button" variant="ghost" size="icon" className="h-9 w-9" onClick={() => { setSearchOpen(false); setSearchQuery(''); }}>
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </form>
+                  <SearchBar
+                    autoFocus
+                    onClose={() => { setSearchOpen(false); }}
+                    className="w-80 animate-in fade-in slide-in-from-right-4 duration-200"
+                  />
                 ) : (
                   <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setSearchOpen(true)}>
                     <Search className="h-4 w-4" />
@@ -422,16 +384,9 @@ export function Header() {
               {user ? (
                 <>
                   {/* Notification bell */}
-                  <Button variant="ghost" size="icon" className="relative h-9 w-9 hidden sm:flex" asChild>
-                    <Link href="/dashboard/leads">
-                      <Bell className="h-4 w-4" />
-                      {hasNotif && (
-                        <span className="absolute top-1 right-1 h-4 min-w-4 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center px-0.5 ring-2 ring-background">
-                          {unreadCount > 9 ? '9+' : unreadCount}
-                        </span>
-                      )}
-                    </Link>
-                  </Button>
+                  <div className="hidden sm:block">
+                    <NotificationBell />
+                  </div>
 
                   <Link href="/dashboard/properties/new" className="hidden sm:block">
                     <Button size="sm" className="gap-1.5 font-medium">
@@ -529,12 +484,7 @@ export function Header() {
 
                     {/* Mobile search */}
                     <div className="p-4 border-b">
-                      <form onSubmit={(e) => { e.preventDefault(); if (searchQuery.trim()) { router.push(`/jual/${searchQuery.trim().toLowerCase().replace(/\s+/g, '-')}`); setMobileOpen(false); setSearchQuery(''); } }}>
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Cari kota atau area..." className="pl-9 text-sm" />
-                        </div>
-                      </form>
+                      <SearchBar onClose={() => setMobileOpen(false)} autoFocus={false} />
                     </div>
 
                     <nav className="flex-1 overflow-y-auto p-4 space-y-6">

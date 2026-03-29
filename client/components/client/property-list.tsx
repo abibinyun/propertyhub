@@ -15,9 +15,10 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { MoreVertical, Eye, Edit, Trash2, MapPin, TrendingUp, MessageSquare, Plus, ChevronLeft, ChevronRight, Heart } from 'lucide-react';
+import { MoreVertical, Eye, Edit, Trash2, MapPin, TrendingUp, MessageSquare, Plus, ChevronLeft, ChevronRight, Heart, Zap } from 'lucide-react';
 import { formatPrice, cn } from '@/lib/utils';
 import { propertyDetailUrl } from '@/lib/url';
+import { FeaturedModal } from './featured-modal';
 
 const STATUS_CONFIG: Record<PropertyStatus, { label: string; className: string }> = {
   ACTIVE:   { label: 'Aktif',    className: 'bg-emerald-100 text-emerald-700' },
@@ -50,6 +51,7 @@ export function PropertyList({ initialProperties, meta, initialSearch = '', init
   const [properties, setProperties] = useState(initialProperties);
   const [deleteTarget, setDeleteTarget] = useState<Property | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [featuredTarget, setFeaturedTarget] = useState<Property | null>(null);
   const [search, setSearch] = useState(initialSearch);
   const [filterStatus, setFilterStatus] = useState(initialStatus);
   const [sort, setSort] = useState(initialSort);
@@ -197,7 +199,13 @@ export function PropertyList({ initialProperties, meta, initialSearch = '', init
                             <Link href={propertyDetailUrl(property)}><Eye className="mr-2 h-4 w-4" />Lihat</Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
+                            <Link href={`/dashboard/properties/${property.id}/analytics`}><TrendingUp className="mr-2 h-4 w-4" />Analitik</Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
                             <Link href={`/dashboard/properties/${property.slug}/edit`}><Edit className="mr-2 h-4 w-4" />Edit</Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setFeaturedTarget(property)}>
+                            <Zap className="mr-2 h-4 w-4 text-amber-500" />Promosikan
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setDeleteTarget(property)} className="text-destructive focus:text-destructive">
                             <Trash2 className="mr-2 h-4 w-4" />Hapus
@@ -271,6 +279,16 @@ export function PropertyList({ initialProperties, meta, initialSearch = '', init
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {featuredTarget && (
+        <FeaturedModal
+          propertyId={featuredTarget.id}
+          propertyTitle={featuredTarget.title}
+          open={!!featuredTarget}
+          onClose={() => setFeaturedTarget(null)}
+          onSuccess={() => { setFeaturedTarget(null); router.refresh(); }}
+        />
+      )}
     </>
   );
 }

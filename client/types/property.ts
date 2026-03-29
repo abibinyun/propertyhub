@@ -21,10 +21,13 @@ export interface PropertyOwner {
   phone?: string;
   email?: string;
   company?: string;
+  verified?: boolean;
+  _count?: { properties: number };
 }
 
 export interface Property {
   id: string;
+  userId: string;
   slug: string;
   title: string;
   description: string;
@@ -61,6 +64,8 @@ export interface Property {
   updatedAt: string;
   latitude?: number;
   longitude?: number;
+  videoUrl?: string;
+  floorPlanUrl?: string;
 }
 
 export interface CreatePropertyDto {
@@ -86,6 +91,7 @@ export interface CreatePropertyDto {
   features?: string[];
   latitude?: number;
   longitude?: number;
+  videoUrl?: string;
 }
 
 export type UpdatePropertyDto = Partial<CreatePropertyDto>;

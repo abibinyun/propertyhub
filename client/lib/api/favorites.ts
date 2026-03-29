@@ -10,9 +10,16 @@ export interface FavoriteItem {
 }
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, { ...init, credentials: 'include' });
-  if (!res.ok) throw await res.json();
-  return res.json();
+  try {
+    const res = await fetch(`${API_URL}${path}`, { ...init, credentials: 'include' });
+    if (!res.ok) throw await res.json();
+    return res.json();
+  } catch (err: unknown) {
+    if (err instanceof TypeError && err.message.includes('fetch')) {
+      throw new Error('Tidak dapat terhubung ke server.');
+    }
+    throw err;
+  }
 }
 
 export const favoritesApi = {

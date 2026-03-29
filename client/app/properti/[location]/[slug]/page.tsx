@@ -3,19 +3,25 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { propertiesApi } from '@/lib/api/properties';
 import { Badge } from '@/components/ui/badge';
+
+export const revalidate = 60;
 import { Button } from '@/components/ui/button';
 import { PropertyGallery } from '@/components/client/property-gallery';
 import { ContactForm } from '@/components/client/contact-form';
+import { KprCalculator } from '@/components/client/kpr-calculator';
 import { PropertyMapView } from '@/components/client/property-map-view';
 import { ShareButton } from '@/components/client/share-button';
+import { ReportButton } from '@/components/client/report-button';
 import { MobileStickyContact } from '@/components/client/mobile-sticky-contact';
 import { SimilarProperties } from '@/components/property/similar-properties';
 import { AuthGate } from '@/components/client/auth-gate';
+import { PriceHistoryChart } from '@/components/client/price-history-chart';
+import { VideoEmbed } from '@/components/client/video-embed';
 import {
   MapPin, Bed, Bath, Maximize, Home, Phone, Mail, ChevronRight,
-  Shield, Calendar, Layers, Car, CheckCircle2, Eye, Tag,
+  Shield, Calendar, Layers, Car, CheckCircle2, Eye, Tag, BadgeCheck, TrendingUp, Clock,
 } from 'lucide-react';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, timeAgo } from '@/lib/utils';
 
 interface Props {
   params: Promise<{ location: string; slug: string }>;
@@ -75,10 +81,16 @@ export default async function PropertyDetailPage({ params }: Props) {
   const { slug, location } = await params;
 
   let property;
+  let priceHistory: { price: number; createdAt: string }[] = [];
   try {
     property = await propertiesApi.getBySlug(slug);
   } catch {
     notFound();
+  }
+  try {
+    priceHistory = await propertiesApi.getPriceHistory(slug);
+  } catch {
+    // price history optional, ignore errors
   }
 
   const images = property.images || [];
@@ -102,6 +114,17 @@ export default async function PropertyDetailPage({ params }: Props) {
     seller: { '@type': 'Person', name: property.user?.name, telephone: property.user?.phone },
   };
 
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Beranda', item: BASE_URL },
+      { '@type': 'ListItem', position: 2, name: statusLabel, item: `${BASE_URL}/${property.listingType === 'SALE' ? 'jual' : 'sewa'}` },
+      { '@type': 'ListItem', position: 3, name: property.city, item: `${BASE_URL}/${property.listingType === 'SALE' ? 'jual' : 'sewa'}/${property.city.toLowerCase().replace(/\s+/g, '-')}` },
+      { '@type': 'ListItem', position: 4, name: property.title, item: pageUrl },
+    ],
+  };
+
   const specs = [
     property.bedrooms && { icon: Bed, label: 'Kamar Tidur', value: `${property.bedrooms} KT` },
     property.bathrooms && { icon: Bath, label: 'Kamar Mandi', value: `${property.bathrooms} KM` },
@@ -123,6 +146,7 @@ export default async function PropertyDetailPage({ params }: Props) {
   return (
     <div className="min-h-screen bg-slate-50/50">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
 
       {/* Breadcrumb */}
       <div className="bg-white border-b border-border/50">
@@ -170,7 +194,10 @@ export default async function PropertyDetailPage({ params }: Props) {
                     <span>{property.address}, {property.district}, {property.city}</span>
                   </div>
                 </div>
-                <ShareButton url={pageUrl} title={property.title} />
+                <div className="flex items-center gap-3">
+                  <ShareButton url={pageUrl} title={property.title} />
+                  <ReportButton propertyId={property.id} />
+                </div>
               </div>
 
               <div className="mt-4 pt-4 border-t border-border/50 flex items-end justify-between flex-wrap gap-3">
@@ -193,6 +220,7 @@ export default async function PropertyDetailPage({ params }: Props) {
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1"><Eye className="h-3.5 w-3.5" />{property.viewsCount} dilihat</span>
                   <span className="flex items-center gap-1"><Tag className="h-3.5 w-3.5" />{property.id.slice(0, 8).toUpperCase()}</span>
+                  <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />Diperbarui {timeAgo(property.updatedAt)}</span>
                 </div>
               </div>
             </div>
@@ -256,6 +284,31 @@ export default async function PropertyDetailPage({ params }: Props) {
               </div>
             </div>
 
+            {/* Price History */}
+            <div className="bg-white rounded-2xl border border-border/60 p-5 md:p-6">
+              <h2 className="font-semibold text-base mb-4 flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-primary" />
+                Riwayat Harga
+              </h2>
+              <PriceHistoryChart data={priceHistory} />
+            </div>
+
+            {/* Video */}
+            {property.videoUrl && (
+              <div className="bg-white rounded-2xl border border-border/60 p-5 md:p-6">
+                <h2 className="font-semibold text-base mb-4">Video / Virtual Tour</h2>
+                <VideoEmbed url={property.videoUrl} />
+              </div>
+            )}
+
+            {/* Floor Plan */}
+            {property.floorPlanUrl && (
+              <div className="bg-white rounded-2xl border border-border/60 p-5 md:p-6">
+                <h2 className="font-semibold text-base mb-4">Denah Lantai</h2>
+                <img src={property.floorPlanUrl} alt="Denah lantai" className="w-full rounded-xl border object-contain max-h-96" />
+              </div>
+            )}
+
             {/* Map */}
             {property.latitude && property.longitude && (
               <div className="bg-white rounded-2xl border border-border/60 p-5 md:p-6">
@@ -293,15 +346,25 @@ export default async function PropertyDetailPage({ params }: Props) {
               <div className="bg-white rounded-2xl border border-border/60 overflow-hidden">
                 <div className="bg-gradient-to-br from-primary/5 to-primary/10 px-5 py-4 border-b border-border/50">
                   <p className="text-xs text-muted-foreground mb-1">Ditawarkan oleh</p>
-                  <div className="flex items-center gap-3">
+                  <Link href={`/agen/${property.userId}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                     <div className="h-11 w-11 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-lg flex-shrink-0">
                       {property.user?.name?.charAt(0) ?? 'A'}
                     </div>
                     <div className="min-w-0">
-                      <p className="font-semibold truncate">{property.user?.name ?? 'Agen Properti'}</p>
+                      <p className="font-semibold truncate flex items-center gap-1.5">
+                        {property.user?.name ?? 'Agen Properti'}
+                        {property.user?.verified && (
+                          <span title="Agen Terverifikasi">
+                            <BadgeCheck className="h-4 w-4 text-primary flex-shrink-0" />
+                          </span>
+                        )}
+                      </p>
                       {property.user?.company && <p className="text-xs text-muted-foreground truncate">{property.user.company}</p>}
+                      {property.user?._count?.properties != null && (
+                        <p className="text-xs text-muted-foreground">{property.user._count.properties} listing aktif</p>
+                      )}
                     </div>
-                  </div>
+                  </Link>
                 </div>
                 <div className="p-4 space-y-2.5">
                   <AuthGate>
@@ -333,13 +396,18 @@ export default async function PropertyDetailPage({ params }: Props) {
                 </div>
               </div>
 
+              {/* KPR Calculator */}
+              {property.listingType === 'SALE' && (
+                <KprCalculator price={Number(property.price)} />
+              )}
+
               {/* Lead form */}
               <div className="bg-white rounded-2xl border border-border/60 p-5">
                 <h3 className="font-semibold text-sm mb-4 flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-primary" />
                   Jadwalkan Survei
                 </h3>
-                <ContactForm propertyId={property.id} />
+                <ContactForm propertyId={property.id} agentPhone={property.user?.phone} />
               </div>
 
             </div>
@@ -352,6 +420,7 @@ export default async function PropertyDetailPage({ params }: Props) {
         phone={property.user?.phone}
         name={property.user?.name}
         price={formatPrice(property.price)}
+        propertyTitle={property.title}
       />
     </div>
   );
