@@ -346,7 +346,7 @@ export default async function PropertyDetailPage({ params }: Props) {
               <div className="bg-white rounded-2xl border border-border/60 overflow-hidden">
                 <div className="bg-gradient-to-br from-primary/5 to-primary/10 px-5 py-4 border-b border-border/50">
                   <p className="text-xs text-muted-foreground mb-1">Ditawarkan oleh</p>
-                  <Link href={`/agen/${property.userId}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                  <Link href={`/agen/${(property.user as any)?.username ?? property.userId}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                     <div className="h-11 w-11 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-lg flex-shrink-0">
                       {property.user?.name?.charAt(0) ?? 'A'}
                     </div>

@@ -153,7 +153,7 @@ export class PropertiesService {
         features: true,
         user: {
           select: {
-            name: true, phone: true, email: true, company: true, verified: true,
+            name: true, phone: true, email: true, company: true, verified: true, username: true,
             _count: { select: { properties: { where: { status: 'ACTIVE', moderationStatus: 'APPROVED' } } } },
           },
         },

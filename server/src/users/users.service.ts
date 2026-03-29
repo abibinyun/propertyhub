@@ -52,16 +52,22 @@ export class UsersService {
     return user;
   }
 
-  async getPublicProfile(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
+  async getPublicProfile(handle: string) {
+    // Lookup by username (slug) atau UUID
+    const isUuid = /^[0-9a-f-]{36}$/.test(handle);
+    const user = await this.prisma.user.findFirst({
+      where: isUuid ? { id: handle } : { username: handle },
       select: {
         id: true,
         name: true,
+        username: true,
         avatar: true,
+        bio: true,
         company: true,
         license: true,
         verified: true,
+        phone: true,
+        email: true,
         createdAt: true,
         _count: { select: { properties: true } },
       },
@@ -69,7 +75,7 @@ export class UsersService {
     if (!user) throw new NotFoundException('User not found');
 
     const properties = await this.prisma.property.findMany({
-      where: { userId, status: 'ACTIVE', moderationStatus: 'APPROVED' },
+      where: { userId: user.id, status: 'ACTIVE', moderationStatus: 'APPROVED' },
       include: { images: { where: { isPrimary: true }, take: 1 } },
       orderBy: [{ featured: 'desc' }, { rankScore: 'desc' }],
       take: 20,

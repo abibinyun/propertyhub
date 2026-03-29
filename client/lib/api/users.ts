@@ -19,9 +19,19 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const usersApi = {
-  updateProfile: (data: { name?: string; phone?: string; company?: string }) =>
+  updateProfile: (data: { name?: string; phone?: string; company?: string; username?: string; bio?: string }) =>
     apiFetch('/users/profile', { method: 'PATCH', body: JSON.stringify(data) }),
 
   changePassword: (data: { currentPassword: string; newPassword: string }) =>
     apiFetch('/users/password', { method: 'PATCH', body: JSON.stringify(data) }),
+
+  uploadAvatar: async (file: File): Promise<{ avatarUrl: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch(`${API_URL}/users/avatar`, {
+      method: 'POST', credentials: 'include', body: formData,
+    });
+    if (!res.ok) throw await res.json();
+    return res.json();
+  },
 };

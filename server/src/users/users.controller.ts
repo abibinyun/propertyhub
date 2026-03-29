@@ -1,4 +1,5 @@
-import { Controller, Get, Patch, Body, Param, UseGuards, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Patch, Post, Body, Param, UseGuards, BadRequestException, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator, ConflictException } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from './users.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -6,8 +7,9 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { getConfig } from '../common/config';
-import * as bcrypt from 'bcrypt';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { PrismaService } from '../prisma/prisma.service';
+import * as bcrypt from 'bcrypt';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -16,6 +18,7 @@ export class UsersController {
     private usersService: UsersService,
     private prisma: PrismaService,
     private configService: ConfigService,
+    private cloudinary: CloudinaryService,
   ) {}
 
   @Get('profile')
@@ -24,8 +27,29 @@ export class UsersController {
   }
 
   @Patch('profile')
-  updateProfile(@CurrentUser() user: any, @Body() dto: UpdateProfileDto) {
+  async updateProfile(@CurrentUser() user: any, @Body() dto: UpdateProfileDto) {
+    // Cek username unik jika diisi
+    if (dto.username) {
+      const existing = await this.prisma.user.findUnique({ where: { username: dto.username } });
+      if (existing && existing.id !== user.id) throw new ConflictException('Username sudah dipakai');
+    }
     return this.usersService.updateProfile(user.id, dto);
+  }
+
+  @Post('avatar')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadAvatar(
+    @CurrentUser() user: any,
+    @UploadedFile(new ParseFilePipe({
+      validators: [
+        new MaxFileSizeValidator({ maxSize: 2 * 1024 * 1024 }),
+        new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp)$/ }),
+      ],
+    })) file: Express.Multer.File,
+  ) {
+    const url = await this.cloudinary.uploadImage(file, 'avatars');
+    await this.prisma.user.update({ where: { id: user.id }, data: { avatar: url } });
+    return { avatarUrl: url };
   }
 
   @Patch('password')
@@ -56,9 +80,10 @@ import { Controller as PublicController } from '@nestjs/common';
 export class UsersPublicController {
   constructor(private usersService: UsersService) {}
 
-  @Get(':id/public')
+  // Lookup by username atau UUID
+  @Get(':handle/public')
   @UseGuards(OptionalJwtAuthGuard)
-  getPublicProfile(@Param('id') id: string) {
-    return this.usersService.getPublicProfile(id);
+  getPublicProfile(@Param('handle') handle: string) {
+    return this.usersService.getPublicProfile(handle);
   }
 }

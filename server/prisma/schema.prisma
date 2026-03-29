@@ -89,9 +89,11 @@ model User {
   role     Role    @default(USER)
 
   // Agent info (optional)
-  company  String?
-  license  String?
-  verified Boolean @default(false)
+  username    String?   @unique  // SEO URL: /agen/budi-santoso
+  bio         String?
+  company     String?
+  license     String?
+  verified    Boolean @default(false)
 
   // Email verification
   emailVerified           Boolean   @default(false)

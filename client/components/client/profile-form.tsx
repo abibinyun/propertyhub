@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import Image from 'next/image';
 import { usersApi } from '@/lib/api/users';
 import { useAuth } from '@/lib/context/auth-context';
 import { User } from '@/types/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, CheckCircle, Eye, EyeOff } from 'lucide-react';
+import { Loader2, CheckCircle, Eye, EyeOff, Camera } from 'lucide-react';
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -22,6 +23,10 @@ function SectionCard({ title, children }: { title: string; children: React.React
 
 export function ProfileForm({ user }: { user: User }) {
   const { setUser } = useAuth();
+  const [avatar, setAvatar] = useState(user.avatar);
+  const [avatarLoading, setAvatarLoading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileSuccess, setProfileSuccess] = useState(false);
   const [profileError, setProfileError] = useState('');
@@ -32,6 +37,19 @@ export function ProfileForm({ user }: { user: User }) {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
 
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.[0]) return;
+    setAvatarLoading(true);
+    try {
+      const { avatarUrl } = await usersApi.uploadAvatar(e.target.files[0]);
+      setAvatar(avatarUrl);
+      setUser({ ...user, avatar: avatarUrl });
+    } catch { /* silent */ } finally {
+      setAvatarLoading(false);
+      e.target.value = '';
+    }
+  };
+
   const handleProfile = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setProfileError(''); setProfileSuccess(false); setProfileLoading(true);
@@ -41,6 +59,8 @@ export function ProfileForm({ user }: { user: User }) {
         name: fd.get('name') as string,
         phone: fd.get('phone') as string || undefined,
         company: fd.get('company') as string || undefined,
+        username: fd.get('username') as string || undefined,
+        bio: fd.get('bio') as string || undefined,
       });
       setUser({ ...user, ...(updated as Partial<User>) });
       setProfileSuccess(true);
@@ -60,10 +80,7 @@ export function ProfileForm({ user }: { user: User }) {
     const confirm = fd.get('confirmPassword') as string;
     if (newPw !== confirm) { setPwError('Konfirmasi password tidak cocok'); setPwLoading(false); return; }
     try {
-      await usersApi.changePassword({
-        currentPassword: fd.get('currentPassword') as string,
-        newPassword: newPw,
-      });
+      await usersApi.changePassword({ currentPassword: fd.get('currentPassword') as string, newPassword: newPw });
       setPwSuccess(true);
       (e.target as HTMLFormElement).reset();
       setTimeout(() => setPwSuccess(false), 3000);
@@ -76,87 +93,133 @@ export function ProfileForm({ user }: { user: User }) {
 
   return (
     <div className="space-y-5">
+      {/* Avatar */}
+      <SectionCard title="Foto Profil">
+        <div className="flex items-center gap-5">
+          <div className="relative flex-shrink-0">
+            {avatar ? (
+              <Image src={avatar} alt="Avatar" width={80} height={80} className="h-20 w-20 rounded-full object-cover ring-2 ring-border" />
+            ) : (
+              <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-3xl ring-2 ring-border">
+                {user.name.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={avatarLoading}
+              className="absolute bottom-0 right-0 h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow hover:bg-primary/90 transition-colors"
+            >
+              {avatarLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
+            </button>
+            <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleAvatarChange} />
+          </div>
+          <div>
+            <p className="text-sm font-medium">{user.name}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Klik ikon kamera untuk ganti foto</p>
+            <p className="text-xs text-muted-foreground">Max 2MB · JPG, PNG, WebP</p>
+          </div>
+        </div>
+      </SectionCard>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-      {/* Profile info */}
-      <SectionCard title="Informasi Akun">
-        <form onSubmit={handleProfile} className="space-y-4">
-          {profileError && <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-xl">{profileError}</p>}
-          {profileSuccess && (
-            <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 px-3 py-2 rounded-xl">
-              <CheckCircle className="h-4 w-4" />Profil berhasil disimpan
+        {/* Profile info */}
+        <SectionCard title="Informasi Akun">
+          <form onSubmit={handleProfile} className="space-y-4">
+            {profileError && <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-xl">{profileError}</p>}
+            {profileSuccess && (
+              <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 px-3 py-2 rounded-xl">
+                <CheckCircle className="h-4 w-4" />Profil berhasil disimpan
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <Label>Email</Label>
+              <Input value={user.email} disabled className="bg-muted rounded-xl" />
+              <p className="text-xs text-muted-foreground">Email tidak dapat diubah</p>
             </div>
-          )}
 
-          <div className="space-y-1.5">
-            <Label>Email</Label>
-            <Input value={user.email} disabled className="bg-muted rounded-xl" />
-            <p className="text-xs text-muted-foreground">Email tidak dapat diubah</p>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="name">Nama Lengkap *</Label>
-            <Input id="name" name="name" defaultValue={user.name} required className="rounded-xl" />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="phone">Nomor Telepon / WhatsApp</Label>
-            <Input id="phone" name="phone" defaultValue={user.phone ?? ''} placeholder="08123456789" className="rounded-xl" />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="company">Nama Perusahaan / Agen</Label>
-            <Input id="company" name="company" defaultValue={user.company ?? ''} placeholder="PT. Properti Indonesia" className="rounded-xl" />
-          </div>
-
-          <Button type="submit" disabled={profileLoading} className="w-full rounded-xl font-semibold">
-            {profileLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {profileLoading ? 'Menyimpan...' : 'Simpan Perubahan'}
-          </Button>
-        </form>
-      </SectionCard>
-
-      {/* Change password */}
-      <SectionCard title="Ganti Password">
-        <form onSubmit={handlePassword} className="space-y-4">
-          {pwError && <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-xl">{pwError}</p>}
-          {pwSuccess && (
-            <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 px-3 py-2 rounded-xl">
-              <CheckCircle className="h-4 w-4" />Password berhasil diubah
+            <div className="space-y-1.5">
+              <Label htmlFor="name">Nama Lengkap *</Label>
+              <Input id="name" name="name" defaultValue={user.name} required className="rounded-xl" />
             </div>
-          )}
 
-          <div className="space-y-1.5">
-            <Label htmlFor="currentPassword">Password Saat Ini</Label>
-            <div className="relative">
-              <Input id="currentPassword" name="currentPassword" type={showCurrent ? 'text' : 'password'} required className="rounded-xl pr-10" />
-              <button type="button" onClick={() => setShowCurrent(!showCurrent)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
+            <div className="space-y-1.5">
+              <Label htmlFor="username">Username</Label>
+              <div className="flex items-center rounded-xl border border-input overflow-hidden focus-within:ring-2 focus-within:ring-ring">
+                <span className="px-3 text-sm text-muted-foreground bg-muted border-r border-input h-10 flex items-center">@</span>
+                <Input id="username" name="username" defaultValue={(user as any).username ?? ''} placeholder="budi-santoso" className="rounded-none border-0 focus-visible:ring-0" />
+              </div>
+              <p className="text-xs text-muted-foreground">URL profil: /agen/username · Huruf kecil, angka, tanda hubung</p>
             </div>
-          </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="newPassword">Password Baru</Label>
-            <div className="relative">
-              <Input id="newPassword" name="newPassword" type={showNew ? 'text' : 'password'} required minLength={6} className="rounded-xl pr-10" />
-              <button type="button" onClick={() => setShowNew(!showNew)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
+            <div className="space-y-1.5">
+              <Label htmlFor="bio">Bio</Label>
+              <textarea id="bio" name="bio" defaultValue={(user as any).bio ?? ''} rows={3} maxLength={300}
+                placeholder="Ceritakan sedikit tentang Anda sebagai agen properti..."
+                className="flex w-full rounded-xl border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none" />
+              <p className="text-xs text-muted-foreground">Maks 300 karakter</p>
             </div>
-            <p className="text-xs text-muted-foreground">Minimal 6 karakter</p>
-          </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="confirmPassword">Konfirmasi Password Baru</Label>
-            <Input id="confirmPassword" name="confirmPassword" type="password" required className="rounded-xl" />
-          </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="phone">Nomor Telepon / WhatsApp</Label>
+              <Input id="phone" name="phone" defaultValue={user.phone ?? ''} placeholder="08123456789" className="rounded-xl" />
+            </div>
 
-          <Button type="submit" variant="outline" disabled={pwLoading} className="w-full rounded-xl font-semibold">
-            {pwLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {pwLoading ? 'Mengubah...' : 'Ubah Password'}
-          </Button>
-        </form>
-      </SectionCard>
+            <div className="space-y-1.5">
+              <Label htmlFor="company">Nama Perusahaan / Agen</Label>
+              <Input id="company" name="company" defaultValue={(user as any).company ?? ''} placeholder="PT. Properti Indonesia" className="rounded-xl" />
+            </div>
+
+            <Button type="submit" disabled={profileLoading} className="w-full rounded-xl font-semibold">
+              {profileLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {profileLoading ? 'Menyimpan...' : 'Simpan Perubahan'}
+            </Button>
+          </form>
+        </SectionCard>
+
+        {/* Change password */}
+        <SectionCard title="Ganti Password">
+          <form onSubmit={handlePassword} className="space-y-4">
+            {pwError && <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-xl">{pwError}</p>}
+            {pwSuccess && (
+              <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 px-3 py-2 rounded-xl">
+                <CheckCircle className="h-4 w-4" />Password berhasil diubah
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <Label htmlFor="currentPassword">Password Saat Ini</Label>
+              <div className="relative">
+                <Input id="currentPassword" name="currentPassword" type={showCurrent ? 'text' : 'password'} required className="rounded-xl pr-10" />
+                <button type="button" onClick={() => setShowCurrent(!showCurrent)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="newPassword">Password Baru</Label>
+              <div className="relative">
+                <Input id="newPassword" name="newPassword" type={showNew ? 'text' : 'password'} required minLength={6} className="rounded-xl pr-10" />
+                <button type="button" onClick={() => setShowNew(!showNew)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground">Minimal 6 karakter</p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="confirmPassword">Konfirmasi Password Baru</Label>
+              <Input id="confirmPassword" name="confirmPassword" type="password" required className="rounded-xl" />
+            </div>
+
+            <Button type="submit" variant="outline" disabled={pwLoading} className="w-full rounded-xl font-semibold">
+              {pwLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {pwLoading ? 'Mengubah...' : 'Ubah Password'}
+            </Button>
+          </form>
+        </SectionCard>
       </div>
     </div>
   );

@@ -65,6 +65,6 @@ export const serverApi = {
   getAdminLeads: (params?: string) => serverFetch<PaginatedResponse<AdminLead>>(`/admin/leads${params ? '?' + params : ''}`),
   getReports: (resolved?: string) => serverFetch<any[]>(`/reports${resolved !== undefined ? `?resolved=${resolved}` : ''}`),
   getSavedSearches: () => serverFetch<any[]>('/saved-searches'),
-  getAgentProfile: (id: string) => serverFetch<any>(`/users/${id}/public`),
+  getAgentProfile: (handle: string) => serverFetch<any>(`/users/${handle}/public`),
   getAgentReviews: (agentId: string) => serverFetch<any>(`/reviews/agent/${agentId}`),
 };
