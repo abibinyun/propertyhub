@@ -233,6 +233,8 @@ model Property {
   @@index([listingType, propertyType])
   @@index([listingType, propertyType, city])
   @@index([listingType, propertyType, city, district])
+  @@index([status, moderationStatus, rankScore])
+  @@index([featured, featuredUntil])
   @@map("properties")
 }
 

@@ -103,8 +103,8 @@ export class RankingService {
     engagementScore: number,
     userReputation: number,
     isFeatured: boolean,
+    featuredType?: string | null,
   ): number {
-    // Weights
     const weights = {
       quality: 0.35,
       freshness: 0.25,
@@ -118,9 +118,14 @@ export class RankingService {
       engagementScore * weights.engagement +
       userReputation * weights.reputation;
 
-    // Featured listings get 50% boost
+    // Boost berbeda per tier — BASIC 1.3x, PREMIUM 1.5x, ULTIMATE 2x
     if (isFeatured) {
-      rankScore *= 1.5;
+      const boostMap: Record<string, number> = {
+        BASIC: 1.3,
+        PREMIUM: 1.5,
+        ULTIMATE: 2.0,
+      };
+      rankScore *= boostMap[featuredType ?? ''] ?? 1.3;
     }
 
     return Math.round(rankScore * 100) / 100;
@@ -142,7 +147,10 @@ export class RankingService {
     if (!property) return;
 
     const qualityScore = this.calculateQualityScore(property);
-    const freshnessScore = this.calculateFreshnessScore(property.lastBoostedAt);
+    // Freeze freshness saat featured — tidak turun selama masa featured aktif
+    const freshnessScore = property.featured
+      ? 100
+      : this.calculateFreshnessScore(property.lastBoostedAt);
     const engagementScore = this.calculateEngagementScore(property);
     const userReputation = await this.calculateUserReputation(property.userId);
 
@@ -152,6 +160,7 @@ export class RankingService {
       engagementScore,
       userReputation,
       property.featured,
+      property.featuredType,
     );
 
     await this.prisma.property.update({

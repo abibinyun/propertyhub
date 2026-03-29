@@ -24,9 +24,9 @@ export interface FeaturedPaymentResult {
 }
 
 export const FEATURED_TIERS = [
-  { type: 'BASIC', label: 'Basic', price: 99000, duration: '1 minggu', perks: ['Muncul di atas hasil pencarian', '2x lebih banyak dilihat'] },
-  { type: 'PREMIUM', label: 'Premium', price: 299000, duration: '1 minggu', perks: ['Tampil di homepage', '5x lebih banyak dilihat', 'Badge Unggulan'] },
-  { type: 'ULTIMATE', label: 'Ultimate', price: 599000, duration: '1 bulan', perks: ['Posisi teratas di mana saja', '10x lebih banyak dilihat', 'Badge Premium', 'Prioritas support'] },
+  { type: 'BASIC', label: 'Basic', price: 99000, duration: '1 minggu', boost: '1.3x', perks: ['Muncul di atas hasil pencarian', 'Rank boost 1.3x', 'Freshness tidak turun'] },
+  { type: 'PREMIUM', label: 'Premium', price: 299000, duration: '1 minggu', boost: '1.5x', perks: ['Tampil di homepage', 'Rank boost 1.5x', 'Freshness tidak turun', 'Badge Unggulan'] },
+  { type: 'ULTIMATE', label: 'Ultimate', price: 599000, duration: '1 bulan', boost: '2x', perks: ['Posisi teratas di mana saja', 'Rank boost 2x', 'Freshness tidak turun', 'Badge Premium', 'Prioritas support'] },
 ] as const;
 
 export function getFeaturedTiers(prices?: { priceBasic: number; pricePremium: number; priceUltimate: number }) {

@@ -81,6 +81,7 @@ export function FeaturedModal({ propertyId, propertyTitle, open, onClose, onSucc
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold">{tier.label}</span>
+                  {'boost' in tier && <Badge variant="outline" className="text-xs font-bold text-emerald-600 border-emerald-300">Boost {(tier as any).boost}</Badge>}
                   {tier.type === 'PREMIUM' && <Badge className="bg-blue-500 text-white text-xs border-0">Populer</Badge>}
                   {tier.type === 'ULTIMATE' && <Badge className="bg-amber-500 text-white text-xs border-0">Terbaik</Badge>}
                 </div>
@@ -88,8 +89,7 @@ export function FeaturedModal({ propertyId, propertyTitle, open, onClose, onSucc
                   <p className="font-bold text-primary">{formatPrice(tier.price)}</p>
                   <p className="text-xs text-muted-foreground">/{tier.duration}</p>
                 </div>
-              </div>
-              <ul className="space-y-1">
+              </div>              <ul className="space-y-1">
                 {tier.perks.map((p) => (
                   <li key={p} className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />
