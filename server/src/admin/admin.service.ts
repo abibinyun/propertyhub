@@ -434,7 +434,7 @@ export class AdminService {
     await this.prisma.$transaction([
       this.prisma.user.update({
         where: { id: userId },
-        data: { verified: false },
+        data: { isBanned: true, banReason: reason },
       }),
       this.prisma.property.updateMany({
         where: { userId },

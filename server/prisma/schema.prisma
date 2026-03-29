@@ -98,6 +98,10 @@ model User {
   verificationToken       String?   @unique
   verificationTokenExpiry DateTime?
 
+  // Ban
+  isBanned    Boolean @default(false)
+  banReason   String?
+
   // Password reset
   resetToken       String?   @unique
   resetTokenExpiry DateTime?

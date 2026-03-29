@@ -195,9 +195,11 @@ export class AuthService {
   }
 
   async validateUser(userId: string) {
-    return this.prisma.user.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true, name: true, role: true, verified: true, emailVerified: true },
+      select: { id: true, email: true, name: true, role: true, verified: true, emailVerified: true, isBanned: true },
     });
+    if (!user || user.isBanned) throw new UnauthorizedException('Akun Anda telah dinonaktifkan');
+    return user;
   }
 }

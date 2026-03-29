@@ -27,6 +27,12 @@ export async function clientFetch<T>(path: string, init?: RequestInit): Promise<
     let res = await doFetch();
 
     if (res.status === 401) {
+      const errBody = await res.clone().json().catch(() => ({}));
+      // Banned user — jangan refresh, langsung redirect
+      if (errBody?.message?.includes('dinonaktifkan')) {
+        window.location.href = '/banned';
+        throw errBody;
+      }
       if (!isRefreshing) {
         isRefreshing = true;
         const ok = await tryRefresh();

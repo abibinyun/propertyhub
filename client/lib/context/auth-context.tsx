@@ -21,6 +21,9 @@ export function AuthProvider({ children, initialUser }: { children: ReactNode; i
     window.location.href = '/';
   };
 
+  // Intercept 401 banned dari fetch — handle di client fetch layer
+  // Dashboard layout sudah handle redirect jika getMe() gagal
+
   return (
     <AuthContext.Provider value={{ user, setUser, logout }}>
       {children}
