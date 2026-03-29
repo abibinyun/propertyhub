@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Building2, ShieldCheck, MessageSquare, Flag, Settings } from 'lucide-react';
+import { LayoutDashboard, Users, Building2, ShieldCheck, MessageSquare, Flag, Settings, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
@@ -17,24 +17,22 @@ const NAV_ITEMS = [
 
 export function AdminSidebarActive() {
   const pathname = usePathname();
-
   return (
     <>
       {NAV_ITEMS.map(({ href, label, icon: Icon, exact }) => {
         const active = exact ? pathname === href : pathname.startsWith(href);
         return (
-          <Link
-            key={href}
-            href={href}
+          <Link key={href} href={href}
             className={cn(
-              'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+              'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all',
               active
-                ? 'bg-blue-600 text-white'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground hover:bg-white',
             )}
           >
             <Icon className="h-4 w-4 flex-shrink-0" />
             {label}
+            {active && <ChevronRight className="h-3.5 w-3.5 ml-auto opacity-70" />}
           </Link>
         );
       })}
