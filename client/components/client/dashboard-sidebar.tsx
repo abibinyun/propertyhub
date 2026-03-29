@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { Building2, Heart, MessageSquare, User, LayoutDashboard, Plus, Menu, LogOut, ChevronRight, Bookmark } from 'lucide-react';
+import { Building2, Heart, MessageSquare, User, LayoutDashboard, Plus, Menu, LogOut, ChevronRight, Bookmark, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/lib/context/auth-context';
@@ -57,6 +57,13 @@ function SidebarContent({ user, onNav }: { user: UserType | null; onNav?: () => 
 
       {/* Bottom actions */}
       <div className="p-3 border-t border-border/50 space-y-2 mt-4">
+        {user?.role === 'ADMIN' && (
+          <Button asChild variant="outline" size="sm" className="w-full gap-2 rounded-xl text-orange-600 border-orange-200 hover:bg-orange-50">
+            <Link href="/admin" onClick={onNav}>
+              <ShieldCheck className="h-4 w-4" />Admin Panel
+            </Link>
+          </Button>
+        )}
         <Button asChild size="sm" className="w-full gap-2 rounded-xl">
           <Link href="/dashboard/properties/new" onClick={onNav}>
             <Plus className="h-4 w-4" />Pasang Iklan

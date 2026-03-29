@@ -9,6 +9,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (!token) redirect('/login?redirect=/dashboard');
 
   const user = await serverApi.getMe().catch(() => null);
+  if (!user) redirect('/login?redirect=/dashboard');
 
   return (
     <div className="min-h-screen bg-slate-50/50">
