@@ -8,4 +8,9 @@ export const reviewsApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     }).then(async (r) => { if (!r.ok) throw await r.json(); return r.json(); }),
+
+  canReview: (agentId: string): Promise<{ eligible: boolean; reason?: string }> =>
+    fetch(`${API_URL}/reviews/agent/${agentId}/can-review`, {
+      credentials: 'include',
+    }).then(async (r) => { if (!r.ok) return { eligible: false }; return r.json(); }),
 };

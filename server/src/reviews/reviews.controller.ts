@@ -14,6 +14,12 @@ export class ReviewsController {
     return this.reviewsService.create(user.id, agentId, dto);
   }
 
+  @Get('agent/:agentId/can-review')
+  @UseGuards(JwtAuthGuard)
+  canReview(@CurrentUser() user: any, @Param('agentId') agentId: string) {
+    return this.reviewsService.canReview(user.id, agentId);
+  }
+
   @Get('agent/:agentId')
   findByAgent(@Param('agentId') agentId: string) {
     return this.reviewsService.findByAgent(agentId);

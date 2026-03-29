@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Star } from 'lucide-react';
 import { timeAgo, cn } from '@/lib/utils';
 import { ReviewForm } from './review-form';
 import { Button } from '@/components/ui/button';
+import { reviewsApi } from '@/lib/api/reviews';
+import { useAuth } from '@/lib/context/auth-context';
 
 interface Review {
   id: string;
@@ -32,15 +34,27 @@ function Stars({ rating, size = 'sm' }: { rating: number; size?: 'sm' | 'md' }) 
   );
 }
 
+const REASON_MSG: Record<string, string> = {
+  already_reviewed: 'Anda sudah memberikan ulasan untuk agen ini.',
+  no_interaction: 'Ulasan hanya bisa diberikan setelah lead Anda direspon oleh agen.',
+};
+
 export function AgentReviews({ agentId, initialReviews, avgRating, totalReviews }: Props) {
+  const { user } = useAuth();
   const [reviews, setReviews] = useState(initialReviews);
   const [avg, setAvg] = useState(avgRating);
   const [total, setTotal] = useState(totalReviews);
   const [showForm, setShowForm] = useState(false);
+  const [eligibility, setEligibility] = useState<{ eligible: boolean; reason?: string } | null>(null);
+
+  useEffect(() => {
+    if (!user || user.id === agentId) return;
+    reviewsApi.canReview(agentId).then(setEligibility);
+  }, [user, agentId]);
 
   const handleSuccess = async () => {
     setShowForm(false);
-    // Refetch reviews
+    setEligibility({ eligible: false, reason: 'already_reviewed' });
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/reviews/agent/${agentId}`);
     const data = await res.json();
     setReviews(data.reviews);
@@ -61,10 +75,16 @@ export function AgentReviews({ agentId, initialReviews, avgRating, totalReviews 
             </div>
           )}
         </div>
-        {!showForm && (
+
+        {user && eligibility?.eligible && !showForm && (
           <Button size="sm" variant="outline" onClick={() => setShowForm(true)}>
             Tulis Ulasan
           </Button>
+        )}
+        {user && eligibility && !eligibility.eligible && eligibility.reason && eligibility.reason !== 'self' && (
+          <p className="text-xs text-muted-foreground max-w-[180px] text-right leading-relaxed">
+            {REASON_MSG[eligibility.reason]}
+          </p>
         )}
       </div>
 
