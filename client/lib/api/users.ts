@@ -25,6 +25,9 @@ export const usersApi = {
   changePassword: (data: { currentPassword: string; newPassword: string }) =>
     apiFetch('/users/password', { method: 'PATCH', body: JSON.stringify(data) }),
 
+  checkUsername: (username: string): Promise<{ available: boolean }> =>
+    apiFetch(`/users/check-username/${username}`),
+
   uploadAvatar: async (file: File): Promise<{ avatarUrl: string }> => {
     const formData = new FormData();
     formData.append('file', file);

@@ -26,6 +26,12 @@ export class UsersController {
     return this.usersService.getProfile(user.id);
   }
 
+  @Get('check-username/:username')
+  async checkUsername(@CurrentUser() user: any, @Param('username') username: string) {
+    const existing = await this.prisma.user.findUnique({ where: { username } });
+    return { available: !existing || existing.id === user.id };
+  }
+
   @Patch('profile')
   async updateProfile(@CurrentUser() user: any, @Body() dto: UpdateProfileDto) {
     // Cek username unik jika diisi

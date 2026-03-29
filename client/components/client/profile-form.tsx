@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { usersApi } from '@/lib/api/users';
 import { useAuth } from '@/lib/context/auth-context';
@@ -8,7 +8,7 @@ import { User } from '@/types/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, CheckCircle, Eye, EyeOff, Camera } from 'lucide-react';
+import { Loader2, CheckCircle, Eye, EyeOff, Camera, Check, X } from 'lucide-react';
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -26,6 +26,25 @@ export function ProfileForm({ user }: { user: User }) {
   const [avatar, setAvatar] = useState(user.avatar);
   const [avatarLoading, setAvatarLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Username availability check
+  const [usernameVal, setUsernameVal] = useState((user as any).username ?? '');
+  const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const checkUsername = useCallback((val: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    const clean = val.trim();
+    if (!clean || clean === (user as any).username) { setUsernameStatus('idle'); return; }
+    if (!/^[a-z0-9-]+$/.test(clean) || clean.length < 3) { setUsernameStatus('idle'); return; }
+    setUsernameStatus('checking');
+    debounceRef.current = setTimeout(async () => {
+      const { available } = await usersApi.checkUsername(clean);
+      setUsernameStatus(available ? 'available' : 'taken');
+    }, 500);
+  }, [user]);
+
+  useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current); }, []);
 
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileSuccess, setProfileSuccess] = useState(false);
@@ -148,9 +167,24 @@ export function ProfileForm({ user }: { user: User }) {
               <Label htmlFor="username">Username</Label>
               <div className="flex items-center rounded-xl border border-input overflow-hidden focus-within:ring-2 focus-within:ring-ring">
                 <span className="px-3 text-sm text-muted-foreground bg-muted border-r border-input h-10 flex items-center">@</span>
-                <Input id="username" name="username" defaultValue={(user as any).username ?? ''} placeholder="budi-santoso" className="rounded-none border-0 focus-visible:ring-0" />
+                <Input
+                  id="username" name="username"
+                  value={usernameVal}
+                  onChange={(e) => { setUsernameVal(e.target.value.toLowerCase()); checkUsername(e.target.value.toLowerCase()); }}
+                  placeholder="budi-santoso"
+                  className="rounded-none border-0 focus-visible:ring-0"
+                />
+                <div className="px-3 flex items-center">
+                  {usernameStatus === 'checking' && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                  {usernameStatus === 'available' && <Check className="h-4 w-4 text-emerald-500" />}
+                  {usernameStatus === 'taken' && <X className="h-4 w-4 text-destructive" />}
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground">URL profil: /agen/username · Huruf kecil, angka, tanda hubung</p>
+              <p className="text-xs text-muted-foreground">
+                {usernameStatus === 'available' && <span className="text-emerald-600">Username tersedia ✓</span>}
+                {usernameStatus === 'taken' && <span className="text-destructive">Username sudah dipakai</span>}
+                {usernameStatus === 'idle' && 'URL profil: /agen/username · Huruf kecil, angka, tanda hubung'}
+              </p>
             </div>
 
             <div className="space-y-1.5">
