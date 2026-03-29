@@ -97,11 +97,12 @@ export default function AdminSettingsPage() {
       {error && <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-lg">{error}</div>}
 
       <Tabs defaultValue="branding">
-        <TabsList className="grid grid-cols-5 w-full">
+        <TabsList className="grid grid-cols-6 w-full">
           <TabsTrigger value="branding">Branding</TabsTrigger>
           <TabsTrigger value="contact">Kontak & Sosmed</TabsTrigger>
           <TabsTrigger value="homepage">Homepage</TabsTrigger>
           <TabsTrigger value="pricing">Harga</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="system">Sistem</TabsTrigger>
         </TabsList>
 
@@ -193,6 +194,26 @@ export default function AdminSettingsPage() {
               </Field>
             );
           })}
+        </TabsContent>
+
+        {/* Analytics */}
+        <TabsContent value="analytics" className="space-y-4 pt-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
+            <p className="font-semibold mb-1">Umami Analytics (Self-hosted)</p>
+            <p className="text-xs text-blue-600">Install Umami di server Anda, lalu isi URL dan Site ID di bawah. Script akan otomatis diinjek ke semua halaman.</p>
+          </div>
+          <Field label="Umami URL" hint="Contoh: https://umami.yourdomain.com">
+            <Input value={settings.umamiUrl ?? ''} onChange={(e) => set('umamiUrl', e.target.value || null)} placeholder="https://umami.yourdomain.com" className="rounded-xl" />
+          </Field>
+          <Field label="Umami Site ID" hint="Dari dashboard Umami → Settings → Websites → Website ID">
+            <Input value={settings.umamiSiteId ?? ''} onChange={(e) => set('umamiSiteId', e.target.value || null)} placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" className="rounded-xl" />
+          </Field>
+          {settings.umamiUrl && settings.umamiSiteId && (
+            <a href={settings.umamiUrl} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm text-primary hover:underline">
+              Buka Dashboard Umami →
+            </a>
+          )}
         </TabsContent>
 
         {/* Sistem */}

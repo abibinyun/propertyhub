@@ -145,7 +145,7 @@ export class PropertiesService {
     };
   }
 
-  async findOne(slug: string, viewerUserId?: string) {
+  async findOne(slug: string, viewerUserId?: string, meta?: { referrer?: string; userAgent?: string }) {
     const property = await this.prisma.property.findUnique({
       where: { slug },
       include: {
@@ -166,10 +166,19 @@ export class PropertiesService {
 
     // Increment views hanya jika bukan pemilik properti
     if (!viewerUserId || viewerUserId !== property.userId) {
-      await this.prisma.property.update({
-        where: { id: property.id },
-        data: { viewsCount: { increment: 1 } },
-      });
+      await Promise.all([
+        this.prisma.property.update({
+          where: { id: property.id },
+          data: { viewsCount: { increment: 1 } },
+        }),
+        this.prisma.propertyView.create({
+          data: {
+            propertyId: property.id,
+            referrer: meta?.referrer?.slice(0, 500) ?? null,
+            userAgent: meta?.userAgent?.slice(0, 500) ?? null,
+          },
+        }),
+      ]);
       this.rankingService.updatePropertyRanking(property.id).catch(() => {});
     }
 
@@ -473,12 +482,26 @@ export class PropertiesService {
       d.setHours(0, 0, 0, 0);
       return d;
     });
+    const since = days[0];
 
-    // Leads per hari
-    const leads = await this.prisma.lead.findMany({
-      where: { propertyId, createdAt: { gte: days[0] } },
-      select: { createdAt: true },
-    });
+    // Leads + Views per hari (parallel)
+    const [leads, views, topReferrers] = await Promise.all([
+      this.prisma.lead.findMany({
+        where: { propertyId, createdAt: { gte: since } },
+        select: { createdAt: true },
+      }),
+      this.prisma.propertyView.findMany({
+        where: { propertyId, viewedAt: { gte: since } },
+        select: { viewedAt: true, referrer: true },
+      }),
+      this.prisma.propertyView.groupBy({
+        by: ['referrer'],
+        where: { propertyId, referrer: { not: null } },
+        _count: { referrer: true },
+        orderBy: { _count: { referrer: 'desc' } },
+        take: 5,
+      }),
+    ]);
 
     const leadsPerDay = new Map<string, number>();
     leads.forEach((l) => {
@@ -486,17 +509,49 @@ export class PropertiesService {
       leadsPerDay.set(key, (leadsPerDay.get(key) ?? 0) + 1);
     });
 
+    const viewsPerDay = new Map<string, number>();
+    views.forEach((v) => {
+      const key = v.viewedAt.toISOString().slice(0, 10);
+      viewsPerDay.set(key, (viewsPerDay.get(key) ?? 0) + 1);
+    });
+
     const data = days.map((d) => {
       const key = d.toISOString().slice(0, 10);
+      const dayViews = viewsPerDay.get(key) ?? 0;
+      const dayLeads = leadsPerDay.get(key) ?? 0;
       return {
         date: key,
         label: d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
-        leads: leadsPerDay.get(key) ?? 0,
+        leads: dayLeads,
+        views: dayViews,
       };
     });
 
+    const totalViews30d = views.length;
+    const totalLeads30d = leads.length;
+    const conversionRate = totalViews30d > 0
+      ? Math.round((totalLeads30d / totalViews30d) * 10000) / 100
+      : 0;
+
     return {
-      property: { id: property.id, title: property.title, viewsCount: property.viewsCount, leadsCount: property.leadsCount },
+      property: {
+        id: property.id,
+        title: property.title,
+        viewsCount: property.viewsCount,
+        leadsCount: property.leadsCount,
+        rankScore: property.rankScore,
+        featured: property.featured,
+        featuredUntil: property.featuredUntil,
+      },
+      summary: {
+        views30d: totalViews30d,
+        leads30d: totalLeads30d,
+        conversionRate,
+      },
+      topReferrers: topReferrers.map((r) => ({
+        referrer: r.referrer ?? 'Direct',
+        count: r._count.referrer,
+      })),
       data,
     };
   }

@@ -71,6 +71,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {process.env.NEXT_PUBLIC_PAYMENT_PROVIDER === 'midtrans' && (
           <Script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY} strategy="lazyOnload" />
         )}
+        {settings.umamiUrl && settings.umamiSiteId && (
+          <Script src={`${settings.umamiUrl}/script.js`} data-website-id={settings.umamiSiteId} strategy="lazyOnload" />
+        )}
       </body>
     </html>
   );

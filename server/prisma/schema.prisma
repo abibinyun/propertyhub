@@ -213,6 +213,7 @@ model Property {
   moderationLogs ModerationLog[]
   reports      Report[]
   priceHistory PriceHistory[]
+  views        PropertyView[]
 
   publishedAt DateTime?
   createdAt   DateTime  @default(now())
@@ -444,9 +445,26 @@ model SiteSettings {
   maintenanceMode Boolean  @default(false)
   maintenanceMsg  String   @default("Sedang dalam pemeliharaan")
 
+  // Analytics (Umami)
+  umamiUrl        String?
+  umamiSiteId     String?
+
   updatedAt       DateTime @updatedAt
 
   @@map("site_settings")
+}
+
+model PropertyView {
+  id         String   @id @default(uuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  viewedAt   DateTime @default(now())
+  referrer   String?
+  userAgent  String?
+  country    String?
+
+  @@index([propertyId, viewedAt])
+  @@map("property_views")
 }
 
 model Review {

@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator, Req } from '@nestjs/common';
+import type { Request } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
 import { Throttle } from '@nestjs/throttler';
@@ -135,8 +136,11 @@ export class PropertiesController {
 
   @Get('properti/detail/:slug')
   @UseGuards(OptionalJwtAuthGuard)
-  findBySlug(@Param('slug') slug: string, @CurrentUser() user?: any) {
-    return this.propertiesService.findOne(slug, user?.id);
+  findBySlug(@Param('slug') slug: string, @CurrentUser() user?: any, @Req() req?: Request) {
+    return this.propertiesService.findOne(slug, user?.id, {
+      referrer: req?.headers?.referer,
+      userAgent: req?.headers?.['user-agent'],
+    });
   }
 
   /**

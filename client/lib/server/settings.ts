@@ -26,6 +26,8 @@ export interface SiteSettings {
   detailLayout: string;
   maintenanceMode: boolean;
   maintenanceMsg: string;
+  umamiUrl: string | null;
+  umamiSiteId: string | null;
 }
 
 const DEFAULT_SETTINGS: SiteSettings = {
@@ -54,6 +56,8 @@ const DEFAULT_SETTINGS: SiteSettings = {
   detailLayout: 'gallery-top',
   maintenanceMode: false,
   maintenanceMsg: 'Sedang dalam pemeliharaan',
+  umamiUrl: null,
+  umamiSiteId: null,
 };
 
 export async function getSettings(): Promise<SiteSettings> {
