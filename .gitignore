@@ -12,6 +12,10 @@ dist/
 out/
 build/
 
+# turbo
+.turbo/
+turbo/
+
 # misc
 .DS_Store
 *.pem
@@ -27,3 +31,18 @@ next-env.d.ts
 
 # vercel
 .vercel
+
+# internal docs (not for portfolio)
+docs/API.md
+docs/ERD.md
+docs/FEATURED_RANKING.md
+docs/MODULAR_ARCHITECTURE.md
+docs/ANALYTICS.md
+docs/SEO_STRATEGY.md
+AI_CONTEXT.md
+RULES_FE.md
+DEVELOPMENT_GUIDE.md
+STATUS.md
+dev.sh
+docker-compose.umami.yml
+packages/shared/
