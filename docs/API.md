@@ -5,7 +5,7 @@
 **Last Updated:** 2026-03-29 WIB
 **Swagger UI:** `http://localhost:3001/api/docs` (dev only)
 
-**Total Endpoints:** 77
+**Total Endpoints:** 82
 
 ---
 
@@ -13,16 +13,17 @@
 
 | Module | Endpoints |
 |---|---|
-| Auth | 11 |
-| Users | 5 |
-| Properties | 19 |
+| Auth | 10 |
+| Users | 7 |
+| Properties | 18 |
 | Leads | 7 |
 | Favorites | 6 |
 | Payment | 3 |
-| Reviews | 2 |
+| Reviews | 3 |
 | Reports | 3 |
 | Saved Searches | 3 |
 | Notifications | 3 |
+| Settings | 4 |
 | Admin | 13 |
 | System | 2 |
 

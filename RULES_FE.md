@@ -412,4 +412,4 @@ Kalau diringkas jadi 5 hukum utama:
 
 baca ini juga :
 
-client/AGENTS.md
+apps/web/AGENTS.md

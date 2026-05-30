@@ -31,36 +31,39 @@ Ini adalah file konteks untuk AI. Baca semua bagian sebelum mulai bekerja.
 ```
 property-webapp/
 ├── dev.sh                    ← jalankan BE + FE sekaligus
-├── server/                   ← NestJS backend
-│   └── src/
-│       ├── auth/             ← JWT, register, login, OAuth Google, password reset
-│       ├── email/            ← EmailService modular (log/resend)
-│       ├── payment/          ← PaymentService modular (log/midtrans)
-│       ├── properties/       ← CRUD, SEO slug, ranking, analytics
-│       ├── leads/            ← Contact forms, anti-spam, email notif, export CSV
-│       ├── favorites/
-│       ├── users/
-│       ├── admin/
-│       └── cloudinary/
-└── client/                   ← Next.js frontend
-    ├── app/
-    │   ├── (listing)/        ← /jual, /sewa + filter
-    │   ├── properti/         ← /properti/[location]/[slug]
-    │   ├── dashboard/        ← user dashboard
-    │   │   └── properties/[id]/analytics/
-    │   ├── admin/
-    │   ├── about|contact|privacy|terms/
-    │   ├── forgot-password|reset-password/
-    │   ├── error.tsx          ← global error boundary
-    │   ├── global-error.tsx   ← layout crash handler
-    │   └── not-found.tsx
-    ├── components/
-    │   ├── client/           ← 'use client' components
-    │   ├── property/
-    │   └── ui/               ← shadcn/ui
-    └── lib/
-        ├── api/              ← client-side API wrappers
-        └── server/           ← server-side fetchers (pakai cookie)
+├── apps/
+│   ├── api/                  ← NestJS backend
+│   │   └── src/
+│   │       ├── auth/         ← JWT, register, login, OAuth Google, password reset
+│   │       ├── email/        ← EmailService modular (log/resend)
+│   │       ├── payment/      ← PaymentService modular (log/midtrans)
+│   │       ├── properties/   ← CRUD, SEO slug, ranking, analytics
+│   │       ├── leads/        ← Contact forms, anti-spam, email notif, export CSV
+│   │       ├── favorites/
+│   │       ├── users/
+│   │       ├── admin/
+│   │       └── cloudinary/
+│   └── web/                  ← Next.js frontend
+│       ├── app/
+│       │   ├── (listing)/    ← /jual, /sewa + filter
+│       │   ├── properti/     ← /properti/[location]/[slug]
+│       │   ├── dashboard/    ← user dashboard
+│       │   │   └── properties/[id]/analytics/
+│       │   ├── admin/
+│       │   ├── about|contact|privacy|terms/
+│       │   ├── forgot-password|reset-password/
+│       │   ├── error.tsx          ← global error boundary
+│       │   ├── global-error.tsx   ← layout crash handler
+│       │   └── not-found.tsx
+│       ├── components/
+│       │   ├── client/           ← 'use client' components
+│       │   ├── property/
+│       │   └── ui/               ← shadcn/ui
+│       └── lib/
+│           ├── api/              ← client-side API wrappers
+│           └── server/           ← server-side fetchers (pakai cookie)
+└── packages/
+    └── shared/               ← shared types & utilities
 ```
 
 ---
@@ -89,7 +92,7 @@ property-webapp/
 - Export CSV
 
 ### Featured Listing (Berbayar)
-- BASIC Rp 50rb/minggu, PREMIUM Rp 100rb/minggu, ULTIMATE Rp 200rb/bulan
+- BASIC Rp 99rb/minggu, PREMIUM Rp 299rb/minggu, ULTIMATE Rp 599rb/bulan
 - Payment modular: log (dev) → Midtrans (prod)
 
 ### Dashboard
@@ -119,7 +122,7 @@ property-webapp/
 2. **Server Components by default** — `'use client'` hanya untuk interaksi
 3. **Semua data dari NestJS API** — tidak ada akses DB langsung
 4. **Fetch di server** — jangan fetch di `useEffect` kalau bisa di server
-5. **Semua lewat API wrapper** — `lib/api/` (client) atau `lib/server/api.ts` (server)
+5. **Semua lewat API wrapper** — `lib/api/` (client) atau `apps/web/lib/server/api.ts` (server)
 6. **No `any`** — semua harus typed
 7. **URL properti** — selalu pakai `propertyDetailUrl()` dari `lib/url.ts`
 8. **DOM library** — pakai `next/dynamic` dengan `ssr: false`
@@ -175,20 +178,20 @@ const data = await serverApi.get().catch(() => defaultValue);
 EMAIL_PROVIDER=log    → LogEmailProvider (console)
 EMAIL_PROVIDER=resend → ResendEmailProvider
 ```
-Tambah provider: implement `EmailProvider` interface di `server/src/email/`
+Tambah provider: implement `EmailProvider` interface di `apps/api/src/email/`
 
 ### Payment
 ```
 PAYMENT_PROVIDER=log      → LogPaymentProvider (langsung aktif)
 PAYMENT_PROVIDER=midtrans → MidtransPaymentProvider
 ```
-Tambah provider: implement `PaymentProvider` interface di `server/src/payment/`
+Tambah provider: implement `PaymentProvider` interface di `apps/api/src/payment/`
 
 ---
 
 ## Environment Variables
 
-### Backend (`server/.env`)
+### Backend (`apps/api/.env`)
 ```env
 DATABASE_URL=postgresql://...
 JWT_SECRET=
@@ -207,7 +210,7 @@ MIDTRANS_CLIENT_KEY=
 MIDTRANS_IS_PRODUCTION=false
 ```
 
-### Frontend (`client/.env.local`)
+### Frontend (`apps/web/.env.local`)
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:3001
 NEXT_PUBLIC_APP_URL=http://localhost:3000
@@ -241,10 +244,7 @@ cd ~/data/LATIHAN/property-webapp
 ## Backlog (Belum Dikerjakan)
 
 - Deployment (Docker + CI/CD)
-- Social proof di homepage (counter real dari DB)
-- Export leads ke CSV sudah ada, tapi belum ada endpoint `/contact` untuk form kontak di halaman `/contact`
-- Refresh token (access 15min + refresh 7d)
-- Notifikasi in-app (bell icon)
+- Redis caching (saat traffic > 1000 req/mnt)
 
 ---
 

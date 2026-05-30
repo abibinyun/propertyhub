@@ -52,9 +52,9 @@ enum ModerationStatus {
 }
 
 enum FeaturedType {
-  BASIC // Rp 50k/week
-  PREMIUM // Rp 100k/week
-  ULTIMATE // Rp 200k/month
+  BASIC // Configurable via SiteSettings (default Rp 99.000)
+  PREMIUM // Configurable via SiteSettings (default Rp 299.000)
+  ULTIMATE // Configurable via SiteSettings (default Rp 599.000)
 }
 
 enum LeadStatus {

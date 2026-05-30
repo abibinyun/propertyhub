@@ -44,9 +44,12 @@ Platform listing properti fullstack — jual, beli, dan sewa properti di Indones
 
 ```
 property-webapp/
-├── server/     # NestJS backend (port 3001)
-├── client/     # Next.js frontend (port 3000)
-└── docs/       # Dokumentasi teknis
+├── apps/
+│   ├── web/          # Next.js frontend (port 3000)
+│   └── api/          # NestJS backend (port 3001)
+├── packages/
+│   └── shared/       # Shared types & utilities
+└── docs/             # Dokumentasi teknis
 ```
 
 ## Quick Start
@@ -55,10 +58,14 @@ property-webapp/
 # Jalankan keduanya sekaligus
 ./dev.sh
 
+# Atau via Turborepo
+bun install
+bun dev
+
 # Atau manual:
 
 # Backend
-cd server
+cd apps/api
 cp .env.example .env   # isi DATABASE_URL, JWT_SECRET, CLOUDINARY_*, GOOGLE_*
 bun install
 bunx prisma migrate dev
@@ -66,7 +73,7 @@ bunx prisma db seed
 bun run start:dev
 
 # Frontend
-cd client
+cd apps/web
 cp .env.example .env.local   # isi NEXT_PUBLIC_API_URL
 bun install
 bun run dev
@@ -88,7 +95,7 @@ bun run dev
 
 ## Env Variables
 
-### Backend (`server/.env`)
+### Backend (`apps/api/.env`)
 ```env
 DATABASE_URL=postgresql://user:pass@localhost:5432/propertyhub
 JWT_SECRET=
@@ -106,7 +113,7 @@ MIDTRANS_SERVER_KEY=        # jika PAYMENT_PROVIDER=midtrans
 MIDTRANS_CLIENT_KEY=        # jika PAYMENT_PROVIDER=midtrans
 ```
 
-### Frontend (`client/.env.local`)
+### Frontend (`apps/web/.env.local`)
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:3001
 NEXT_PUBLIC_APP_URL=http://localhost:3000
@@ -116,11 +123,10 @@ NEXT_PUBLIC_MIDTRANS_CLIENT_KEY=        # jika PAYMENT_PROVIDER=midtrans
 
 ## Dokumentasi
 
-- [docs/API.md](docs/API.md) — 77 API endpoints
-- [docs/ERD.md](docs/ERD.md) — Database schema (17 tabel)
+- [docs/API.md](docs/API.md) — 82 API endpoints
+- [docs/ERD.md](docs/ERD.md) — Database schema (15 tabel)
 - [docs/FEATURED_RANKING.md](docs/FEATURED_RANKING.md) — Featured listing & ranking algorithm
 - [docs/ANALYTICS.md](docs/ANALYTICS.md) — Setup Umami + built-in analytics
-- [docs/SITE_SETTINGS_THEME_PLAN.md](docs/SITE_SETTINGS_THEME_PLAN.md) — Rencana site settings & theme
-- [docs/ARCHITECTURE_DECISION.md](docs/ARCHITECTURE_DECISION.md) — Keputusan arsitektur
+- [docs/MODULAR_ARCHITECTURE.md](docs/MODULAR_ARCHITECTURE.md) — Modular provider pattern
+- [docs/SEO_STRATEGY.md](docs/SEO_STRATEGY.md) — SEO strategy & anti-gaming
 - [STATUS.md](STATUS.md) — Status pengerjaan
-- [docs/TODO.md](docs/TODO.md) — Backlog & deployment checklist

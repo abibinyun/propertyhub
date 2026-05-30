@@ -44,7 +44,7 @@
 | Health Check | ✅ | `GET /health` |
 | Error Handling | ✅ | AllExceptionsFilter, structured error response |
 
-**Total:** 77 endpoints, 14 tabel, 11 migrations
+**Total:** 82 endpoints, 15 tabel, 20 migrations
 
 ---
 

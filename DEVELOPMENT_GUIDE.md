@@ -10,7 +10,8 @@
 ### Cara Tercepat
 ```bash
 cd ~/data/LATIHAN/property-webapp
-./dev.sh
+bun install
+bun dev
 # Backend  → http://localhost:3001
 # Frontend → http://localhost:3000
 # Ctrl+C untuk stop keduanya
@@ -20,7 +21,7 @@ cd ~/data/LATIHAN/property-webapp
 
 #### Backend
 ```bash
-cd server
+cd apps/api
 cp .env.example .env   # isi semua variabel
 bun install
 bunx prisma migrate deploy
@@ -30,7 +31,7 @@ bun run start:dev
 
 #### Frontend
 ```bash
-cd client
+cd apps/web
 cp .env.example .env.local
 bun install
 bun run dev
@@ -52,40 +53,44 @@ docker run -d --name postgres \
 ```
 property-webapp/
 ├── dev.sh                ← jalankan backend + frontend sekaligus
-├── server/               ← NestJS backend (port 3001)
-│   ├── src/
-│   │   ├── auth/         ← JWT, register, login, OAuth Google, password reset
-│   │   ├── email/        ← EmailService modular (log/resend)
-│   │   ├── payment/      ← PaymentService modular (log/midtrans)
-│   │   ├── users/        ← Profile management
-│   │   ├── properties/   ← CRUD, SEO slug, ranking, analytics, image upload
-│   │   ├── leads/        ← Contact forms, anti-spam, email notifikasi
-│   │   ├── favorites/    ← Bookmarks
-│   │   ├── admin/        ← Moderation, stats, charts
-│   │   └── cloudinary/   ← Image upload service
-│   └── prisma/
-│       ├── schema.prisma
-│       ├── migrations/
-│       └── seed.ts
+├── apps/
+│   ├── api/              ← NestJS backend (port 3001)
+│   │   ├── src/
+│   │   │   ├── auth/     ← JWT, register, login, OAuth Google, password reset
+│   │   │   ├── email/    ← EmailService modular (log/resend)
+│   │   │   ├── payment/  ← PaymentService modular (log/midtrans)
+│   │   │   ├── users/    ← Profile management
+│   │   │   ├── properties/ ← CRUD, SEO slug, ranking, analytics, image upload
+│   │   │   ├── leads/    ← Contact forms, anti-spam, email notifikasi
+│   │   │   ├── favorites/ ← Bookmarks
+│   │   │   ├── admin/    ← Moderation, stats, charts
+│   │   │   └── cloudinary/ ← Image upload service
+│   │   └── prisma/
+│   │       ├── schema.prisma
+│   │       ├── migrations/
+│   │       └── seed.ts
+│   │
+│   └── web/              ← Next.js frontend (port 3000)
+│       ├── app/
+│       │   ├── (listing)/ ← /jual, /sewa, /jual/[city]/...
+│       │   ├── properti/  ← /properti/[location]/[slug]
+│       │   ├── dashboard/ ← User dashboard
+│       │   │   └── properties/[id]/analytics/ ← Analitik per properti
+│       │   ├── admin/     ← Admin panel
+│       │   ├── forgot-password/ ← Reset password step 1
+│       │   ├── reset-password/  ← Reset password step 2
+│       │   └── login|register/
+│       ├── components/
+│       │   ├── client/    ← 'use client' components
+│       │   ├── property/  ← Shared property components
+│       │   └── ui/        ← shadcn/ui components
+│       ├── lib/
+│       │   ├── api/       ← Client-side API wrappers
+│       │   └── server/    ← Server-side fetchers (cookies)
+│       └── types/
 │
-├── client/               ← Next.js frontend (port 3000)
-│   ├── app/
-│   │   ├── (listing)/    ← /jual, /sewa, /jual/[city]/...
-│   │   ├── properti/     ← /properti/[location]/[slug]
-│   │   ├── dashboard/    ← User dashboard
-│   │   │   └── properties/[id]/analytics/ ← Analitik per properti
-│   │   ├── admin/        ← Admin panel
-│   │   ├── forgot-password/ ← Reset password step 1
-│   │   ├── reset-password/  ← Reset password step 2
-│   │   └── login|register/
-│   ├── components/
-│   │   ├── client/       ← 'use client' components
-│   │   ├── property/     ← Shared property components
-│   │   └── ui/           ← shadcn/ui components
-│   ├── lib/
-│   │   ├── api/          ← Client-side API wrappers
-│   │   └── server/       ← Server-side fetchers (cookies)
-│   └── types/
+├── packages/
+│   └── shared/           ← Shared types & utilities
 │
 └── docs/                 ← Dokumentasi teknis
 ```
@@ -105,7 +110,7 @@ property-webapp/
 
 ## ⚙️ Environment Variables
 
-### Backend (`server/.env`)
+### Backend (`apps/api/.env`)
 ```env
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/property
 JWT_SECRET=your-secret-key-min-32-chars
@@ -137,7 +142,7 @@ MIDTRANS_CLIENT_KEY=        # isi jika PAYMENT_PROVIDER=midtrans
 MIDTRANS_IS_PRODUCTION=false
 ```
 
-### Frontend (`client/.env.local`)
+### Frontend (`apps/web/.env.local`)
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:3001
 NEXT_PUBLIC_APP_URL=http://localhost:3000
@@ -163,7 +168,7 @@ EmailService
 ├── LogEmailProvider    ← default, log ke console
 └── ResendEmailProvider ← aktif via EMAIL_PROVIDER=resend
 ```
-Tambah provider baru: implement `EmailProvider` interface di `server/src/email/`.
+Tambah provider baru: implement `EmailProvider` interface di `apps/api/src/email/`.
 
 ### Payment System (Modular)
 ```
@@ -171,7 +176,7 @@ PaymentService
 ├── LogPaymentProvider      ← default, log ke console, featured langsung aktif
 └── MidtransPaymentProvider ← aktif via PAYMENT_PROVIDER=midtrans
 ```
-Tambah provider baru: implement `PaymentProvider` interface di `server/src/payment/`.
+Tambah provider baru: implement `PaymentProvider` interface di `apps/api/src/payment/`.
 
 ### OAuth Google Flow
 ```
@@ -203,7 +208,7 @@ User klik "Login Google"
 
 Jika ingin melanjutkan development dengan AI, share file-file ini:
 1. `STATUS.md` — status fitur saat ini
-2. `docs/TODO.md` — backlog & prioritas
+2. `AI_CONTEXT.md` — konteks project untuk AI
 3. `RULES_FE.md` — aturan coding frontend (wajib dipatuhi AI)
 4. `DEVELOPMENT_GUIDE.md` — file ini
 
@@ -215,8 +220,11 @@ Lalu katakan: *"Lanjutkan development PropertyHub. Baca semua file konteks yang 
 
 | File | Isi |
 |---|---|
-| [docs/API.md](docs/API.md) | Semua API endpoints |
-| [docs/ERD.md](docs/ERD.md) | Database schema & relasi |
-| [docs/TODO.md](docs/TODO.md) | Backlog + prioritas |
+| [docs/API.md](docs/API.md) | Semua API endpoints (82 total) |
+| [docs/ERD.md](docs/ERD.md) | Database schema & relasi (15 tabel) |
+| [docs/FEATURED_RANKING.md](docs/FEATURED_RANKING.md) | Featured listing & ranking algorithm |
+| [docs/MODULAR_ARCHITECTURE.md](docs/MODULAR_ARCHITECTURE.md) | Modular provider pattern |
+| [docs/ANALYTICS.md](docs/ANALYTICS.md) | Setup Umami + built-in analytics |
+| [docs/SEO_STRATEGY.md](docs/SEO_STRATEGY.md) | SEO strategy & anti-gaming |
 | [STATUS.md](STATUS.md) | Status per fitur |
 | [RULES_FE.md](RULES_FE.md) | Aturan coding frontend (wajib) |

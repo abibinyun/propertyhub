@@ -34,7 +34,7 @@ APP_URL=http://localhost:3000
 NODE_ENV=development
 ```
 
-## API Endpoints (43 total)
+## API Endpoints (82 total)
 
 ### Auth
 | Method | Path | Deskripsi |
@@ -67,19 +67,27 @@ NODE_ENV=development
 
 ```
 src/
-├── auth/           # JWT, guards, strategies
-├── users/          # Profile, stats
-├── properties/     # CRUD, ranking, slug, validation
-├── leads/          # Lead management
+├── auth/           # JWT, guards, strategies, OAuth, password reset
+├── users/          # Profile, stats, password change
+├── properties/     # CRUD, ranking, slug, validation, analytics
+├── leads/          # Lead management, anti-spam, CSV export
 ├── favorites/      # Favorit properti
-├── admin/          # Moderasi, statistik
-├── cloudinary/     # Image upload
+├── admin/          # Moderasi, statistik, user management
+├── reviews/        # Agent reviews & ratings
+├── reports/        # Report spam/scam listings
+├── saved-searches/ # Saved search filters + digest
+├── notifications/  # In-app notifications (bell icon)
+├── payment/        # Modular payment (log/midtrans)
+├── email/          # Modular email (log/resend)
+├── digest/         # Weekly email digest cron
+├── settings/       # SiteSettings (admin-configurable)
+├── cloudinary/     # Image upload service
 └── prisma/         # Database service
 ```
 
 ## Database
 
-9 tabel: `User`, `Property`, `PropertyImage`, `PropertyFeature`, `Lead`, `Favorite`, `ModerationLog`, `AuditLog`, `Session`
+15 tabel: `User`, `Property`, `PropertyImage`, `PropertyFeature`, `PropertyView`, `Lead`, `Transaction`, `ModerationLog`, `Favorite`, `Report`, `SavedSearch`, `Notification`, `PriceHistory`, `SiteSettings`, `Review`
 
 `PropertyFeature` menyimpan fasilitas properti sebagai string per baris (e.g. `security_24h`, `swimming_pool`, `other_nama_custom`).
 

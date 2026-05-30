@@ -51,7 +51,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 - **Server Components** by default — semua pages fetch data di server
 - **`'use client'`** hanya untuk komponen interaktif (form, map, filter)
 - **Cookie auth** — server components baca token dari `next/headers`
-- **API wrapper** — semua request lewat `lib/api/` atau `lib/server/api.ts`
+- **API wrapper** — semua request lewat `lib/api/` atau `apps/web/lib/server/api.ts`
 
 ```
 app/                    # Server components (pages)

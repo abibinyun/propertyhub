@@ -2,7 +2,7 @@
 
 **Last Updated:** 2026-03-29 WIB
 **Database:** PostgreSQL 15+ via Prisma ORM
-**Total Tables:** 17
+**Total Tables:** 15
 
 ---
 
