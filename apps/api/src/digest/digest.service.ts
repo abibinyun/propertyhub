@@ -22,7 +22,7 @@ export class DigestService {
   @Cron('0 1 * * 1')
   async sendWeeklyDigest() {
     this.logger.log('Sending weekly digest emails...');
-    const frontendUrl = this.config.get<string>('FRONTEND_URL', 'http://localhost:3000');
+    const frontendUrl = this.config.get<string>('FRONTEND_URL', 'http://localhost:3002');
     const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
     // Get all users with active properties
