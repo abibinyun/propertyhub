@@ -2,7 +2,9 @@
 
 Platform listing properti fullstack — jual, beli, dan sewa properti di Indonesia.
 
-**Last Updated:** 2026-03-29 | **Status:** Production-ready (minus deployment)
+![Homepage](docs/screenshot/homepage.png)
+
+**Last Updated:** 2026-05-30 | **Status:** Production-ready (minus deployment)
 
 ## Stack
 
@@ -15,17 +17,6 @@ Platform listing properti fullstack — jual, beli, dan sewa properti di Indones
 | Storage | Cloudinary |
 | Payment | Midtrans (modular, log default) |
 | Maps | Leaflet + OpenStreetMap + data wilayah offline |
-
-## Repositories
-
-- **Backend**: [propertyweb-nestjs](https://github.com/abibinyun/propertyweb-nestjs)
-- **Frontend**: [propertyweb-nextjs](https://github.com/abibinyun/propertyweb-nextjs)
-
-> Monorepo ini di-push ke dua repo terpisah via `git subtree`:
-> ```bash
-> git subtree push --prefix=client fe main
-> git subtree push --prefix=server be main
-> ```
 
 ## Fitur Utama
 

@@ -31,7 +31,7 @@ async function bootstrap() {
   app.use(cookieParser());
 
   // CORS — restrict to frontend URL only
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3002';
   app.enableCors({ origin: frontendUrl, credentials: true });
 
   // Swagger (dev only)
@@ -44,11 +44,11 @@ async function bootstrap() {
       .build();
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('api/docs', app, document);
-    logger.log('📖 Swagger docs: http://localhost:3001/api/docs');
+    logger.log('📖 Swagger docs: http://localhost:3003/api/docs');
   }
 
   const configService = app.get(ConfigService);
-  const port = configService.get<number>('PORT') || 3001;
+  const port = configService.get<number>('PORT') || 3003;
 
   await app.listen(port);
   logger.log(`🚀 Running on: http://localhost:${port}`);
