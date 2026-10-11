@@ -37,4 +37,11 @@ export const usersApi = {
     if (!res.ok) throw await res.json();
     return res.json();
   },
+
+  submitVerification: (data: {
+    idCardNumber?: string;
+    licenseNumber?: string;
+    idCardUrl?: string;
+    brokerCertificateUrl?: string;
+  }) => apiFetch('/users/verification', { method: 'POST', body: JSON.stringify(data) }),
 };

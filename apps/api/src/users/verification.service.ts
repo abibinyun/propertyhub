@@ -122,6 +122,26 @@ export class VerificationService {
     }
   }
 
+  async getVerifications(status?: string) {
+    const where: Record<string, unknown> = {};
+    if (status) where.status = status;
+    return this.prisma.agentVerification.findMany({
+      where,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            company: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async addBlacklist(
     type: 'PHONE' | 'EMAIL' | 'IP',
     value: string,

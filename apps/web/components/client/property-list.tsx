@@ -14,10 +14,11 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { MoreVertical, Eye, Edit, Trash2, MapPin, TrendingUp, MessageSquare, Plus, ChevronLeft, ChevronRight, Heart, Zap } from 'lucide-react';
+import { MoreVertical, Eye, Edit, Trash2, MapPin, TrendingUp, MessageSquare, Plus, ChevronLeft, ChevronRight, Heart, Zap, Rocket, Loader2 } from 'lucide-react';
 import { formatPrice, cn } from '@/lib/utils';
 import { propertyDetailUrl } from '@/lib/url';
 import { FeaturedModal } from './featured-modal';
+import { packagesApi } from '@/lib/api/packages';
 
 const STATUS_CONFIG: Record<PropertyStatus, { label: string; className: string }> = {
   ACTIVE:   { label: 'Aktif',    className: 'bg-emerald-100 text-emerald-700' },
@@ -52,6 +53,8 @@ export function PropertyList({ initialProperties, meta, initialSearch = '', init
   const [deleteTarget, setDeleteTarget] = useState<Property | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [featuredTarget, setFeaturedTarget] = useState<Property | null>(null);
+  const [bumpingId, setBumpingId] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [search, setSearch] = useState(initialSearch);
   const [filterStatus, setFilterStatus] = useState(initialStatus);
   const [sort, setSort] = useState(initialSort);
@@ -90,6 +93,21 @@ export function PropertyList({ initialProperties, meta, initialSearch = '', init
     finally { setDeleting(false); setDeleteTarget(null); }
   };
 
+  const handleBump = async (propertyId: string) => {
+    setBumpingId(propertyId);
+    setFeedback(null);
+    try {
+      const res = await packagesApi.bumpProperty(propertyId);
+      setFeedback({ type: 'success', message: res.message });
+      setTimeout(() => setFeedback(null), 5000);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : (typeof err === 'object' && err !== null && 'message' in err ? String((err as { message: string }).message) : 'Gagal menyundul properti');
+      setFeedback({ type: 'error', message: msg });
+    } finally {
+      setBumpingId(null);
+    }
+  };
+
   if (meta.total === 0 && !initialSearch && !initialStatus) {
     return (
       <div className="text-center py-20 bg-white rounded-2xl border border-border/60">
@@ -107,6 +125,16 @@ export function PropertyList({ initialProperties, meta, initialSearch = '', init
 
   return (
     <>
+      {feedback && (
+        <div className={`mb-4 px-4 py-3 rounded-xl text-sm border ${
+          feedback.type === 'success'
+            ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+            : 'bg-red-50 border-red-200 text-red-800'
+        }`}>
+          {feedback.message}
+        </div>
+      )}
+
       {/* Search + Filter */}
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <input
@@ -195,12 +223,28 @@ export function PropertyList({ initialProperties, meta, initialSearch = '', init
                         </div>
                       </div>
 
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleBump(property.id)}
+                          disabled={bumpingId === property.id}
+                          className="h-8 gap-1 text-xs font-semibold text-amber-700 border-amber-200 hover:bg-amber-50"
+                        >
+                          {bumpingId === property.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Rocket className="h-3.5 w-3.5 text-amber-600" />
+                          )}
+                          Sundul
+                        </Button>
+
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem asChild>
                             <Link href={propertyDetailUrl(property)}><Eye className="mr-2 h-4 w-4" />Lihat</Link>
@@ -211,6 +255,9 @@ export function PropertyList({ initialProperties, meta, initialSearch = '', init
                           <DropdownMenuItem asChild>
                             <Link href={`/dashboard/properties/${property.slug}/edit`}><Edit className="mr-2 h-4 w-4" />Edit</Link>
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleBump(property.id)}>
+                            <Rocket className="mr-2 h-4 w-4 text-amber-600" />Sundul Listing
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setFeaturedTarget(property)}>
                             <Zap className="mr-2 h-4 w-4 text-amber-500" />Promosikan
                           </DropdownMenuItem>
@@ -220,8 +267,9 @@ export function PropertyList({ initialProperties, meta, initialSearch = '', init
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
+                  </div>
 
-                    <div className="flex items-center gap-4 mt-2 pt-2 border-t border-border/40">
+                  <div className="flex items-center gap-4 mt-2 pt-2 border-t border-border/40">
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Eye className="h-3 w-3" />{property.viewsCount} dilihat
                       </div>

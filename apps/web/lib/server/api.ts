@@ -1,6 +1,6 @@
 import { getAuthHeader } from '@/lib/server/auth';
 import { User } from '@/types/auth';
-import { Property } from '@/types/property';
+import { Property, AgentVerification } from '@/types/property';
 import { PaginatedResponse } from '@/types/api';
 import { FavoriteItem } from '@/lib/api/favorites';
 import { Lead } from '@/types/lead';
@@ -41,6 +41,10 @@ export interface AgentReviewsResponse {
   }>;
   avgRating: number | null;
   totalReviews: number;
+}
+
+export interface AdminVerificationItem extends AgentVerification {
+  user?: { id: string; name: string; email: string; phone?: string | null; company?: string | null };
 }
 
 import { API_URL } from '@/lib/config';
@@ -109,4 +113,5 @@ export const serverApi = {
     return serverFetch<AgentProfileResponse>(`/users/${handle}/public${qs}`);
   },
   getAgentReviews: (agentId: string) => serverFetch<AgentReviewsResponse>(`/reviews/agent/${agentId}`),
+  getAdminVerifications: (status?: string) => serverFetch<AdminVerificationItem[]>(`/users/verifications${status ? `?status=${status}` : ''}`),
 };

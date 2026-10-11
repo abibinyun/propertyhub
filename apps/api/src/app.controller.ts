@@ -7,7 +7,12 @@ export class AppController {
 
   @Get('health')
   health() {
-    return { status: 'ok', timestamp: new Date().toISOString() };
+    return this.appService.getHealth();
+  }
+
+  @Get('health/ready')
+  readiness() {
+    return this.appService.getReadiness();
   }
 
   @Get('stats')

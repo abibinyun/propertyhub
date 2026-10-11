@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Building2, ShieldCheck, MessageSquare, Flag, Settings, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Users, Building2, ShieldCheck, MessageSquare, Flag, Settings, ChevronRight, UserCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { href: '/admin/moderation', label: 'Moderasi', icon: ShieldCheck },
+  { href: '/admin/verifications', label: 'Verifikasi Agen', icon: UserCheck },
   { href: '/admin/properties', label: 'Properti', icon: Building2 },
   { href: '/admin/users', label: 'Pengguna', icon: Users },
   { href: '/admin/leads', label: 'Leads', icon: MessageSquare },

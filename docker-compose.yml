@@ -17,6 +17,20 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    container_name: property-redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   # Optional self-hosted analytics: docker compose --profile analytics up -d
   umami:
     image: ghcr.io/umami-software/umami:postgresql-latest
@@ -54,4 +68,5 @@ services:
 
 volumes:
   postgres_data:
+  redis_data:
   umami_db_data:

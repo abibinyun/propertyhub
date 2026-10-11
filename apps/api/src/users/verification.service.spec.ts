@@ -129,4 +129,20 @@ describe('VerificationService (TDD)', () => {
       expect(result.message).toContain('ditolak');
     });
   });
+
+  describe('getVerifications', () => {
+    it('should return list of verifications filtered by status', async () => {
+      prisma.agentVerification.findMany = jest
+        .fn()
+        .mockResolvedValue([{ id: 'v1', status: 'PENDING' }]);
+
+      const result = await service.getVerifications('PENDING');
+      expect(prisma.agentVerification.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { status: 'PENDING' },
+        }),
+      );
+      expect(result).toHaveLength(1);
+    });
+  });
 });

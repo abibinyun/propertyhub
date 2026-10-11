@@ -67,6 +67,18 @@ export class UsersController {
     );
   }
 
+  @Get('verifications')
+  getVerifications(
+    @CurrentUser() user: RequestUser,
+    @Query('status') status?: string,
+  ) {
+    if (user.role !== 'ADMIN')
+      throw new BadRequestException(
+        'Hanya admin yang dapat melihat daftar verifikasi',
+      );
+    return this.verificationService.getVerifications(status);
+  }
+
   @Get('profile')
   getProfile(@CurrentUser() user: RequestUser) {
     return this.usersService.getProfile(user.id);

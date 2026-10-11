@@ -8,7 +8,7 @@ import { User } from '@/types/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, CheckCircle, Eye, EyeOff, Camera, Check, X } from 'lucide-react';
+import { Loader2, CheckCircle, Eye, EyeOff, Camera, Check, X, ShieldCheck } from 'lucide-react';
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -56,6 +56,10 @@ export function ProfileForm({ user }: { user: User }) {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
 
+  const [verifLoading, setVerifLoading] = useState(false);
+  const [verifSuccess, setVerifSuccess] = useState(false);
+  const [verifError, setVerifError] = useState('');
+
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return;
     setAvatarLoading(true);
@@ -88,6 +92,26 @@ export function ProfileForm({ user }: { user: User }) {
       setProfileError(err instanceof Error ? err.message : 'Gagal menyimpan');
     } finally {
       setProfileLoading(false);
+    }
+  };
+
+  const handleVerification = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setVerifError('');
+    setVerifSuccess(false);
+    setVerifLoading(true);
+    const fd = new FormData(e.currentTarget);
+    try {
+      await usersApi.submitVerification({
+        idCardNumber: fd.get('idCardNumber') as string,
+        licenseNumber: fd.get('licenseNumber') as string,
+      });
+      setVerifSuccess(true);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Gagal mengirim pengajuan verifikasi';
+      setVerifError(msg);
+    } finally {
+      setVerifLoading(false);
     }
   };
 
@@ -253,6 +277,46 @@ export function ProfileForm({ user }: { user: User }) {
               {pwLoading ? 'Mengubah...' : 'Ubah Password'}
             </Button>
           </form>
+        </SectionCard>
+
+        {/* Agent Verification */}
+        <SectionCard title="Verifikasi Agen Resmi (KTP & AREBI)">
+          {user.verified ? (
+            <div className="flex items-center gap-3 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800">
+              <ShieldCheck className="h-6 w-6 text-emerald-600 flex-shrink-0" />
+              <div>
+                <p className="font-semibold text-sm">Akun Terverifikasi</p>
+                <p className="text-xs text-emerald-700">Profil Anda memiliki lencana resmi Agen Terverifikasi PropertyHub.</p>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleVerification} className="space-y-4">
+              <p className="text-xs text-muted-foreground">
+                Tingkatkan kepercayaan calon pembeli dengan lencana Agen Terverifikasi. Masukkan NIK KTP dan nomor registrasi broker/AREBI Anda.
+              </p>
+              {verifError && <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-xl">{verifError}</p>}
+              {verifSuccess && (
+                <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 px-3 py-2 rounded-xl">
+                  <CheckCircle className="h-4 w-4" />Pengajuan verifikasi berhasil dikirim. Tim admin akan memverifikasi dokumen Anda.
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <Label htmlFor="idCardNumber">Nomor Induk Kependudukan (NIK KTP)</Label>
+                <Input id="idCardNumber" name="idCardNumber" placeholder="3201..." required maxLength={16} className="rounded-xl" />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="licenseNumber">Nomor Sertifikasi / Lisensi (AREBI / SIU-P4)</Label>
+                <Input id="licenseNumber" name="licenseNumber" placeholder="AREBI-..." className="rounded-xl" />
+              </div>
+
+              <Button type="submit" variant="default" disabled={verifLoading} className="w-full rounded-xl font-semibold">
+                {verifLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {verifLoading ? 'Mengirim...' : 'Ajukan Verifikasi Agen'}
+              </Button>
+            </form>
+          )}
         </SectionCard>
       </div>
     </div>
