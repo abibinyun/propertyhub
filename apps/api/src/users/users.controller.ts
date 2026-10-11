@@ -2,6 +2,8 @@ import { Controller, Get, Patch, Post, Body, Param, Query, UseGuards, BadRequest
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from './users.service';
+import { VerificationService } from './verification.service';
+import { SubmitVerificationDto } from './dto/verification.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
@@ -16,10 +18,26 @@ import * as bcrypt from 'bcrypt';
 export class UsersController {
   constructor(
     private usersService: UsersService,
+    private verificationService: VerificationService,
     private prisma: PrismaService,
     private configService: ConfigService,
     private cloudinary: CloudinaryService,
   ) {}
+
+  @Post('verification')
+  submitVerification(@CurrentUser() user: any, @Body() dto: SubmitVerificationDto) {
+    return this.verificationService.submitVerification(user.id, dto);
+  }
+
+  @Patch('verification/:id/review')
+  reviewVerification(
+    @CurrentUser() user: any,
+    @Param('id') verificationId: string,
+    @Body() body: { status: 'APPROVED' | 'REJECTED'; reason?: string },
+  ) {
+    if (user.role !== 'ADMIN') throw new BadRequestException('Hanya admin yang dapat mereview verifikasi');
+    return this.verificationService.reviewVerification(user.id, verificationId, body.status, body.reason);
+  }
 
   @Get('profile')
   getProfile(@CurrentUser() user: any) {

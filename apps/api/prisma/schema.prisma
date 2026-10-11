@@ -123,6 +123,9 @@ model User {
   notifications Notification[]
   reviewsGiven    Review[] @relation("ReviewAuthor")
   reviewsReceived Review[] @relation("ReviewAgent")
+  subscriptions   UserSubscription[]
+  agentVerification AgentVerification?
+  bumpLogs        PropertyBumpLog[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -218,6 +221,7 @@ model Property {
   reports      Report[]
   priceHistory PriceHistory[]
   views        PropertyView[]
+  bumpLogs     PropertyBumpLog[]
 
   publishedAt DateTime?
   createdAt   DateTime  @default(now())
@@ -459,6 +463,12 @@ model SiteSettings {
   umamiUrl        String?
   umamiSiteId     String?
 
+  // Quota & Commercial Rules
+  freeListingQuota   Int      @default(3)
+  bumpCooldownHours  Int      @default(6)
+  watermarkEnabled   Boolean  @default(true)
+  watermarkText      String   @default("PropertyHub")
+
   updatedAt       DateTime @updatedAt
 
   @@map("site_settings")
@@ -491,3 +501,90 @@ model Review {
   @@index([agentId])
   @@map("reviews")
 }
+
+// ─── ENTERPRISE MONETIZATION & PACKAGES (RUMAH123 GRADE) ──────────────────────
+
+model AdPackage {
+  id           String   @id @default(uuid())
+  name         String   // e.g. "Paket Starter Agen", "Paket Pro Broker"
+  code         String   @unique // STARTER, PRO, ENTERPRISE
+  description  String?  @db.Text
+  price        Decimal  @db.Decimal(15, 2) // IDR
+  durationDays Int      @default(30)
+  listingQuota Int      @default(10)
+  bumpQuota    Int      @default(5)
+  featuredQuota Int     @default(1)
+  badgeVerified Boolean @default(false)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  subscriptions UserSubscription[]
+
+  @@map("ad_packages")
+}
+
+model UserSubscription {
+  id                     String    @id @default(uuid())
+  userId                 String
+  user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  packageId              String
+  package                AdPackage @relation(fields: [packageId], references: [id], onDelete: Restrict)
+  listingQuotaRemaining  Int
+  bumpQuotaRemaining     Int
+  featuredQuotaRemaining Int       @default(0)
+  status                 String    @default("ACTIVE") // ACTIVE, EXPIRED, CANCELLED
+  expiresAt              DateTime
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  @@index([userId, status])
+  @@index([expiresAt])
+  @@map("user_subscriptions")
+}
+
+model PropertyBumpLog {
+  id         String   @id @default(uuid())
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bumpedAt   DateTime @default(now())
+
+  @@index([propertyId, bumpedAt])
+  @@index([userId])
+  @@map("property_bump_logs")
+}
+
+// ─── VERIFIKASI AGEN & ANTI-FRAUD ─────────────────────────────────────────────
+
+model AgentVerification {
+  id                   String           @id @default(uuid())
+  userId               String           @unique
+  user                 User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  idCardNumber         String?          // NIK KTP
+  licenseNumber        String?          // AREBI / SIU-P4
+  idCardUrl            String?          // Dokumen KTP
+  brokerCertificateUrl String?          // Sertifikat Broker
+  status               ModerationStatus @default(PENDING)
+  rejectionReason      String?
+  verifiedAt           DateTime?
+  verifiedBy           String?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+
+  @@index([status])
+  @@map("agent_verifications")
+}
+
+model Blacklist {
+  id        String   @id @default(uuid())
+  type      String   // PHONE, EMAIL, IP
+  value     String   @unique
+  reason    String
+  createdAt DateTime @default(now())
+
+  @@index([type, value])
+  @@map("blacklists")
+}
+

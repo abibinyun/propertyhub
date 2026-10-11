@@ -20,6 +20,7 @@ import { SavedSearchesModule } from './saved-searches/saved-searches.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { SettingsModule } from './settings/settings.module';
+import { PackagesModule } from './packages/packages.module';
 import { DigestModule } from './digest/digest.module';
 
 @Module({
@@ -47,6 +48,7 @@ import { DigestModule } from './digest/digest.module';
     ReviewsModule,
     DigestModule,
     SettingsModule,
+    PackagesModule,
   ],
   controllers: [AppController],
   providers: [

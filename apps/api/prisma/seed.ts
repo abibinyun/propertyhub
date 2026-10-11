@@ -307,6 +307,58 @@ async function main() {
     leads: await prisma.lead.count(),
   };
 
+  // Commercial Ad Packages
+  await prisma.adPackage.upsert({
+    where: { code: 'STARTER' },
+    update: {},
+    create: {
+      name: 'Paket Starter Agen',
+      code: 'STARTER',
+      description: 'Cocok untuk agen pemula atau pemilik properti mandiri.',
+      price: 149000,
+      durationDays: 30,
+      listingQuota: 10,
+      bumpQuota: 5,
+      featuredQuota: 0,
+      badgeVerified: false,
+      isActive: true,
+    },
+  });
+
+  await prisma.adPackage.upsert({
+    where: { code: 'PRO' },
+    update: {},
+    create: {
+      name: 'Paket Pro Broker',
+      code: 'PRO',
+      description: 'Paket terpopuler untuk agen profesional dengan badge terverifikasi.',
+      price: 399000,
+      durationDays: 30,
+      listingQuota: 50,
+      bumpQuota: 25,
+      featuredQuota: 2,
+      badgeVerified: true,
+      isActive: true,
+    },
+  });
+
+  await prisma.adPackage.upsert({
+    where: { code: 'ENTERPRISE' },
+    update: {},
+    create: {
+      name: 'Paket Kantor Agen / Developer',
+      code: 'ENTERPRISE',
+      description: 'Solusi lengkap untuk kantor broker dan developer properti.',
+      price: 999000,
+      durationDays: 90,
+      listingQuota: 200,
+      bumpQuota: 100,
+      featuredQuota: 5,
+      badgeVerified: true,
+      isActive: true,
+    },
+  });
+
   console.log('\n📊 Seed Summary:');
   console.log(`   Users: ${stats.users}`);
   console.log(`   Properties: ${stats.properties}`);
