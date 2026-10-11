@@ -16,7 +16,7 @@ import { User } from '@/types/auth';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+import { BASE_URL } from '@/lib/config';
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings();

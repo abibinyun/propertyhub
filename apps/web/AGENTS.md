@@ -1,5 +1,9 @@
-<!-- BEGIN:nextjs-agent-rules -->
-# This is NOT the Next.js you know
+# Next.js Guidelines for AI Agents
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
-<!-- END:nextjs-agent-rules -->
+See root [AGENTS.md](../../AGENTS.md) and [docs/FRONTEND_GUIDELINES.md](../../docs/FRONTEND_GUIDELINES.md) for full authoritative rules.
+
+Next.js 16 conventions:
+- Next.js is **UI layer only**; never place database or business logic here.
+- Default to React Server Components. Use `"use client"` only for interaction.
+- Import `API_URL` and `APP_URL` from `@/lib/config`.
+- Import domain models and types from `@propertyhub/shared`.

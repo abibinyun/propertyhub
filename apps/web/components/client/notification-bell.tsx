@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Bell, CheckCheck, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { API_URL } from '@/lib/config';
 
 const TYPE_ICON: Record<string, string> = {
   lead_received: '💬',

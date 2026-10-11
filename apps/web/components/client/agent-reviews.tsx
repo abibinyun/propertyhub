@@ -6,6 +6,7 @@ import { timeAgo, cn } from '@/lib/utils';
 import { ReviewForm } from './review-form';
 import { Button } from '@/components/ui/button';
 import { reviewsApi } from '@/lib/api/reviews';
+import { API_URL } from '@/lib/config';
 import { useAuth } from '@/lib/context/auth-context';
 
 interface Review {
@@ -55,7 +56,7 @@ export function AgentReviews({ agentId, initialReviews, avgRating, totalReviews 
   const handleSuccess = async () => {
     setShowForm(false);
     setEligibility({ eligible: false, reason: 'already_reviewed' });
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/reviews/agent/${agentId}`);
+    const res = await fetch(`${API_URL}/reviews/agent/${agentId}`);
     const data = await res.json();
     setReviews(data.reviews);
     setAvg(data.avgRating);

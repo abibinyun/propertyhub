@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Loader2, CheckCircle, Send, Lock, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export function ContactForm({ propertyId, agentPhone }: { propertyId: string; agentPhone?: string }) {
+export function ContactForm({ propertyId, agentPhone }: { propertyId: string; agentPhone?: string | null }) {
   const { user } = useAuth();
   const pathname = usePathname();
   const loginUrl = `/login?redirect=${encodeURIComponent(pathname)}`;

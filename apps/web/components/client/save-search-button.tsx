@@ -6,7 +6,7 @@ import { Bookmark, BookmarkCheck, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/context/auth-context';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { API_URL } from '@/lib/config';
 
 export function SaveSearchButton({ label }: { label: string }) {
   const { user } = useAuth();

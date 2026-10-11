@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { RegisterForm } from '@/components/client/register-form';
 import { UserPlus } from 'lucide-react';
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+import { BASE_URL } from '@/lib/config';
 
 export const metadata: Metadata = {
   title: 'Daftar — PropertyHub',

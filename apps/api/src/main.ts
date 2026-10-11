@@ -31,7 +31,7 @@ async function bootstrap() {
   app.use(cookieParser());
 
   // CORS — restrict to frontend URL only
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3002';
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3004';
   app.enableCors({ origin: frontendUrl, credentials: true });
 
   // Swagger (dev only)

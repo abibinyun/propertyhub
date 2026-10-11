@@ -22,6 +22,7 @@ import {
   Shield, Calendar, Layers, Car, CheckCircle2, Eye, Tag, BadgeCheck, TrendingUp, Clock,
 } from 'lucide-react';
 import { formatPrice, timeAgo } from '@/lib/utils';
+import { BASE_URL } from '@/lib/config';
 
 interface Props {
   params: Promise<{ location: string; slug: string }>;
@@ -57,7 +58,6 @@ const FURNISHING_LABEL: Record<string, string> = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug, location } = await params;
-  const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   try {
     const p = await propertiesApi.getBySlug(slug);
     const img = p.images?.[0]?.url;
@@ -94,7 +94,6 @@ export default async function PropertyDetailPage({ params }: Props) {
   }
 
   const images = property.images || [];
-  const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   const pageUrl = `${BASE_URL}/properti/${location}/${slug}`;
   const statusLabel = property.listingType === 'SALE' ? 'Dijual' : 'Disewa';
   const typeLabel = TYPE_LABEL[property.propertyType] ?? property.propertyType;

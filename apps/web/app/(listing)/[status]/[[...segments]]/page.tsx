@@ -14,6 +14,7 @@ import { SortControls } from '@/components/client/sort-controls';
 import { SaveSearchButton } from '@/components/client/save-search-button';
 import { NearMeButton } from '@/components/client/near-me-button';
 import { Property } from '@/types/property';
+import { BASE_URL } from '@/lib/config';
 
 interface Props {
   params: Promise<{ status: string; segments?: string[] }>;
@@ -64,7 +65,6 @@ function buildBreadcrumbs(parsed: ReturnType<typeof parseSegments>) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { status, segments } = await params;
-  const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   const parsed = parseSegments(status, segments ?? []);
   const statusLabel = status === 'jual' ? 'Dijual' : 'Disewa';
   const typeLabel = parsed.type ? (TYPE_LABELS[parsed.type] ?? parsed.type) : 'Properti';
@@ -115,7 +115,6 @@ export default async function ListingPage({ params, searchParams }: Props) {
   const pageTitle = breadcrumbs[breadcrumbs.length - 1].label;
   const statusLabel = status === 'jual' ? 'Dijual' : 'Disewa';
 
-  const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   const breadcrumbJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',

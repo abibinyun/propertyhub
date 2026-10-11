@@ -13,10 +13,9 @@ import { getToken } from '@/lib/server/auth';
 import { getSettings } from '@/lib/server/settings';
 import { PropertyCard } from '@/components/property/property-card';
 import { HomeSearch } from '@/components/client/home-search';
+import { API_URL, BASE_URL } from '@/lib/config';
 
 export const revalidate = 60; // ISR — revalidate setiap 60 detik
-
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
 export const metadata: Metadata = {
   title: 'PropertyHub — Jual, Beli & Sewa Properti di Indonesia',
@@ -62,7 +61,6 @@ const FEATURED_CITIES = [
 
 export default async function HomePage() {
   const token = await getToken();
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
   const [{ data: featured, meta }, favoriteIds, siteStats, settings] = await Promise.all([
     propertiesApi.getAll({ limit: 6, page: 1 }).catch(() => ({ data: [], meta: { total: 0, page: 1, limit: 6, totalPages: 0 } })),

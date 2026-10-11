@@ -1,7 +1,7 @@
 import { Property, CreatePropertyDto, UpdatePropertyDto, PropertyImage } from '@/types/property';
 import { PaginatedResponse } from '@/types/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { API_URL } from '@/lib/config';
 
 export interface PropertyQuery {
   city?: string;

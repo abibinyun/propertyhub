@@ -20,7 +20,7 @@ export class EmailService implements EmailProvider {
   }
 
   async sendVerificationEmail(to: string, name: string, token: string): Promise<void> {
-    const appUrl = this.config.get<string>('APP_URL', 'http://localhost:3000');
+    const appUrl = this.config.get<string>('FRONTEND_URL') || this.config.get<string>('APP_URL', 'http://localhost:3004');
     const url = `${appUrl}/verify-email?token=${token}`;
     return this.send({
       to,
@@ -66,7 +66,7 @@ export class EmailService implements EmailProvider {
   }
 
   async sendPasswordResetEmail(to: string, name: string, token: string): Promise<void> {
-    const appUrl = this.config.get<string>('APP_URL', 'http://localhost:3000');
+    const appUrl = this.config.get<string>('FRONTEND_URL') || this.config.get<string>('APP_URL', 'http://localhost:3004');
     const url = `${appUrl}/reset-password?token=${token}`;
     return this.send({
       to,

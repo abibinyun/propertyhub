@@ -6,7 +6,7 @@ import { FavoriteItem } from '@/lib/api/favorites';
 import { Lead } from '@/types/lead';
 import { AdminStats, AdminUser, AdminLead, ModerationLog } from '@/lib/api/admin';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { API_URL } from '@/lib/config';
 
 async function serverFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const authHeader = await getAuthHeader();

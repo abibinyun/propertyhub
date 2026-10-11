@@ -1,7 +1,7 @@
 // Client-only fetch with auto-refresh interceptor
 // Import ini HANYA dari Client Components
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { API_URL } from '@/lib/config';
 
 let isRefreshing = false;
 let refreshQueue: Array<() => void> = [];

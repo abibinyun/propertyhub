@@ -1,5 +1,5 @@
 // Client-side auth mutations — set cookie via credentials: 'include'
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { API_URL } from '@/lib/config';
 
 async function apiFetch<T>(path: string, body: unknown): Promise<T> {
   try {

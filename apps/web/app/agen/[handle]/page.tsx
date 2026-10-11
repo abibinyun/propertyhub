@@ -8,7 +8,7 @@ import { AgentListings } from '@/components/client/agent-listings';
 import { ShareButton } from '@/components/client/share-button';
 import { serverApi } from '@/lib/server/api';
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+import { BASE_URL } from '@/lib/config';
 
 interface Props {
   params: Promise<{ handle: string }>;

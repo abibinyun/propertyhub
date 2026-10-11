@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { LoginForm } from '@/components/client/login-form';
 import { LogIn } from 'lucide-react';
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+import { BASE_URL } from '@/lib/config';
 
 export const metadata: Metadata = {
   title: 'Masuk — PropertyHub',

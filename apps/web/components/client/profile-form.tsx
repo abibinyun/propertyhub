@@ -28,14 +28,14 @@ export function ProfileForm({ user }: { user: User }) {
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Username availability check
-  const [usernameVal, setUsernameVal] = useState((user as any).username ?? '');
+  const [usernameVal, setUsernameVal] = useState(user.username ?? '');
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const checkUsername = useCallback((val: string) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     const clean = val.trim();
-    if (!clean || clean === (user as any).username) { setUsernameStatus('idle'); return; }
+    if (!clean || clean === user.username) { setUsernameStatus('idle'); return; }
     if (!/^[a-z0-9-]+$/.test(clean) || clean.length < 3) { setUsernameStatus('idle'); return; }
     setUsernameStatus('checking');
     debounceRef.current = setTimeout(async () => {
@@ -189,7 +189,7 @@ export function ProfileForm({ user }: { user: User }) {
 
             <div className="space-y-1.5">
               <Label htmlFor="bio">Bio</Label>
-              <textarea id="bio" name="bio" defaultValue={(user as any).bio ?? ''} rows={3} maxLength={300}
+              <textarea id="bio" name="bio" defaultValue={user.bio ?? ''} rows={3} maxLength={300}
                 placeholder="Ceritakan sedikit tentang Anda sebagai agen properti..."
                 className="flex w-full rounded-xl border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none" />
               <p className="text-xs text-muted-foreground">Maks 300 karakter</p>
@@ -202,7 +202,7 @@ export function ProfileForm({ user }: { user: User }) {
 
             <div className="space-y-1.5">
               <Label htmlFor="company">Nama Perusahaan / Agen</Label>
-              <Input id="company" name="company" defaultValue={(user as any).company ?? ''} placeholder="PT. Properti Indonesia" className="rounded-xl" />
+              <Input id="company" name="company" defaultValue={user.company ?? ''} placeholder="PT. Properti Indonesia" className="rounded-xl" />
             </div>
 
             <Button type="submit" disabled={profileLoading} className="w-full rounded-xl font-semibold">

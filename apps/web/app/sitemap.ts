@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+import { API_URL } from '@/lib/config';
+import { BASE_URL } from '@/lib/config';
 
 const STATUSES = ['jual', 'sewa'];
 const TYPES = ['rumah', 'apartemen', 'tanah', 'komersial', 'villa', 'gudang'];

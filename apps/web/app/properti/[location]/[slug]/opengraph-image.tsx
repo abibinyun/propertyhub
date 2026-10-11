@@ -5,7 +5,7 @@ export const alt = 'PropertyHub';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { API_URL } from '@/lib/config';
 
 const TYPE_LABEL: Record<string, string> = {
   HOUSE: 'Rumah', APARTMENT: 'Apartemen', LAND: 'Tanah',

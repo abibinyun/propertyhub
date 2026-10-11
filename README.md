@@ -1,107 +1,88 @@
 # PropertyHub
 
-Platform listing properti fullstack — jual, beli, dan sewa properti di Indonesia.
+Fullstack Indonesian property marketplace platform built with NestJS, Next.js 16, and PostgreSQL within a Turborepo monorepo.
 
 ![Homepage](docs/screenshot/homepage.png)
 
-## Stack
+---
 
-| Layer | Tech |
-|---|---|
-| Backend | NestJS + PostgreSQL + Prisma |
-| Frontend | Next.js 16 + Tailwind v4 + shadcn/ui |
-| Runtime | Bun |
-| Auth | JWT cookie-based (httpOnly) + OAuth Google |
-| Storage | Cloudinary |
-| Payment | Midtrans (modular, log default) |
-| Maps | Leaflet + OpenStreetMap + data wilayah offline |
+## 📖 System Documentation
 
-## Fitur Utama
+All architectural specifications, database models, and API contracts are indexed in:
+- **[`docs/00_MOC.md`](docs/00_MOC.md)** (Central Documentation Map of Content)
+- **[`AGENTS.md`](AGENTS.md)** (Operating Guidelines for AI Agents)
 
-- Listing properti dengan SEO URL hierarki 5 level
-- Filter, sort, pagination di listing dan dashboard
-- Detail page: gallery premium, specs, floor plan, price history chart, video, properti serupa, sticky contact
-- Leads system: anti-spam, rate limit, dashboard dua sisi (pengirim & penerima), export CSV
-- Favorites: per-user, count per properti, load more
-- Dashboard: sidebar, stats real-time, sort properti (views/leads/favorites/rank), analitik per properti
-- Access control: views tidak increment untuk pemilik, self-favorite/lead/review dicegah
-- Auth: JWT cookie, refresh token, redirect balik ke halaman asal setelah login
-- Admin: moderation queue, approve/reject/flag, ban user, reports
-- Notifikasi in-app (bell icon), reviews & rating agen, perbandingan properti, KPR calculator
+---
 
-## Struktur Monorepo
+## 🏗️ Architecture & Tech Stack
 
-```
+| Layer | Technology | Port | Details |
+|---|---|---|---|
+| **Backend** | NestJS 11 + Prisma ORM + Bun | `3003` | Modular architecture, JWT cookies, rate limiting, Decimal serialization |
+| **Frontend** | Next.js 16 (App Router) + Tailwind v4 + shadcn/ui | `3004` | Server Components, ISR caching, Leaflet maps, Recharts analytics |
+| **Shared** | `@propertyhub/shared` TypeScript library | — | Shared domain enums, models, DTOs, and API envelopes |
+| **Database** | PostgreSQL 16 (Docker Compose) | `5435` | 15 tables, 20 migrations, spatial indexing, composite indexes |
+| **Storage** | Cloudinary | — | Property images & floor plan upload with size limits |
+| **Payments** | Midtrans (modular: log / midtrans) | — | Featured listing tiers (Basic, Premium, Ultimate) |
+
+---
+
+## 📁 Monorepo Structure
+
+```text
 property-webapp/
-├── apps/
-│   ├── web/          # Next.js frontend
-│   └── api/          # NestJS backend
-└── docs/
-    └── screenshot/   # Screenshots
+├── Makefile              # Canonical command entrypoint (dev, build, docker, migrate)
+├── docker-compose.yml    # PostgreSQL container (port 5435) + optional Umami
+├── AGENTS.md             # Directives and invariants for AI agents
+├── docs/                 # Documentation repository & MOC
+│   ├── 00_MOC.md         # Central documentation index
+│   ├── API.md            # REST API specification
+│   ├── ERD.md            # Entity Relationship Design
+│   ├── FRONTEND_GUIDELINES.md # UI constraints & data fetching rules
+│   └── ...
+├── packages/
+│   └── shared/           # @propertyhub/shared domain types and DTOs
+└── apps/
+    ├── api/              # NestJS backend application (:3003)
+    └── web/              # Next.js frontend application (:3004)
 ```
 
-## Quick Start
+---
 
+## 🚀 Quick Start
+
+### 1. Start Infrastructure & Database
 ```bash
-# Jalankan via Turborepo
-bun install
-bun dev
-
-# Atau manual:
-
-# Backend
-cd apps/api
-cp .env.example .env   # isi DATABASE_URL, JWT_SECRET, CLOUDINARY_*, GOOGLE_*
-bun install
-bunx prisma migrate dev
-bunx prisma db seed
-bun run start:dev
-
-# Frontend
-cd apps/web
-cp .env.example .env.local   # isi NEXT_PUBLIC_API_URL
-bun install
-bun run dev
+make docker-up
 ```
 
-## Fitur
-
-- Listing properti dengan URL SEO-friendly (`/jual/jakarta-selatan/rumah`)
-- Detail properti dengan peta interaktif (Leaflet)
-- Auth: register, login, JWT cookie, **OAuth Google**
-- **Password reset** via email
-- Dashboard: kelola properti, favorit, leads, **analitik per properti**
-- **Featured listing** — BASIC/PREMIUM/ULTIMATE, payment modular (Midtrans)
-- **Email notifikasi** — lead baru langsung dikirim ke pemilik properti
-- Admin: moderasi, approve/reject, statistik
-- Ranking algorithm (quality, freshness, engagement, reputation)
-- SEO: generateMetadata, JSON-LD, sitemap.xml, robots.txt
-- **Data wilayah offline** — dropdown Provinsi→Kota→Kecamatan tanpa API eksternal
-
-## Env Variables
-
-### Backend (`apps/api/.env`)
-```env
-DATABASE_URL=postgresql://user:pass@localhost:5432/propertyhub
-JWT_SECRET=
-APP_URL=http://localhost:3003
-FRONTEND_URL=http://localhost:3002
-CLOUDINARY_CLOUD_NAME=
-CLOUDINARY_API_KEY=
-CLOUDINARY_API_SECRET=
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
-EMAIL_PROVIDER=log          # log | resend
-RESEND_API_KEY=             # jika EMAIL_PROVIDER=resend
-PAYMENT_PROVIDER=log        # log | midtrans
-MIDTRANS_SERVER_KEY=        # jika PAYMENT_PROVIDER=midtrans
-MIDTRANS_CLIENT_KEY=        # jika PAYMENT_PROVIDER=midtrans
+### 2. Configure Environment Files
+```bash
+cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.example apps/web/.env.local
 ```
 
-### Frontend (`apps/web/.env.local`)
-```env
-NEXT_PUBLIC_API_URL=http://localhost:3003
-NEXT_PUBLIC_APP_URL=http://localhost:3002
-NEXT_PUBLIC_PAYMENT_PROVIDER=log        # log | midtrans
-NEXT_PUBLIC_MIDTRANS_CLIENT_KEY=        # jika PAYMENT_PROVIDER=midtrans
+### 3. Run Migrations & Seed Data
+```bash
+make db-migrate
+make db-seed
 ```
+
+### 4. Start Development Servers
+```bash
+make dev
+```
+- Frontend: `http://localhost:3004`
+- Backend API: `http://localhost:3003`
+- Swagger Docs: `http://localhost:3003/api/docs`
+
+---
+
+## 🔑 Default Accounts (Seeder)
+
+| Role | Email | Password |
+|---|---|---|
+| **Admin** | `admin@propertyhub.com` | `admin123` |
+| **Agent 1** | `agent1@propertyhub.com` | `admin123` |
+| **Agent 2** | `agent2@propertyhub.com` | `admin123` |
+| **User** | `user@propertyhub.com` | `admin123` |

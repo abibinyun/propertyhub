@@ -7,8 +7,8 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/context/auth-context';
 
 interface Props {
-  phone?: string;
-  name?: string;
+  phone?: string | null;
+  name?: string | null;
   price: string;
   propertyTitle?: string;
 }

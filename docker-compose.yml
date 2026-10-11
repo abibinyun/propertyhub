@@ -1,0 +1,57 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: property-postgres
+    restart: unless-stopped
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_DB: property
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d property"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Optional self-hosted analytics: docker compose --profile analytics up -d
+  umami:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    container_name: property-umami
+    profiles:
+      - analytics
+    ports:
+      - "3005:3000"
+    environment:
+      DATABASE_URL: postgresql://umami:umami@umami-db:5432/umami
+      DATABASE_TYPE: postgresql
+      APP_SECRET: propertyhub-umami-secret-key-change-in-prod
+    depends_on:
+      umami-db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  umami-db:
+    image: postgres:16-alpine
+    container_name: property-umami-db
+    profiles:
+      - analytics
+    environment:
+      POSTGRES_DB: umami
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: umami
+    volumes:
+      - umami_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U umami"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  umami_db_data:

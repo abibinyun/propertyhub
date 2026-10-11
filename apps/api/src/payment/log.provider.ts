@@ -12,7 +12,7 @@ export class LogPaymentProvider implements PaymentProvider {
 
     return {
       token: `log-token-${options.orderId}`,
-      redirectUrl: `http://localhost:3000/dashboard/properties?featured=pending&orderId=${options.orderId}`,
+      redirectUrl: `${process.env.FRONTEND_URL || 'http://localhost:3004'}/dashboard/properties?featured=pending&orderId=${options.orderId}`,
     };
   }
 }
