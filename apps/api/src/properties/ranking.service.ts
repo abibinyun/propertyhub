@@ -189,16 +189,18 @@ export class RankingService {
   }
 
   /**
-   * Batch update rankings (for cron job)
+   * Batch update rankings (for cron job) with chunking & non-blocking execution
    */
   async updateAllRankings(): Promise<void> {
     const properties = await this.prisma.property.findMany({
-      where: { status: 'ACTIVE' },
+      where: { status: 'ACTIVE', deletedAt: null },
       select: { id: true },
     });
 
-    for (const property of properties) {
-      await this.updatePropertyRanking(property.id);
+    const chunkSize = 50;
+    for (let i = 0; i < properties.length; i += chunkSize) {
+      const chunk = properties.slice(i, i + chunkSize);
+      await Promise.allSettled(chunk.map((p) => this.updatePropertyRanking(p.id)));
     }
   }
 }

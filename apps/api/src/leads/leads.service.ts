@@ -65,23 +65,24 @@ export class LeadsService {
       throw new HttpException(`Batas pengiriman pesan harian (${dailyLimit}) telah tercapai`, HttpStatus.TOO_MANY_REQUESTS);
     }
 
-    const lead = await this.prisma.lead.create({
-      data: {
-        propertyId: dto.propertyId,
-        userId,
-        name: dto.name,
-        email: dto.email,
-        phone: dto.phone,
-        message: dto.message,
-        source: dto.source || 'website',
-      },
-      include: { property: { select: { ...PROPERTY_SELECT, userId: true } } },
-    });
-
-    await this.prisma.property.update({
-      where: { id: dto.propertyId },
-      data: { leadsCount: { increment: 1 } },
-    });
+    const [lead] = await this.prisma.$transaction([
+      this.prisma.lead.create({
+        data: {
+          propertyId: dto.propertyId,
+          userId,
+          name: dto.name,
+          email: dto.email,
+          phone: dto.phone,
+          message: dto.message,
+          source: dto.source || 'website',
+        },
+        include: { property: { select: { ...PROPERTY_SELECT, userId: true } } },
+      }),
+      this.prisma.property.update({
+        where: { id: dto.propertyId },
+        data: { leadsCount: { increment: 1 } },
+      }),
+    ]);
 
     // Email notification ke pemilik properti
     const owner = await this.prisma.user.findUnique({

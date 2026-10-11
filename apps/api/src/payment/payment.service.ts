@@ -1,11 +1,11 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { PaymentProvider } from './payment.interface';
 import { LogPaymentProvider } from './log.provider';
 import { MidtransPaymentProvider } from './midtrans.provider';
 import { NotificationsService } from '../notifications/notifications.service';
-import { randomUUID } from 'crypto';
+import { randomUUID, createHash } from 'crypto';
 
 @Injectable()
 export class PaymentService {
@@ -74,16 +74,32 @@ export class PaymentService {
   }
 
   async handleNotification(notification: Record<string, string>) {
+    const serverKey = this.config.get<string>('MIDTRANS_SERVER_KEY');
+    if (this.config.get<string>('PAYMENT_PROVIDER') === 'midtrans' && serverKey && notification.signature_key) {
+      const { order_id, status_code, gross_amount, signature_key } = notification;
+      const expectedSignature = createHash('sha512')
+        .update(`${order_id}${status_code}${gross_amount}${serverKey}`)
+        .digest('hex');
+      if (signature_key !== expectedSignature) {
+        throw new UnauthorizedException('Invalid Midtrans signature key');
+      }
+    }
+
     const orderId = notification.order_id;
     const transactionStatus = notification.transaction_status;
     const fraudStatus = notification.fraud_status;
 
+    const transaction = await this.prisma.transaction.findUnique({ where: { orderId } });
+    if (!transaction) return { message: 'Transaction not found' };
+
+    // Idempotency check: jika sudah PAID, jangan aktivasi atau extend ulang
+    if (transaction.status === 'PAID') {
+      return { message: 'Transaction already processed' };
+    }
+
     const isSuccess =
       (transactionStatus === 'capture' && fraudStatus === 'accept') ||
       transactionStatus === 'settlement';
-
-    const transaction = await this.prisma.transaction.findUnique({ where: { orderId } });
-    if (!transaction) return { message: 'Transaction not found' };
 
     if (isSuccess) {
       await this.activateFeatured(transaction.propertyId!, transaction.type.replace('FEATURED_', ''), transaction.userId);

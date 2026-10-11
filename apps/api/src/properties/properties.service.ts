@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { CreatePropertyDto, UpdatePropertyDto } from './dto/property.dto';
@@ -80,32 +81,49 @@ export class PropertiesService {
     if (lat && lng && radius) {
       const latN = Number(lat), lngN = Number(lng), radiusKm = Math.min(Number(radius), 100);
       const skip = (page - 1) * limit;
-      const baseWhere = `
-        status = 'ACTIVE'
-        AND "moderationStatus" = 'APPROVED'
-        AND latitude IS NOT NULL AND longitude IS NOT NULL
-        ${propertyType ? `AND "propertyType" = '${propertyType}'` : ''}
-        ${listingType ? `AND "listingType" = '${listingType}'` : ''}
-        ${minPrice ? `AND price >= ${Number(minPrice)}` : ''}
-        ${maxPrice ? `AND price <= ${Number(maxPrice)}` : ''}
-        AND (6371 * acos(cos(radians(${latN})) * cos(radians(latitude)) * cos(radians(longitude) - radians(${lngN})) + sin(radians(${latN})) * sin(radians(latitude)))) <= ${radiusKm}
-      `;
+
+      const conditions: Prisma.Sql[] = [
+        Prisma.sql`status = 'ACTIVE'`,
+        Prisma.sql`"moderationStatus" = 'APPROVED'`,
+        Prisma.sql`latitude IS NOT NULL`,
+        Prisma.sql`longitude IS NOT NULL`,
+      ];
+
+      if (propertyType) {
+        conditions.push(Prisma.sql`"propertyType" = ${propertyType}::"PropertyType"`);
+      }
+      if (listingType) {
+        conditions.push(Prisma.sql`"listingType" = ${listingType}::"ListingType"`);
+      }
+      if (minPrice) {
+        conditions.push(Prisma.sql`price >= ${Number(minPrice)}`);
+      }
+      if (maxPrice) {
+        conditions.push(Prisma.sql`price <= ${Number(maxPrice)}`);
+      }
+
+      conditions.push(
+        Prisma.sql`(6371 * acos(cos(radians(${latN})) * cos(radians(latitude)) * cos(radians(longitude) - radians(${lngN})) + sin(radians(${latN})) * sin(radians(latitude)))) <= ${radiusKm}`,
+      );
+
+      const whereClause = Prisma.join(conditions, ' AND ');
+
       const [properties, countResult]: any[] = await Promise.all([
-        this.prisma.$queryRawUnsafe(`
+        this.prisma.$queryRaw`
           SELECT p.*, 
             (6371 * acos(cos(radians(${latN})) * cos(radians(p.latitude)) * cos(radians(p.longitude) - radians(${lngN})) + sin(radians(${latN})) * sin(radians(p.latitude)))) AS distance_km
           FROM properties p
-          WHERE ${baseWhere}
+          WHERE ${whereClause}
           ORDER BY distance_km ASC
           LIMIT ${Number(limit)} OFFSET ${skip}
-        `),
-        this.prisma.$queryRawUnsafe(`SELECT COUNT(*) as count FROM properties p WHERE ${baseWhere}`),
+        `,
+        this.prisma.$queryRaw`SELECT COUNT(*) as count FROM properties p WHERE ${whereClause}`,
       ]);
       const total = Number(countResult[0]?.count ?? 0);
       return { data: properties, meta: { total, page: Number(page), limit: Number(limit), totalPages: Math.ceil(total / Number(limit)) } };
     }
 
-    const where: any = { status: 'ACTIVE', moderationStatus: 'APPROVED' };
+    const where: any = { status: 'ACTIVE', moderationStatus: 'APPROVED', deletedAt: null };
 
     if (city) where.city = { contains: city, mode: 'insensitive' };
     if (propertyType) where.propertyType = propertyType;
@@ -160,29 +178,36 @@ export class PropertiesService {
       },
     });
 
-    if (!property) {
+    if (!property || property.deletedAt) {
       throw new NotFoundException('Property not found');
     }
 
-    // Increment views hanya jika bukan pemilik properti
+    // Increment views async tanpa memblokir response
     if (!viewerUserId || viewerUserId !== property.userId) {
-      await Promise.all([
-        this.prisma.property.update({
-          where: { id: property.id },
-          data: { viewsCount: { increment: 1 } },
-        }),
-        this.prisma.propertyView.create({
-          data: {
-            propertyId: property.id,
-            referrer: meta?.referrer?.slice(0, 500) ?? null,
-            userAgent: meta?.userAgent?.slice(0, 500) ?? null,
-          },
-        }),
-      ]);
-      this.rankingService.updatePropertyRanking(property.id).catch(() => {});
+      this.recordViewAsync(property.id, meta);
     }
 
     return property;
+  }
+
+  private recordViewAsync(propertyId: string, meta?: { referrer?: string; userAgent?: string }) {
+    Promise.all([
+      this.prisma.property.update({
+        where: { id: propertyId },
+        data: { viewsCount: { increment: 1 } },
+      }),
+      this.prisma.propertyView.create({
+        data: {
+          propertyId,
+          referrer: meta?.referrer?.slice(0, 500) ?? null,
+          userAgent: meta?.userAgent?.slice(0, 500) ?? null,
+        },
+      }),
+    ])
+      .then(() => {
+        this.rankingService.updatePropertyRanking(propertyId).catch(() => {});
+      })
+      .catch(() => {});
   }
 
   async update(userId: string, slug: string, dto: UpdatePropertyDto) {
@@ -257,7 +282,13 @@ export class PropertiesService {
       throw new ForbiddenException('You can only delete your own properties');
     }
 
-    await this.prisma.property.delete({ where: { slug } });
+    await this.prisma.property.update({
+      where: { slug },
+      data: {
+        status: 'INACTIVE',
+        deletedAt: new Date(),
+      },
+    });
 
     return { message: 'Property deleted successfully' };
   }
