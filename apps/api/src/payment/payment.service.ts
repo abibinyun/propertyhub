@@ -61,6 +61,7 @@ export class PaymentService {
       throw new NotFoundException('Properti tidak ditemukan');
 
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User tidak ditemukan');
     const prices = await this.getFeaturedPrices();
     const amount = prices[featuredType];
     const orderId = `FEAT-${randomUUID().slice(0, 8).toUpperCase()}`;
