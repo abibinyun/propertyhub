@@ -17,10 +17,7 @@ describe('RankingService (TDD)', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        RankingService,
-        { provide: PrismaService, useValue: prisma },
-      ],
+      providers: [RankingService, { provide: PrismaService, useValue: prisma }],
     }).compile();
 
     service = module.get<RankingService>(RankingService);
@@ -60,7 +57,9 @@ describe('RankingService (TDD)', () => {
 
       expect(service.calculateFreshnessScore(now)).toBe(100);
       expect(service.calculateFreshnessScore(threeDaysAgo)).toBe(95);
-      expect(Math.round(service.calculateFreshnessScore(twentyDaysAgo))).toBe(67);
+      expect(Math.round(service.calculateFreshnessScore(twentyDaysAgo))).toBe(
+        67,
+      );
       expect(service.calculateFreshnessScore(sixtyDaysAgo)).toBe(25);
     });
 
@@ -71,11 +70,21 @@ describe('RankingService (TDD)', () => {
       const baseReputation = 70;
 
       const basicScore = service.calculateRankScore(
-        baseQuality, baseFreshness, baseEngagement, baseReputation, true, 'BASIC'
+        baseQuality,
+        baseFreshness,
+        baseEngagement,
+        baseReputation,
+        true,
+        'BASIC',
       );
 
       const ultimateScore = service.calculateRankScore(
-        baseQuality, baseFreshness, baseEngagement, baseReputation, true, 'ULTIMATE'
+        baseQuality,
+        baseFreshness,
+        baseEngagement,
+        baseReputation,
+        true,
+        'ULTIMATE',
       );
 
       expect(ultimateScore).toBeGreaterThan(basicScore);

@@ -8,10 +8,12 @@ export interface CreateFeaturedPaymentOptions {
 }
 
 export interface PaymentResult {
-  token: string;       // Snap token (Midtrans) atau dummy (log)
+  token: string; // Snap token (Midtrans) atau dummy (log)
   redirectUrl: string; // Snap redirect URL atau dummy
 }
 
 export interface PaymentProvider {
-  createFeaturedPayment(options: CreateFeaturedPaymentOptions): Promise<PaymentResult>;
+  createFeaturedPayment(
+    options: CreateFeaturedPaymentOptions,
+  ): Promise<PaymentResult>;
 }

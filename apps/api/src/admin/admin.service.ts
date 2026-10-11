@@ -155,7 +155,11 @@ export class AdminService {
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
 
     const [
       totalUsers,
@@ -184,13 +188,25 @@ export class AdminService {
       this.prisma.user.findMany({
         take: 5,
         orderBy: { createdAt: 'desc' },
-        select: { id: true, name: true, email: true, role: true, createdAt: true, emailVerified: true },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          createdAt: true,
+          emailVerified: true,
+        },
       }),
       this.prisma.property.findMany({
         take: 5,
         orderBy: { createdAt: 'desc' },
         select: {
-          id: true, title: true, status: true, price: true, city: true, createdAt: true,
+          id: true,
+          title: true,
+          status: true,
+          price: true,
+          city: true,
+          createdAt: true,
           user: { select: { name: true } },
           images: { where: { isPrimary: true }, take: 1 },
         },
@@ -228,16 +244,34 @@ export class AdminService {
 
     return {
       stats: {
-        totalUsers, totalProperties, totalLeads, activeProperties,
-        draftProperties, pendingModeration, newUsersToday, newLeadsToday,
+        totalUsers,
+        totalProperties,
+        totalLeads,
+        activeProperties,
+        draftProperties,
+        pendingModeration,
+        newUsersToday,
+        newLeadsToday,
       },
       recentUsers,
       recentProperties,
       charts: {
-        propertiesByType: propertiesByType.map((p) => ({ type: p.propertyType, count: p._count.id })),
-        propertiesByCity: propertiesByCity.map((p) => ({ city: p.city, count: p._count.id })),
-        dailyListings: dailyListings.map((d) => ({ date: d.date, count: Number(d.count) })),
-        dailyLeads: dailyLeads.map((d) => ({ date: d.date, count: Number(d.count) })),
+        propertiesByType: propertiesByType.map((p) => ({
+          type: p.propertyType,
+          count: p._count.id,
+        })),
+        propertiesByCity: propertiesByCity.map((p) => ({
+          city: p.city,
+          count: p._count.id,
+        })),
+        dailyListings: dailyListings.map((d) => ({
+          date: d.date,
+          count: Number(d.count),
+        })),
+        dailyLeads: dailyLeads.map((d) => ({
+          date: d.date,
+          count: Number(d.count),
+        })),
       },
     };
   }
@@ -272,8 +306,14 @@ export class AdminService {
     };
   }
 
-  async approveProperty(propertyId: string, moderatorId: string, notes?: string) {
-    const property = await this.prisma.property.findUnique({ where: { id: propertyId } });
+  async approveProperty(
+    propertyId: string,
+    moderatorId: string,
+    notes?: string,
+  ) {
+    const property = await this.prisma.property.findUnique({
+      where: { id: propertyId },
+    });
     if (!property) throw new NotFoundException('Property not found');
 
     await this.prisma.$transaction([
@@ -297,18 +337,28 @@ export class AdminService {
       }),
     ]);
 
-    this.notifications.create(
-      property.userId, 'property_approved',
-      'Listing disetujui ✅',
-      `"${property.title}" telah disetujui dan sekarang aktif`,
-      `/dashboard/properties`,
-    ).catch(() => {});
+    this.notifications
+      .create(
+        property.userId,
+        'property_approved',
+        'Listing disetujui ✅',
+        `"${property.title}" telah disetujui dan sekarang aktif`,
+        `/dashboard/properties`,
+      )
+      .catch(() => {});
 
     return { message: 'Property approved' };
   }
 
-  async rejectProperty(propertyId: string, moderatorId: string, reason: string, notes?: string) {
-    const property = await this.prisma.property.findUnique({ where: { id: propertyId } });
+  async rejectProperty(
+    propertyId: string,
+    moderatorId: string,
+    reason: string,
+    notes?: string,
+  ) {
+    const property = await this.prisma.property.findUnique({
+      where: { id: propertyId },
+    });
     if (!property) throw new NotFoundException('Property not found');
 
     await this.prisma.$transaction([
@@ -328,18 +378,28 @@ export class AdminService {
       }),
     ]);
 
-    this.notifications.create(
-      property.userId, 'property_rejected',
-      'Listing ditolak ❌',
-      `"${property.title}" ditolak: ${reason}`,
-      `/dashboard/properties`,
-    ).catch(() => {});
+    this.notifications
+      .create(
+        property.userId,
+        'property_rejected',
+        'Listing ditolak ❌',
+        `"${property.title}" ditolak: ${reason}`,
+        `/dashboard/properties`,
+      )
+      .catch(() => {});
 
     return { message: 'Property rejected' };
   }
 
-  async flagProperty(propertyId: string, moderatorId: string, reason: string, notes?: string) {
-    const property = await this.prisma.property.findUnique({ where: { id: propertyId } });
+  async flagProperty(
+    propertyId: string,
+    moderatorId: string,
+    reason: string,
+    notes?: string,
+  ) {
+    const property = await this.prisma.property.findUnique({
+      where: { id: propertyId },
+    });
     if (!property) throw new NotFoundException('Property not found');
 
     await this.prisma.$transaction([
@@ -358,12 +418,15 @@ export class AdminService {
       }),
     ]);
 
-    this.notifications.create(
-      property.userId, 'property_flagged',
-      'Listing ditandai ⚠️',
-      `"${property.title}" ditandai untuk ditinjau: ${reason}`,
-      `/dashboard/properties`,
-    ).catch(() => {});
+    this.notifications
+      .create(
+        property.userId,
+        'property_flagged',
+        'Listing ditandai ⚠️',
+        `"${property.title}" ditandai untuk ditinjau: ${reason}`,
+        `/dashboard/properties`,
+      )
+      .catch(() => {});
 
     return { message: 'Property flagged' };
   }
@@ -422,7 +485,12 @@ export class AdminService {
 
     return {
       data: leads,
-      meta: { total, page: Number(page), limit: Number(limit), totalPages: Math.ceil(total / Number(limit)) },
+      meta: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        totalPages: Math.ceil(total / Number(limit)),
+      },
     };
   }
 

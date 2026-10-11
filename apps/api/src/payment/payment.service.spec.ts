@@ -19,7 +19,11 @@ describe('PaymentService (TDD)', () => {
       siteSettings: { findUnique: jest.fn() },
       property: { findUnique: jest.fn(), update: jest.fn() },
       user: { findUnique: jest.fn() },
-      transaction: { create: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
+      transaction: {
+        create: jest.fn(),
+        findUnique: jest.fn(),
+        update: jest.fn(),
+      },
     };
 
     config = {
@@ -56,7 +60,9 @@ describe('PaymentService (TDD)', () => {
         signature_key: 'invalid-signature-hash',
       };
 
-      await expect(service.handleNotification(payload)).rejects.toThrow(UnauthorizedException);
+      await expect(service.handleNotification(payload)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('should NOT re-activate or duplicate duration if transaction is already PAID (Idempotent)', async () => {
@@ -130,7 +136,10 @@ describe('PaymentService (TDD)', () => {
       expect(prisma.property.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: 'prop-1' },
-          data: expect.objectContaining({ featured: true, featuredType: 'BASIC' }),
+          data: expect.objectContaining({
+            featured: true,
+            featuredType: 'BASIC',
+          }),
         }),
       );
       expect(prisma.transaction.update).toHaveBeenCalledWith(

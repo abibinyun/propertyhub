@@ -1,4 +1,13 @@
-import { Controller, Get, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -32,7 +41,10 @@ export class AdminController {
   }
 
   @Patch('properties/:id/status')
-  updatePropertyStatus(@Param('id') id: string, @Body('status') status: string) {
+  updatePropertyStatus(
+    @Param('id') id: string,
+    @Body('status') status: string,
+  ) {
     return this.adminService.updatePropertyStatus(id, status);
   }
 
@@ -48,17 +60,34 @@ export class AdminController {
   }
 
   @Patch('moderation/:id/approve')
-  approveProperty(@CurrentUser() user: any, @Param('id') id: string, @Body() data: { notes?: string }) {
+  approveProperty(
+    @CurrentUser() user: any,
+    @Param('id') id: string,
+    @Body() data: { notes?: string },
+  ) {
     return this.adminService.approveProperty(id, user.id, data.notes);
   }
 
   @Patch('moderation/:id/reject')
-  rejectProperty(@CurrentUser() user: any, @Param('id') id: string, @Body() data: { reason: string; notes?: string }) {
-    return this.adminService.rejectProperty(id, user.id, data.reason, data.notes);
+  rejectProperty(
+    @CurrentUser() user: any,
+    @Param('id') id: string,
+    @Body() data: { reason: string; notes?: string },
+  ) {
+    return this.adminService.rejectProperty(
+      id,
+      user.id,
+      data.reason,
+      data.notes,
+    );
   }
 
   @Patch('moderation/:id/flag')
-  flagProperty(@CurrentUser() user: any, @Param('id') id: string, @Body() data: { reason: string; notes?: string }) {
+  flagProperty(
+    @CurrentUser() user: any,
+    @Param('id') id: string,
+    @Body() data: { reason: string; notes?: string },
+  ) {
     return this.adminService.flagProperty(id, user.id, data.reason, data.notes);
   }
 

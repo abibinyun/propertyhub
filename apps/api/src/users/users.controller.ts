@@ -1,4 +1,20 @@
-import { Controller, Get, Patch, Post, Body, Param, Query, UseGuards, BadRequestException, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator, ConflictException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  BadRequestException,
+  UseInterceptors,
+  UploadedFile,
+  ParseFilePipe,
+  MaxFileSizeValidator,
+  FileTypeValidator,
+  ConflictException,
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from './users.service';
@@ -25,7 +41,10 @@ export class UsersController {
   ) {}
 
   @Post('verification')
-  submitVerification(@CurrentUser() user: any, @Body() dto: SubmitVerificationDto) {
+  submitVerification(
+    @CurrentUser() user: any,
+    @Body() dto: SubmitVerificationDto,
+  ) {
     return this.verificationService.submitVerification(user.id, dto);
   }
 
@@ -35,8 +54,16 @@ export class UsersController {
     @Param('id') verificationId: string,
     @Body() body: { status: 'APPROVED' | 'REJECTED'; reason?: string },
   ) {
-    if (user.role !== 'ADMIN') throw new BadRequestException('Hanya admin yang dapat mereview verifikasi');
-    return this.verificationService.reviewVerification(user.id, verificationId, body.status, body.reason);
+    if (user.role !== 'ADMIN')
+      throw new BadRequestException(
+        'Hanya admin yang dapat mereview verifikasi',
+      );
+    return this.verificationService.reviewVerification(
+      user.id,
+      verificationId,
+      body.status,
+      body.reason,
+    );
   }
 
   @Get('profile')
@@ -45,7 +72,10 @@ export class UsersController {
   }
 
   @Get('check-username/:username')
-  async checkUsername(@CurrentUser() user: any, @Param('username') username: string) {
+  async checkUsername(
+    @CurrentUser() user: any,
+    @Param('username') username: string,
+  ) {
     const existing = await this.prisma.user.findUnique({ where: { username } });
     return { available: !existing || existing.id === user.id };
   }
@@ -54,8 +84,11 @@ export class UsersController {
   async updateProfile(@CurrentUser() user: any, @Body() dto: UpdateProfileDto) {
     // Cek username unik jika diisi
     if (dto.username) {
-      const existing = await this.prisma.user.findUnique({ where: { username: dto.username } });
-      if (existing && existing.id !== user.id) throw new ConflictException('Username sudah dipakai');
+      const existing = await this.prisma.user.findUnique({
+        where: { username: dto.username },
+      });
+      if (existing && existing.id !== user.id)
+        throw new ConflictException('Username sudah dipakai');
     }
     return this.usersService.updateProfile(user.id, dto);
   }
@@ -64,15 +97,21 @@ export class UsersController {
   @UseInterceptors(FileInterceptor('file'))
   async uploadAvatar(
     @CurrentUser() user: any,
-    @UploadedFile(new ParseFilePipe({
-      validators: [
-        new MaxFileSizeValidator({ maxSize: 2 * 1024 * 1024 }),
-        new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp)$/ }),
-      ],
-    })) file: Express.Multer.File,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 2 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp)$/ }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
   ) {
     const url = await this.cloudinary.uploadImage(file, 'avatars');
-    await this.prisma.user.update({ where: { id: user.id }, data: { avatar: url } });
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { avatar: url },
+    });
     return { avatarUrl: url };
   }
 
@@ -85,9 +124,16 @@ export class UsersController {
     if (!u) throw new BadRequestException('User not found');
     const valid = await bcrypt.compare(body.currentPassword, u.password);
     if (!valid) throw new BadRequestException('Password lama tidak sesuai');
-    if (body.newPassword.length < 6) throw new BadRequestException('Password minimal 6 karakter');
-    const hashed = await bcrypt.hash(body.newPassword, getConfig(this.configService).bcryptRounds);
-    await this.prisma.user.update({ where: { id: user.id }, data: { password: hashed } });
+    if (body.newPassword.length < 6)
+      throw new BadRequestException('Password minimal 6 karakter');
+    const hashed = await bcrypt.hash(
+      body.newPassword,
+      getConfig(this.configService).bcryptRounds,
+    );
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashed },
+    });
     return { message: 'Password berhasil diubah' };
   }
 

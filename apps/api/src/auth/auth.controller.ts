@@ -1,16 +1,34 @@
-import { Controller, Post, Body, Get, Query, Res, UseGuards, Req, UnauthorizedException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Query,
+  Res,
+  UseGuards,
+  Req,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import type { Response, Request } from 'express';
 import { AuthService } from './auth.service';
-import { RegisterDto, LoginDto, ForgotPasswordDto, ResetPasswordDto } from './dto/auth.dto';
+import {
+  RegisterDto,
+  LoginDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+} from './dto/auth.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { getConfig } from '../common/config';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService, private configService: ConfigService) {}
+  constructor(
+    private authService: AuthService,
+    private configService: ConfigService,
+  ) {}
 
   private get cookieOptions() {
     return {
@@ -27,7 +45,12 @@ export class AuthController {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax' as const,
-      maxAge: getConfig(this.configService).refreshTokenExpiryDays * 24 * 60 * 60 * 1000,
+      maxAge:
+        getConfig(this.configService).refreshTokenExpiryDays *
+        24 *
+        60 *
+        60 *
+        1000,
       path: '/',
     };
   }
@@ -38,14 +61,20 @@ export class AuthController {
   }
 
   @Post('register')
-  async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) res: Response) {
+  async register(
+    @Body() dto: RegisterDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const result = await this.authService.register(dto);
     this.setAuthCookies(res, result.token, result.refreshToken);
     return result;
   }
 
   @Post('login')
-  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const result = await this.authService.login(dto);
     this.setAuthCookies(res, result.token, result.refreshToken);
     return result;
@@ -53,7 +82,10 @@ export class AuthController {
 
   @Post('logout')
   @UseGuards(JwtAuthGuard)
-  async logout(@CurrentUser() user: any, @Res({ passthrough: true }) res: Response) {
+  async logout(
+    @CurrentUser() user: any,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     await this.authService.revokeRefreshToken(user.id);
     res.clearCookie('token', { path: '/' });
     res.clearCookie('refresh_token', { path: '/' });
@@ -61,10 +93,14 @@ export class AuthController {
   }
 
   @Post('refresh')
-  async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+  async refresh(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const refreshToken = (req as any).cookies?.refresh_token;
     if (!refreshToken) throw new UnauthorizedException('No refresh token');
-    const { accessToken } = await this.authService.refreshAccessToken(refreshToken);
+    const { accessToken } =
+      await this.authService.refreshAccessToken(refreshToken);
     res.cookie('token', accessToken, this.cookieOptions);
     return { message: 'Token refreshed' };
   }
@@ -98,7 +134,9 @@ export class AuthController {
 
   @Get('google')
   @UseGuards(AuthGuard('google'))
-  googleLogin() { /* redirect handled by passport */ }
+  googleLogin() {
+    /* redirect handled by passport */
+  }
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))

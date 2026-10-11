@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { PaymentProvider } from './payment.interface';
@@ -16,17 +21,20 @@ export class PaymentService {
     private config: ConfigService,
     private notifications: NotificationsService,
   ) {
-    this.provider = config.get<string>('PAYMENT_PROVIDER') === 'midtrans'
-      ? new MidtransPaymentProvider(config)
-      : new LogPaymentProvider();
+    this.provider =
+      config.get<string>('PAYMENT_PROVIDER') === 'midtrans'
+        ? new MidtransPaymentProvider(config)
+        : new LogPaymentProvider();
   }
 
   /** Ambil harga dari SiteSettings DB (fallback ke env/default) */
   private async getFeaturedPrices() {
-    const settings = await this.prisma.siteSettings.findUnique({ where: { id: 'default' } });
+    const settings = await this.prisma.siteSettings.findUnique({
+      where: { id: 'default' },
+    });
     return {
-      BASIC:    settings?.priceBasic    ?? 99000,
-      PREMIUM:  settings?.pricePremium  ?? 299000,
+      BASIC: settings?.priceBasic ?? 99000,
+      PREMIUM: settings?.pricePremium ?? 299000,
       ULTIMATE: settings?.priceUltimate ?? 599000,
     };
   }
@@ -36,13 +44,21 @@ export class PaymentService {
     return map[featuredType] ?? 7;
   }
 
-  async createFeaturedPayment(userId: string, propertyId: string, featuredType: string) {
+  async createFeaturedPayment(
+    userId: string,
+    propertyId: string,
+    featuredType: string,
+  ) {
     const validTypes = ['BASIC', 'PREMIUM', 'ULTIMATE'];
-    if (!validTypes.includes(featuredType)) throw new BadRequestException('Tipe featured tidak valid');
+    if (!validTypes.includes(featuredType))
+      throw new BadRequestException('Tipe featured tidak valid');
 
-    const property = await this.prisma.property.findUnique({ where: { id: propertyId } });
+    const property = await this.prisma.property.findUnique({
+      where: { id: propertyId },
+    });
     if (!property) throw new NotFoundException('Properti tidak ditemukan');
-    if (property.userId !== userId) throw new NotFoundException('Properti tidak ditemukan');
+    if (property.userId !== userId)
+      throw new NotFoundException('Properti tidak ditemukan');
 
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     const prices = await this.getFeaturedPrices();
@@ -64,8 +80,8 @@ export class PaymentService {
     const result = await this.provider.createFeaturedPayment({
       orderId,
       amount,
-      customerName: user!.name,
-      customerEmail: user!.email,
+      customerName: user.name,
+      customerEmail: user.email,
       propertyTitle: property.title,
       featuredType,
     });
@@ -75,8 +91,13 @@ export class PaymentService {
 
   async handleNotification(notification: Record<string, string>) {
     const serverKey = this.config.get<string>('MIDTRANS_SERVER_KEY');
-    if (this.config.get<string>('PAYMENT_PROVIDER') === 'midtrans' && serverKey && notification.signature_key) {
-      const { order_id, status_code, gross_amount, signature_key } = notification;
+    if (
+      this.config.get<string>('PAYMENT_PROVIDER') === 'midtrans' &&
+      serverKey &&
+      notification.signature_key
+    ) {
+      const { order_id, status_code, gross_amount, signature_key } =
+        notification;
       const expectedSignature = createHash('sha512')
         .update(`${order_id}${status_code}${gross_amount}${serverKey}`)
         .digest('hex');
@@ -89,7 +110,9 @@ export class PaymentService {
     const transactionStatus = notification.transaction_status;
     const fraudStatus = notification.fraud_status;
 
-    const transaction = await this.prisma.transaction.findUnique({ where: { orderId } });
+    const transaction = await this.prisma.transaction.findUnique({
+      where: { orderId },
+    });
     if (!transaction) return { message: 'Transaction not found' };
 
     // Idempotency check: jika sudah PAID, jangan aktivasi atau extend ulang
@@ -102,52 +125,86 @@ export class PaymentService {
       transactionStatus === 'settlement';
 
     if (isSuccess) {
-      await this.activateFeatured(transaction.propertyId!, transaction.type.replace('FEATURED_', ''), transaction.userId);
-      await this.prisma.transaction.update({ where: { orderId }, data: { status: 'PAID', paidAt: new Date() } });
+      await this.activateFeatured(
+        transaction.propertyId,
+        transaction.type.replace('FEATURED_', ''),
+        transaction.userId,
+      );
+      await this.prisma.transaction.update({
+        where: { orderId },
+        data: { status: 'PAID', paidAt: new Date() },
+      });
     } else if (['cancel', 'deny', 'expire'].includes(transactionStatus)) {
       await this.prisma.transaction.update({
         where: { orderId },
-        data: { status: transactionStatus === 'expire' ? 'EXPIRED' : 'CANCELLED' },
+        data: {
+          status: transactionStatus === 'expire' ? 'EXPIRED' : 'CANCELLED',
+        },
       });
     }
 
     return { message: 'OK' };
   }
 
-  private async activateFeatured(propertyId: string, featuredType: string, userId: string) {
+  private async activateFeatured(
+    propertyId: string,
+    featuredType: string,
+    userId: string,
+  ) {
     const days = this.getFeaturedDurationDays(featuredType);
-    const property = await this.prisma.property.findUnique({ where: { id: propertyId } });
+    const property = await this.prisma.property.findUnique({
+      where: { id: propertyId },
+    });
     if (!property) return;
 
     // Jika sudah featured dan belum expired → extend dari featuredUntil
-    const base = property.featured && property.featuredUntil && property.featuredUntil > new Date()
-      ? property.featuredUntil
-      : new Date();
+    const base =
+      property.featured &&
+      property.featuredUntil &&
+      property.featuredUntil > new Date()
+        ? property.featuredUntil
+        : new Date();
     const featuredUntil = new Date(base.getTime() + days * 24 * 60 * 60 * 1000);
 
     await this.prisma.property.update({
       where: { id: propertyId },
-      data: { featured: true, featuredUntil, featuredType: featuredType as any },
+      data: {
+        featured: true,
+        featuredUntil,
+        featuredType: featuredType as any,
+      },
     });
 
     // Notifikasi ke owner
-    await this.notifications.create(userId, 'featured_activated',
+    await this.notifications.create(
+      userId,
+      'featured_activated',
       'Featured Listing Aktif!',
       `Properti "${property.title}" kini tampil sebagai ${featuredType} hingga ${featuredUntil.toLocaleDateString('id-ID')}.`,
       `/dashboard/properties`,
     );
   }
 
-  async activateFeaturedDirect(userId: string, propertyId: string, featuredType: string) {
+  async activateFeaturedDirect(
+    userId: string,
+    propertyId: string,
+    featuredType: string,
+  ) {
     if (this.config.get<string>('PAYMENT_PROVIDER') === 'midtrans') {
-      throw new BadRequestException('Gunakan payment flow untuk aktivasi featured');
+      throw new BadRequestException(
+        'Gunakan payment flow untuk aktivasi featured',
+      );
     }
     const validTypes = ['BASIC', 'PREMIUM', 'ULTIMATE'];
-    if (!validTypes.includes(featuredType)) throw new BadRequestException('Tipe featured tidak valid');
+    if (!validTypes.includes(featuredType))
+      throw new BadRequestException('Tipe featured tidak valid');
 
-    const property = await this.prisma.property.findUnique({ where: { id: propertyId } });
+    const property = await this.prisma.property.findUnique({
+      where: { id: propertyId },
+    });
     if (!property) throw new NotFoundException('Properti tidak ditemukan');
-    if (property.userId !== userId) throw new NotFoundException('Properti tidak ditemukan');
+    if (property.userId !== userId)
+      throw new NotFoundException('Properti tidak ditemukan');
 
     await this.activateFeatured(propertyId, featuredType, userId);
     return this.prisma.property.findUnique({ where: { id: propertyId } });

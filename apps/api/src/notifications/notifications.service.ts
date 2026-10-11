@@ -19,14 +19,28 @@ export class NotificationsService {
 
   async markRead(userId: string, id?: string) {
     if (id) {
-      await this.prisma.notification.updateMany({ where: { id, userId }, data: { read: true } });
+      await this.prisma.notification.updateMany({
+        where: { id, userId },
+        data: { read: true },
+      });
     } else {
-      await this.prisma.notification.updateMany({ where: { userId, read: false }, data: { read: true } });
+      await this.prisma.notification.updateMany({
+        where: { userId, read: false },
+        data: { read: true },
+      });
     }
     return { ok: true };
   }
 
-  async create(userId: string, type: string, title: string, body: string, url?: string) {
-    return this.prisma.notification.create({ data: { userId, type, title, body, url } });
+  async create(
+    userId: string,
+    type: string,
+    title: string,
+    body: string,
+    url?: string,
+  ) {
+    return this.prisma.notification.create({
+      data: { userId, type, title, body, url },
+    });
   }
 }

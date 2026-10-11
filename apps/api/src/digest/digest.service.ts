@@ -22,21 +22,36 @@ export class DigestService {
   @Cron('0 1 * * 1')
   async sendWeeklyDigest() {
     this.logger.log('Sending weekly digest emails...');
-    const frontendUrl = this.config.get<string>('FRONTEND_URL', 'http://localhost:3004');
+    const frontendUrl = this.config.get<string>(
+      'FRONTEND_URL',
+      'http://localhost:3004',
+    );
     const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
     // Get all users with active properties
     const users = await this.prisma.user.findMany({
-      where: { properties: { some: { status: 'ACTIVE', moderationStatus: 'APPROVED' } } },
+      where: {
+        properties: {
+          some: { status: 'ACTIVE', moderationStatus: 'APPROVED' },
+        },
+      },
       select: { id: true, name: true, email: true },
     });
 
     for (const user of users) {
       try {
         const properties = await this.prisma.property.findMany({
-          where: { userId: user.id, status: 'ACTIVE', moderationStatus: 'APPROVED' },
+          where: {
+            userId: user.id,
+            status: 'ACTIVE',
+            moderationStatus: 'APPROVED',
+          },
           select: {
-            id: true, title: true, slug: true, viewsCount: true, leadsCount: true,
+            id: true,
+            title: true,
+            slug: true,
+            viewsCount: true,
+            leadsCount: true,
             _count: { select: { favorites: true } },
           },
           orderBy: { viewsCount: 'desc' },
@@ -49,9 +64,14 @@ export class DigestService {
         });
 
         const totalViews = properties.reduce((s, p) => s + p.viewsCount, 0);
-        const totalFavorites = properties.reduce((s, p) => s + p._count.favorites, 0);
+        const totalFavorites = properties.reduce(
+          (s, p) => s + p._count.favorites,
+          0,
+        );
 
-        const rows = properties.map((p) => `
+        const rows = properties
+          .map(
+            (p) => `
           <tr>
             <td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;font-size:13px">
               <a href="${frontendUrl}/properti/${p.slug}" style="color:#2563eb;text-decoration:none">${p.title}</a>
@@ -60,7 +80,9 @@ export class DigestService {
             <td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;font-size:13px;text-align:center">${p.leadsCount}</td>
             <td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;font-size:13px;text-align:center">${p._count.favorites}</td>
           </tr>
-        `).join('');
+        `,
+          )
+          .join('');
 
         await this.email.send({
           to: user.email,
@@ -132,13 +154,15 @@ export class DigestService {
       // Recalculate ranking (featured=false sekarang, rank score turun)
       await this.ranking.updatePropertyRanking(p.id).catch(() => {});
 
-      await this.notifications.create(
-        p.userId,
-        'featured_expired',
-        'Featured Listing Berakhir',
-        `Featured listing "${p.title}" telah berakhir. Perpanjang sekarang untuk tetap tampil di posisi teratas.`,
-        `/dashboard/properties`,
-      ).catch(() => {});
+      await this.notifications
+        .create(
+          p.userId,
+          'featured_expired',
+          'Featured Listing Berakhir',
+          `Featured listing "${p.title}" telah berakhir. Perpanjang sekarang untuk tetap tampil di posisi teratas.`,
+          `/dashboard/properties`,
+        )
+        .catch(() => {});
     }
 
     this.logger.log(`Expired ${expired.length} featured listings`);

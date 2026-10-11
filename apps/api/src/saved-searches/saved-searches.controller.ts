@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+} from '@nestjs/common';
 import { SavedSearchesService } from './saved-searches.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -14,7 +22,10 @@ export class SavedSearchesController {
   }
 
   @Post()
-  create(@CurrentUser() user: any, @Body() body: { name: string; url: string }) {
+  create(
+    @CurrentUser() user: any,
+    @Body() body: { name: string; url: string },
+  ) {
     return this.service.create(user.id, body.name, body.url);
   }
 

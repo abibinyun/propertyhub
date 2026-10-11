@@ -1,4 +1,16 @@
-import { Controller, Get, Patch, Post, Body, UseGuards, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Body,
+  UseGuards,
+  UseInterceptors,
+  UploadedFile,
+  ParseFilePipe,
+  MaxFileSizeValidator,
+  FileTypeValidator,
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { SettingsService } from './settings.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -28,12 +40,15 @@ export class SettingsController {
   @Roles('ADMIN')
   @UseInterceptors(FileInterceptor('file'))
   uploadLogo(
-    @UploadedFile(new ParseFilePipe({
-      validators: [
-        new MaxFileSizeValidator({ maxSize: 2 * 1024 * 1024 }),
-        new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp|svg)$/ }),
-      ],
-    })) file: Express.Multer.File,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 2 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp|svg)$/ }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
   ) {
     return this.settingsService.uploadLogo(file);
   }
@@ -43,12 +58,15 @@ export class SettingsController {
   @Roles('ADMIN')
   @UseInterceptors(FileInterceptor('file'))
   uploadFavicon(
-    @UploadedFile(new ParseFilePipe({
-      validators: [
-        new MaxFileSizeValidator({ maxSize: 1 * 1024 * 1024 }),
-        new FileTypeValidator({ fileType: /(ico|png|svg)$/ }),
-      ],
-    })) file: Express.Multer.File,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 1 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: /(ico|png|svg)$/ }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
   ) {
     return this.settingsService.uploadFavicon(file);
   }

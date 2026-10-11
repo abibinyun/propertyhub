@@ -10,7 +10,11 @@ export class ReviewsController {
 
   @Post('agent/:agentId')
   @UseGuards(JwtAuthGuard)
-  create(@CurrentUser() user: any, @Param('agentId') agentId: string, @Body() dto: CreateReviewDto) {
+  create(
+    @CurrentUser() user: any,
+    @Param('agentId') agentId: string,
+    @Body() dto: CreateReviewDto,
+  ) {
     return this.reviewsService.create(user.id, agentId, dto);
   }
 

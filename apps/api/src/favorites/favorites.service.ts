@@ -1,4 +1,8 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -81,13 +85,17 @@ export class FavoritesService {
     return favs.map((f) => f.propertyId);
   }
 
-  async getPropertyFavoriteCounts(userId: string): Promise<Record<string, number>> {
+  async getPropertyFavoriteCounts(
+    userId: string,
+  ): Promise<Record<string, number>> {
     const counts = await this.prisma.favorite.groupBy({
       by: ['propertyId'],
       where: { property: { userId } },
       _count: { propertyId: true },
     });
-    return Object.fromEntries(counts.map((c) => [c.propertyId, c._count.propertyId]));
+    return Object.fromEntries(
+      counts.map((c) => [c.propertyId, c._count.propertyId]),
+    );
   }
 
   async isFavorite(userId: string, propertyId: string) {

@@ -10,7 +10,9 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsString()
   @MaxLength(30)
-  @Matches(/^[a-z0-9-]+$/, { message: 'Username hanya boleh huruf kecil, angka, dan tanda hubung' })
+  @Matches(/^[a-z0-9-]+$/, {
+    message: 'Username hanya boleh huruf kecil, angka, dan tanda hubung',
+  })
   username?: string;
 
   @IsOptional()

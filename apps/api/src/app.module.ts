@@ -28,9 +28,9 @@ import { DigestModule } from './digest/digest.module';
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
     ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([
-      { name: 'short', ttl: 1000, limit: 10 },       // 10 req/detik
-      { name: 'medium', ttl: 60000, limit: 100 },     // 100 req/menit
-      { name: 'long', ttl: 3600000, limit: 500 },     // 500 req/jam
+      { name: 'short', ttl: 1000, limit: 10 }, // 10 req/detik
+      { name: 'medium', ttl: 60000, limit: 100 }, // 100 req/menit
+      { name: 'long', ttl: 3600000, limit: 500 }, // 500 req/jam
     ]),
     PrismaModule,
     CloudinaryModule,

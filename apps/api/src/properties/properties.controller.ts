@@ -1,4 +1,20 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  UseInterceptors,
+  UploadedFile,
+  ParseFilePipe,
+  MaxFileSizeValidator,
+  FileTypeValidator,
+  Req,
+} from '@nestjs/common';
 import type { Request } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
@@ -12,11 +28,21 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { getConfig } from '../common/config';
 
 const LISTING_TYPES = ['jual', 'sewa'];
-const PROPERTY_TYPES = ['rumah', 'apartemen', 'tanah', 'komersial', 'villa', 'gudang'];
+const PROPERTY_TYPES = [
+  'rumah',
+  'apartemen',
+  'tanah',
+  'komersial',
+  'villa',
+  'gudang',
+];
 
 @Controller('properties')
 export class PropertiesController {
-  constructor(private propertiesService: PropertiesService, private configService: ConfigService) {}
+  constructor(
+    private propertiesService: PropertiesService,
+    private configService: ConfigService,
+  ) {}
 
   // ─── Mutations ────────────────────────────────────────────────────────────
 
@@ -33,15 +59,24 @@ export class PropertiesController {
   uploadImage(
     @CurrentUser() user: any,
     @Param('id') propertyId: string,
-    @UploadedFile(new ParseFilePipe({
-      validators: [
-        new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
-        new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp)$/ }),
-      ],
-    })) file: Express.Multer.File,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp)$/ }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
     @Body() dto: UploadImageDto,
   ) {
-    return this.propertiesService.uploadImage(user.id, propertyId, file, dto.isPrimary, dto.order);
+    return this.propertiesService.uploadImage(
+      user.id,
+      propertyId,
+      file,
+      dto.isPrimary,
+      dto.order,
+    );
   }
 
   @Patch('images/:imageId/primary')
@@ -63,12 +98,15 @@ export class PropertiesController {
   uploadFloorPlan(
     @CurrentUser() user: any,
     @Param('id') propertyId: string,
-    @UploadedFile(new ParseFilePipe({
-      validators: [
-        new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
-        new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp|pdf)$/ }),
-      ],
-    })) file: Express.Multer.File,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp|pdf)$/ }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
   ) {
     return this.propertiesService.uploadFloorPlan(user.id, propertyId, file);
   }
@@ -81,7 +119,11 @@ export class PropertiesController {
 
   @Patch(':slug')
   @UseGuards(JwtAuthGuard)
-  update(@CurrentUser() user: any, @Param('slug') slug: string, @Body() dto: UpdatePropertyDto) {
+  update(
+    @CurrentUser() user: any,
+    @Param('slug') slug: string,
+    @Body() dto: UpdatePropertyDto,
+  ) {
     return this.propertiesService.update(user.id, slug, dto);
   }
 
@@ -100,13 +142,19 @@ export class PropertiesController {
 
   @Get('my/analytics/:propertyId')
   @UseGuards(JwtAuthGuard)
-  getAnalytics(@CurrentUser() user: any, @Param('propertyId') propertyId: string) {
+  getAnalytics(
+    @CurrentUser() user: any,
+    @Param('propertyId') propertyId: string,
+  ) {
     return this.propertiesService.getAnalytics(user.id, propertyId);
   }
 
   @Get('my/price-history/:propertyId')
   @UseGuards(JwtAuthGuard)
-  getPriceHistory(@CurrentUser() user: any, @Param('propertyId') propertyId: string) {
+  getPriceHistory(
+    @CurrentUser() user: any,
+    @Param('propertyId') propertyId: string,
+  ) {
     return this.propertiesService.getPriceHistory(user.id, propertyId);
   }
 
@@ -118,7 +166,8 @@ export class PropertiesController {
 
   @Get('my')
   @UseGuards(JwtAuthGuard)
-  findMyProperties(    @CurrentUser() user: any,
+  findMyProperties(
+    @CurrentUser() user: any,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('search') search?: string,
@@ -136,7 +185,11 @@ export class PropertiesController {
 
   @Get('properti/detail/:slug')
   @UseGuards(OptionalJwtAuthGuard)
-  findBySlug(@Param('slug') slug: string, @CurrentUser() user?: any, @Req() req?: Request) {
+  findBySlug(
+    @Param('slug') slug: string,
+    @CurrentUser() user?: any,
+    @Req() req?: Request,
+  ) {
     return this.propertiesService.findOne(slug, user?.id, {
       referrer: req?.headers?.referer,
       userAgent: req?.headers?.['user-agent'],
@@ -172,7 +225,13 @@ export class PropertiesController {
     if (!LISTING_TYPES.includes(status) || !PROPERTY_TYPES.includes(type)) {
       return this.propertiesService.findAll(query);
     }
-    return this.propertiesService.findByCategory({ status, city, district, type, ...query });
+    return this.propertiesService.findByCategory({
+      status,
+      city,
+      district,
+      type,
+      ...query,
+    });
   }
 
   /**
@@ -189,7 +248,12 @@ export class PropertiesController {
     if (!LISTING_TYPES.includes(status) || !PROPERTY_TYPES.includes(type)) {
       return this.propertiesService.findAll(query);
     }
-    return this.propertiesService.findByCategory({ status, city, type, ...query });
+    return this.propertiesService.findByCategory({
+      status,
+      city,
+      type,
+      ...query,
+    });
   }
 
   /**
@@ -204,7 +268,11 @@ export class PropertiesController {
   ) {
     if (!LISTING_TYPES.includes(status) || !PROPERTY_TYPES.includes(type)) {
       // Bukan tipe properti — anggap sebagai city
-      return this.propertiesService.findByCategory({ status, city: type, ...query });
+      return this.propertiesService.findByCategory({
+        status,
+        city: type,
+        ...query,
+      });
     }
     return this.propertiesService.findByCategory({ status, type, ...query });
   }

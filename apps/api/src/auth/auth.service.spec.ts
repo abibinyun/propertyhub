@@ -35,7 +35,10 @@ describe('AuthService (TDD)', () => {
         AuthService,
         { provide: PrismaService, useValue: prisma },
         { provide: JwtService, useValue: jwtService },
-        { provide: ConfigService, useValue: { get: jest.fn((key, def) => def ?? 10) } },
+        {
+          provide: ConfigService,
+          useValue: { get: jest.fn((key, def) => def ?? 10) },
+        },
         { provide: EmailService, useValue: emailService },
       ],
     }).compile();
@@ -45,7 +48,10 @@ describe('AuthService (TDD)', () => {
 
   describe('register', () => {
     it('should throw ConflictException if email is already registered', async () => {
-      prisma.user.findUnique.mockResolvedValue({ id: 'u1', email: 'exist@mail.com' });
+      prisma.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        email: 'exist@mail.com',
+      });
 
       await expect(
         service.register({
@@ -129,7 +135,10 @@ describe('AuthService (TDD)', () => {
         isBanned: false,
       });
 
-      const result = await service.login({ email: 'user@mail.com', password: 'correct-password' });
+      const result = await service.login({
+        email: 'user@mail.com',
+        password: 'correct-password',
+      });
 
       expect(result.token).toBe('mock-jwt-token');
       expect(result.user.email).toBe('user@mail.com');
@@ -140,7 +149,9 @@ describe('AuthService (TDD)', () => {
     it('should reject invalid or expired refresh token', async () => {
       prisma.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.refreshAccessToken('bad-token')).rejects.toThrow(UnauthorizedException);
+      await expect(service.refreshAccessToken('bad-token')).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('should issue new access token when refresh token is valid', async () => {

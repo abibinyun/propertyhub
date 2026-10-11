@@ -1,4 +1,13 @@
-import { Controller, Post, Get, Patch, Body, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Patch,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ReportsService } from './reports.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -15,14 +24,21 @@ export class ReportsController {
     @CurrentUser() user: any,
     @Body() body: { propertyId: string; reason: string; notes?: string },
   ) {
-    return this.reportsService.create(user.id, body.propertyId, body.reason, body.notes);
+    return this.reportsService.create(
+      user.id,
+      body.propertyId,
+      body.reason,
+      body.notes,
+    );
   }
 
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   getAll(@Query('resolved') resolved?: string) {
-    return this.reportsService.getAll(resolved === undefined ? undefined : resolved === 'true');
+    return this.reportsService.getAll(
+      resolved === undefined ? undefined : resolved === 'true',
+    );
   }
 
   @Patch(':id/resolve')

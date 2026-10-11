@@ -1,4 +1,13 @@
-import { IsString, IsEnum, IsNumber, IsOptional, IsBoolean, Min, IsArray, Validate } from 'class-validator';
+import {
+  IsString,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsBoolean,
+  Min,
+  IsArray,
+  Validate,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { PropertyTitleValidator } from '../validators/title.validator';
 

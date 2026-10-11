@@ -37,8 +37,14 @@ describe('PropertiesService (TDD)', () => {
         { provide: PrismaService, useValue: prisma },
         { provide: ConfigService, useValue: { get: jest.fn() } },
         { provide: RankingService, useValue: rankingService },
-        { provide: CloudinaryService, useValue: { uploadImage: jest.fn(), deleteImage: jest.fn() } },
-        { provide: NotificationsService, useValue: { create: jest.fn().mockResolvedValue({}) } },
+        {
+          provide: CloudinaryService,
+          useValue: { uploadImage: jest.fn(), deleteImage: jest.fn() },
+        },
+        {
+          provide: NotificationsService,
+          useValue: { create: jest.fn().mockResolvedValue({}) },
+        },
       ],
     }).compile();
 
@@ -47,9 +53,11 @@ describe('PropertiesService (TDD)', () => {
 
   describe('findAll Radius Search (SQL Parameterization & Safety)', () => {
     it('should NOT use $queryRawUnsafe and must execute parameterized $queryRaw', async () => {
-      prisma.$queryRaw.mockResolvedValueOnce([
-        { id: 'p1', title: 'Rumah Radius 1', distance_km: 2.5 },
-      ]).mockResolvedValueOnce([{ count: BigInt(1) }]);
+      prisma.$queryRaw
+        .mockResolvedValueOnce([
+          { id: 'p1', title: 'Rumah Radius 1', distance_km: 2.5 },
+        ])
+        .mockResolvedValueOnce([{ count: BigInt(1) }]);
 
       const result = await service.findAll({
         lat: '-6.2088',
@@ -72,7 +80,9 @@ describe('PropertiesService (TDD)', () => {
     });
 
     it('should clamp radiusKm to maximum 100km to avoid full-table radius scans', async () => {
-      prisma.$queryRaw.mockResolvedValueOnce([]).mockResolvedValueOnce([{ count: BigInt(0) }]);
+      prisma.$queryRaw
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([{ count: BigInt(0) }]);
 
       await service.findAll({
         lat: '-6.2088',
@@ -119,7 +129,9 @@ describe('PropertiesService (TDD)', () => {
         userId: 'user-owner',
       });
 
-      await expect(service.delete('user-stranger', 'rumah-bagus-1')).rejects.toThrow();
+      await expect(
+        service.delete('user-stranger', 'rumah-bagus-1'),
+      ).rejects.toThrow();
       expect(prisma.property.update).not.toHaveBeenCalled();
       expect(prisma.property.delete).not.toHaveBeenCalled();
     });

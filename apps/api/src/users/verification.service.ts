@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { SubmitVerificationDto } from './dto/verification.dto';
@@ -20,7 +25,9 @@ export class VerificationService {
         where: { value: user.phone },
       });
       if (blacklistedPhone) {
-        throw new ForbiddenException('Nomor telepon Anda terdaftar dalam daftar hitam anti-fraud.');
+        throw new ForbiddenException(
+          'Nomor telepon Anda terdaftar dalam daftar hitam anti-fraud.',
+        );
       }
     }
 
@@ -28,7 +35,9 @@ export class VerificationService {
       where: { value: user.email },
     });
     if (blacklistedEmail) {
-      throw new ForbiddenException('Email Anda terdaftar dalam daftar hitam anti-fraud.');
+      throw new ForbiddenException(
+        'Email Anda terdaftar dalam daftar hitam anti-fraud.',
+      );
     }
 
     return this.prisma.agentVerification.upsert({
@@ -96,7 +105,8 @@ export class VerificationService {
         where: { id: verificationId },
         data: {
           status: 'REJECTED',
-          rejectionReason: rejectionReason || 'Dokumen belum memenuhi persyaratan',
+          rejectionReason:
+            rejectionReason || 'Dokumen belum memenuhi persyaratan',
           verifiedBy: adminId,
         },
       });
@@ -113,7 +123,11 @@ export class VerificationService {
     }
   }
 
-  async addBlacklist(type: 'PHONE' | 'EMAIL' | 'IP', value: string, reason: string) {
+  async addBlacklist(
+    type: 'PHONE' | 'EMAIL' | 'IP',
+    value: string,
+    reason: string,
+  ) {
     return this.prisma.blacklist.create({
       data: { type, value, reason },
     });

@@ -1,21 +1,41 @@
-import { ValidatorConstraint, ValidatorConstraintInterface, ValidationArguments } from 'class-validator';
+import {
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+  ValidationArguments,
+} from 'class-validator';
 
 @ValidatorConstraint({ name: 'propertyTitle', async: false })
 export class PropertyTitleValidator implements ValidatorConstraintInterface {
   private readonly SPAM_KEYWORDS = [
-    'murah banget', 'super murah', 'paling murah', 'termurah se-',
-    'dijamin', 'pasti untung', 'cuan', 'profit tinggi',
-    'bonus', 'gratis', 'free', 'promo', 'diskon',
-    'wa sekarang', 'hubungi segera', 'jangan lewatkan',
-    'limited', 'terbatas', 'hanya hari ini',
-    'investasi terbaik', 'roi tinggi', 'passive income',
+    'murah banget',
+    'super murah',
+    'paling murah',
+    'termurah se-',
+    'dijamin',
+    'pasti untung',
+    'cuan',
+    'profit tinggi',
+    'bonus',
+    'gratis',
+    'free',
+    'promo',
+    'diskon',
+    'wa sekarang',
+    'hubungi segera',
+    'jangan lewatkan',
+    'limited',
+    'terbatas',
+    'hanya hari ini',
+    'investasi terbaik',
+    'roi tinggi',
+    'passive income',
   ];
 
   private readonly FORBIDDEN_PATTERNS = [
     /(.)\1{3,}/i, // Repeated chars (aaaa, 1111)
-    /[!]{2,}/,    // Multiple exclamation marks
-    /[?]{2,}/,    // Multiple question marks
-    /\d{10,}/,    // Phone numbers (10+ digits)
+    /[!]{2,}/, // Multiple exclamation marks
+    /[?]{2,}/, // Multiple question marks
+    /\d{10,}/, // Phone numbers (10+ digits)
     /0\d{2,3}[-\s]?\d{3,4}[-\s]?\d{3,4}/i, // Phone patterns
     /wa\.me|whatsapp/i, // WhatsApp links
     /http|www\./i, // URLs
@@ -51,11 +71,12 @@ export class PropertyTitleValidator implements ValidatorConstraintInterface {
     // Keyword stuffing check (same word repeated 3+ times)
     const words = trimmed.toLowerCase().split(/\s+/);
     const wordCount = new Map<string, number>();
-    
+
     for (const word of words) {
-      if (word.length > 3) { // Only check meaningful words
+      if (word.length > 3) {
+        // Only check meaningful words
         wordCount.set(word, (wordCount.get(word) || 0) + 1);
-        if (wordCount.get(word)! >= 3) {
+        if (wordCount.get(word) >= 3) {
           return false;
         }
       }
@@ -73,11 +94,11 @@ export class PropertyTitleValidator implements ValidatorConstraintInterface {
 
   defaultMessage(args: ValidationArguments) {
     const title = args.value as string;
-    
+
     if (!title || title.trim().length < 10) {
       return 'Title must be at least 10 characters';
     }
-    
+
     if (title.trim().length > 100) {
       return 'Title must not exceed 100 characters';
     }
@@ -101,7 +122,7 @@ export class PropertyTitleValidator implements ValidatorConstraintInterface {
     for (const word of words) {
       if (word.length > 3) {
         wordCount.set(word, (wordCount.get(word) || 0) + 1);
-        if (wordCount.get(word)! >= 3) {
+        if (wordCount.get(word) >= 3) {
           return `Keyword stuffing detected: "${word}" repeated too many times`;
         }
       }

@@ -20,7 +20,10 @@ export class PackagesController {
 
   @Post('bump/:propertyId')
   @UseGuards(JwtAuthGuard)
-  bumpProperty(@CurrentUser() user: any, @Param('propertyId') propertyId: string) {
+  bumpProperty(
+    @CurrentUser() user: any,
+    @Param('propertyId') propertyId: string,
+  ) {
     return this.packagesService.bumpProperty(user.id, propertyId);
   }
 }

@@ -12,7 +12,11 @@ export class CloudinaryService {
     });
   }
 
-  async uploadImage(file: Express.Multer.File, folder: string = 'properties', watermarkText?: string): Promise<string> {
+  async uploadImage(
+    file: Express.Multer.File,
+    folder: string = 'properties',
+    watermarkText?: string,
+  ): Promise<string> {
     const uploadOptions: Record<string, any> = {
       folder,
       resource_type: 'auto',
@@ -36,13 +40,12 @@ export class CloudinaryService {
     }
 
     return new Promise((resolve, reject) => {
-      cloudinary.uploader.upload_stream(
-        uploadOptions,
-        (error, result) => {
+      cloudinary.uploader
+        .upload_stream(uploadOptions, (error, result) => {
           if (error) return reject(error);
           resolve(result.secure_url);
-        },
-      ).end(file.buffer);
+        })
+        .end(file.buffer);
     });
   }
 

@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
@@ -27,7 +32,9 @@ export class PropertiesService {
     });
 
     if (duplicate) {
-      throw new BadRequestException('You already have a property with this title. Please use a different title.');
+      throw new BadRequestException(
+        'You already have a property with this title. Please use a different title.',
+      );
     }
 
     const slug = await this.generateSlug(dto);
@@ -57,17 +64,26 @@ export class PropertiesService {
         furnishing: dto.furnishing as any,
         videoUrl: dto.videoUrl,
         status: 'DRAFT',
-        features: dto.features ? { create: dto.features.map((feature) => ({ feature })) } : undefined,
+        features: dto.features
+          ? { create: dto.features.map((feature) => ({ feature })) }
+          : undefined,
       },
       include: { features: true, images: true },
     });
 
     // Auto-flag + ranking in parallel (non-blocking, best-effort)
-    const flagReason = this.getAutoFlagReason({ description: dto.description, price: dto.price, imageCount: 0 });
+    const flagReason = this.getAutoFlagReason({
+      description: dto.description,
+      price: dto.price,
+      imageCount: 0,
+    });
     await Promise.all([
       this.rankingService.updatePropertyRanking(property.id),
       flagReason
-        ? this.prisma.property.update({ where: { id: property.id }, data: { moderationStatus: 'FLAGGED', flagReason } })
+        ? this.prisma.property.update({
+            where: { id: property.id },
+            data: { moderationStatus: 'FLAGGED', flagReason },
+          })
         : Promise.resolve(),
     ]);
 
@@ -75,11 +91,24 @@ export class PropertiesService {
   }
 
   async findAll(query: any) {
-    const { city, propertyType, listingType, minPrice, maxPrice, page = 1, limit = 10, lat, lng, radius } = query;
+    const {
+      city,
+      propertyType,
+      listingType,
+      minPrice,
+      maxPrice,
+      page = 1,
+      limit = 10,
+      lat,
+      lng,
+      radius,
+    } = query;
 
     // Radius search — pakai Haversine, bypass Prisma where
     if (lat && lng && radius) {
-      const latN = Number(lat), lngN = Number(lng), radiusKm = Math.min(Number(radius), 100);
+      const latN = Number(lat),
+        lngN = Number(lng),
+        radiusKm = Math.min(Number(radius), 100);
       const skip = (page - 1) * limit;
 
       const conditions: Prisma.Sql[] = [
@@ -90,10 +119,14 @@ export class PropertiesService {
       ];
 
       if (propertyType) {
-        conditions.push(Prisma.sql`"propertyType" = ${propertyType}::"PropertyType"`);
+        conditions.push(
+          Prisma.sql`"propertyType" = ${propertyType}::"PropertyType"`,
+        );
       }
       if (listingType) {
-        conditions.push(Prisma.sql`"listingType" = ${listingType}::"ListingType"`);
+        conditions.push(
+          Prisma.sql`"listingType" = ${listingType}::"ListingType"`,
+        );
       }
       if (minPrice) {
         conditions.push(Prisma.sql`price >= ${Number(minPrice)}`);
@@ -117,13 +150,26 @@ export class PropertiesService {
           ORDER BY distance_km ASC
           LIMIT ${Number(limit)} OFFSET ${skip}
         `,
-        this.prisma.$queryRaw`SELECT COUNT(*) as count FROM properties p WHERE ${whereClause}`,
+        this.prisma
+          .$queryRaw`SELECT COUNT(*) as count FROM properties p WHERE ${whereClause}`,
       ]);
       const total = Number(countResult[0]?.count ?? 0);
-      return { data: properties, meta: { total, page: Number(page), limit: Number(limit), totalPages: Math.ceil(total / Number(limit)) } };
+      return {
+        data: properties,
+        meta: {
+          total,
+          page: Number(page),
+          limit: Number(limit),
+          totalPages: Math.ceil(total / Number(limit)),
+        },
+      };
     }
 
-    const where: any = { status: 'ACTIVE', moderationStatus: 'APPROVED', deletedAt: null };
+    const where: any = {
+      status: 'ACTIVE',
+      moderationStatus: 'APPROVED',
+      deletedAt: null,
+    };
 
     if (city) where.city = { contains: city, mode: 'insensitive' };
     if (propertyType) where.propertyType = propertyType;
@@ -139,7 +185,9 @@ export class PropertiesService {
         where,
         include: {
           images: { where: { isPrimary: true }, take: 1 },
-          user: { select: { name: true, phone: true, company: true, verified: true } },
+          user: {
+            select: { name: true, phone: true, company: true, verified: true },
+          },
         },
         orderBy: [
           { featured: 'desc' },
@@ -163,7 +211,11 @@ export class PropertiesService {
     };
   }
 
-  async findOne(slug: string, viewerUserId?: string, meta?: { referrer?: string; userAgent?: string }) {
+  async findOne(
+    slug: string,
+    viewerUserId?: string,
+    meta?: { referrer?: string; userAgent?: string },
+  ) {
     const property = await this.prisma.property.findUnique({
       where: { slug },
       include: {
@@ -171,8 +223,19 @@ export class PropertiesService {
         features: true,
         user: {
           select: {
-            name: true, phone: true, email: true, company: true, verified: true, username: true,
-            _count: { select: { properties: { where: { status: 'ACTIVE', moderationStatus: 'APPROVED' } } } },
+            name: true,
+            phone: true,
+            email: true,
+            company: true,
+            verified: true,
+            username: true,
+            _count: {
+              select: {
+                properties: {
+                  where: { status: 'ACTIVE', moderationStatus: 'APPROVED' },
+                },
+              },
+            },
           },
         },
       },
@@ -190,7 +253,10 @@ export class PropertiesService {
     return property;
   }
 
-  private recordViewAsync(propertyId: string, meta?: { referrer?: string; userAgent?: string }) {
+  private recordViewAsync(
+    propertyId: string,
+    meta?: { referrer?: string; userAgent?: string },
+  ) {
     Promise.all([
       this.prisma.property.update({
         where: { id: propertyId },
@@ -226,15 +292,23 @@ export class PropertiesService {
 
     // Enforce minimum 3 photos when publishing
     if (rest.status === 'ACTIVE') {
-      const imageCount = await this.prisma.propertyImage.count({ where: { propertyId: property.id } });
+      const imageCount = await this.prisma.propertyImage.count({
+        where: { propertyId: property.id },
+      });
       if (imageCount < 3) {
-        throw new BadRequestException('Minimal 3 foto diperlukan sebelum listing dapat dipublikasikan');
+        throw new BadRequestException(
+          'Minimal 3 foto diperlukan sebelum listing dapat dipublikasikan',
+        );
       }
 
       // Auto-flag suspicious listings before publishing
       const description = rest.description ?? property.description;
       const price = rest.price ?? Number(property.price);
-      const flagReason = this.getAutoFlagReason({ description, price, imageCount });
+      const flagReason = this.getAutoFlagReason({
+        description,
+        price,
+        imageCount,
+      });
       if (flagReason) {
         updateData.moderationStatus = 'FLAGGED';
         updateData.flagReason = flagReason;
@@ -249,7 +323,8 @@ export class PropertiesService {
     }
 
     // Track price change before update
-    const priceChanged = rest.price !== undefined && Number(rest.price) !== Number(property.price);
+    const priceChanged =
+      rest.price !== undefined && Number(rest.price) !== Number(property.price);
 
     const updated = await this.prisma.property.update({
       where: { slug },
@@ -263,7 +338,9 @@ export class PropertiesService {
     // Price history + ranking boost in parallel
     await Promise.all([
       priceChanged
-        ? this.prisma.priceHistory.create({ data: { propertyId: updated.id, price: updated.price } })
+        ? this.prisma.priceHistory.create({
+            data: { propertyId: updated.id, price: updated.price },
+          })
         : Promise.resolve(),
       this.rankingService.boostProperty(updated.id),
     ]);
@@ -293,7 +370,16 @@ export class PropertiesService {
     return { message: 'Property deleted successfully' };
   }
 
-  async findMyProperties(userId: string, query: { page?: number; limit?: number; search?: string; status?: string; sort?: string } = {}) {
+  async findMyProperties(
+    userId: string,
+    query: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      status?: string;
+      sort?: string;
+    } = {},
+  ) {
     const page = Math.max(1, query.page || 1);
     const limit = Math.min(50, query.limit || 10);
     const skip = (page - 1) * limit;
@@ -309,18 +395,24 @@ export class PropertiesService {
     }
 
     const orderBy: any =
-      query.sort === 'views'     ? { viewsCount: 'desc' } :
-      query.sort === 'leads'     ? { leadsCount: 'desc' } :
-      query.sort === 'rank'      ? { rankScore: 'desc' } :
-      query.sort === 'favorites' ? { createdAt: 'desc' } : // handled post-query
-      { createdAt: 'desc' };
+      query.sort === 'views'
+        ? { viewsCount: 'desc' }
+        : query.sort === 'leads'
+          ? { leadsCount: 'desc' }
+          : query.sort === 'rank'
+            ? { rankScore: 'desc' }
+            : query.sort === 'favorites'
+              ? { createdAt: 'desc' } // handled post-query
+              : { createdAt: 'desc' };
 
     let [data, total] = await Promise.all([
       this.prisma.property.findMany({
         where,
         include: {
           images: { where: { isPrimary: true }, take: 1 },
-          ...(query.sort === 'favorites' && { _count: { select: { favorites: true } } }),
+          ...(query.sort === 'favorites' && {
+            _count: { select: { favorites: true } },
+          }),
         },
         orderBy,
         skip: query.sort === 'favorites' ? 0 : skip,
@@ -336,17 +428,39 @@ export class PropertiesService {
         .slice(skip, skip + limit);
     }
 
-    return { data, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
+    return {
+      data,
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+    };
   }
 
   async findByCategory(filters: any) {
-    const { status, type, city, district, page = 1, limit = 20, minPrice, maxPrice, sort, bedrooms, minArea, certificate, furnishing } = filters;
+    const {
+      status,
+      type,
+      city,
+      district,
+      page = 1,
+      limit = 20,
+      minPrice,
+      maxPrice,
+      sort,
+      bedrooms,
+      minArea,
+      certificate,
+      furnishing,
+    } = filters;
     const where: any = { status: 'ACTIVE', moderationStatus: 'APPROVED' };
 
     if (status) where.listingType = this.reverseTranslateListingType(status);
     if (type) where.propertyType = this.reverseTranslatePropertyType(type);
-    if (city) where.city = { contains: city.replace(/-/g, ' '), mode: 'insensitive' };
-    if (district) where.district = { contains: district.replace(/-/g, ' '), mode: 'insensitive' };
+    if (city)
+      where.city = { contains: city.replace(/-/g, ' '), mode: 'insensitive' };
+    if (district)
+      where.district = {
+        contains: district.replace(/-/g, ' '),
+        mode: 'insensitive',
+      };
     if (minPrice || maxPrice) {
       where.price = {};
       if (minPrice) where.price.gte = Number(minPrice);
@@ -360,7 +474,10 @@ export class PropertiesService {
     if (sort === 'price_asc') orderBy.push({ price: 'asc' });
     else if (sort === 'price_desc') orderBy.push({ price: 'desc' });
     else if (sort === 'newest') orderBy.push({ createdAt: 'desc' });
-    else { orderBy.push({ rankScore: 'desc' }); orderBy.push({ createdAt: 'desc' }); }
+    else {
+      orderBy.push({ rankScore: 'desc' });
+      orderBy.push({ createdAt: 'desc' });
+    }
 
     const [properties, total] = await Promise.all([
       this.prisma.property.findMany({
@@ -378,7 +495,12 @@ export class PropertiesService {
 
     return {
       data: properties,
-      meta: { total, page: Number(page), limit: Number(limit), totalPages: Math.ceil(total / Number(limit)) },
+      meta: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        totalPages: Math.ceil(total / Number(limit)),
+      },
     };
   }
 
@@ -388,18 +510,23 @@ export class PropertiesService {
 
   private reverseTranslatePropertyType(slug: string): string {
     const map: Record<string, string> = {
-      'rumah': 'HOUSE',
-      'apartemen': 'APARTMENT',
-      'tanah': 'LAND',
-      'komersial': 'COMMERCIAL',
-      'villa': 'VILLA',
-      'gudang': 'WAREHOUSE',
+      rumah: 'HOUSE',
+      apartemen: 'APARTMENT',
+      tanah: 'LAND',
+      komersial: 'COMMERCIAL',
+      villa: 'VILLA',
+      gudang: 'WAREHOUSE',
     };
     return map[slug] || slug.toUpperCase();
   }
 
-
-  async uploadImage(userId: string, propertyId: string, file: Express.Multer.File, isPrimary: boolean = false, order: number = 0) {
+  async uploadImage(
+    userId: string,
+    propertyId: string,
+    file: Express.Multer.File,
+    isPrimary: boolean = false,
+    order: number = 0,
+  ) {
     const property = await this.prisma.property.findUnique({
       where: { id: propertyId },
     });
@@ -409,10 +536,14 @@ export class PropertiesService {
     }
 
     if (property.userId !== userId) {
-      throw new ForbiddenException('You can only upload images to your own properties');
+      throw new ForbiddenException(
+        'You can only upload images to your own properties',
+      );
     }
 
-    const imageCount = await this.prisma.propertyImage.count({ where: { propertyId } });
+    const imageCount = await this.prisma.propertyImage.count({
+      where: { propertyId },
+    });
     if (imageCount >= 20) {
       throw new BadRequestException('Maksimal 20 foto per properti');
     }
@@ -443,8 +574,14 @@ export class PropertiesService {
     });
     if (!image) throw new NotFoundException('Image not found');
     if (image.property.userId !== userId) throw new ForbiddenException();
-    await this.prisma.propertyImage.updateMany({ where: { propertyId: image.propertyId }, data: { isPrimary: false } });
-    await this.prisma.propertyImage.update({ where: { id: imageId }, data: { isPrimary: true } });
+    await this.prisma.propertyImage.updateMany({
+      where: { propertyId: image.propertyId },
+      data: { isPrimary: false },
+    });
+    await this.prisma.propertyImage.update({
+      where: { id: imageId },
+      data: { isPrimary: true },
+    });
     return { message: 'Primary image updated' };
   }
 
@@ -459,7 +596,9 @@ export class PropertiesService {
     }
 
     if (image.property.userId !== userId) {
-      throw new ForbiddenException('You can only delete images from your own properties');
+      throw new ForbiddenException(
+        'You can only delete images from your own properties',
+      );
     }
 
     await this.cloudinary.deleteImage(image.url);
@@ -468,22 +607,37 @@ export class PropertiesService {
     return { message: 'Image deleted successfully' };
   }
 
-  async uploadFloorPlan(userId: string, propertyId: string, file: Express.Multer.File) {
-    const property = await this.prisma.property.findUnique({ where: { id: propertyId } });
+  async uploadFloorPlan(
+    userId: string,
+    propertyId: string,
+    file: Express.Multer.File,
+  ) {
+    const property = await this.prisma.property.findUnique({
+      where: { id: propertyId },
+    });
     if (!property) throw new NotFoundException('Property not found');
     if (property.userId !== userId) throw new ForbiddenException();
 
     const url = await this.cloudinary.uploadImage(file, 'floor-plans');
-    await this.prisma.property.update({ where: { id: propertyId }, data: { floorPlanUrl: url } });
+    await this.prisma.property.update({
+      where: { id: propertyId },
+      data: { floorPlanUrl: url },
+    });
     return { floorPlanUrl: url };
   }
 
   async deleteFloorPlan(userId: string, propertyId: string) {
-    const property = await this.prisma.property.findUnique({ where: { id: propertyId } });
+    const property = await this.prisma.property.findUnique({
+      where: { id: propertyId },
+    });
     if (!property) throw new NotFoundException('Property not found');
     if (property.userId !== userId) throw new ForbiddenException();
-    if (property.floorPlanUrl) await this.cloudinary.deleteImage(property.floorPlanUrl);
-    await this.prisma.property.update({ where: { id: propertyId }, data: { floorPlanUrl: null } });
+    if (property.floorPlanUrl)
+      await this.cloudinary.deleteImage(property.floorPlanUrl);
+    await this.prisma.property.update({
+      where: { id: propertyId },
+      data: { floorPlanUrl: null },
+    });
     return { message: 'Floor plan deleted' };
   }
 
@@ -491,10 +645,12 @@ export class PropertiesService {
     const title = this.slugify(dto.title);
     // Format: judul-properti (tanpa prefix status/jenis/kota)
     // URL SEO ditangani di routing, slug hanya identifier unik
-    let baseSlug = title;
+    const baseSlug = title;
     let counter = 1;
     let finalSlug = baseSlug;
-    while (await this.prisma.property.findUnique({ where: { slug: finalSlug } })) {
+    while (
+      await this.prisma.property.findUnique({ where: { slug: finalSlug } })
+    ) {
       counter++;
       finalSlug = `${baseSlug}-${counter}`;
     }
@@ -502,9 +658,12 @@ export class PropertiesService {
   }
 
   async getAnalytics(userId: string, propertyId: string) {
-    const property = await this.prisma.property.findUnique({ where: { id: propertyId } });
+    const property = await this.prisma.property.findUnique({
+      where: { id: propertyId },
+    });
     if (!property) throw new NotFoundException('Properti tidak ditemukan');
-    if (property.userId !== userId) throw new NotFoundException('Properti tidak ditemukan');
+    if (property.userId !== userId)
+      throw new NotFoundException('Properti tidak ditemukan');
 
     // Generate 30 hari terakhir
     const days = Array.from({ length: 30 }, (_, i) => {
@@ -552,7 +711,10 @@ export class PropertiesService {
       const dayLeads = leadsPerDay.get(key) ?? 0;
       return {
         date: key,
-        label: d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
+        label: d.toLocaleDateString('id-ID', {
+          day: 'numeric',
+          month: 'short',
+        }),
         leads: dayLeads,
         views: dayViews,
       };
@@ -560,9 +722,10 @@ export class PropertiesService {
 
     const totalViews30d = views.length;
     const totalLeads30d = leads.length;
-    const conversionRate = totalViews30d > 0
-      ? Math.round((totalLeads30d / totalViews30d) * 10000) / 100
-      : 0;
+    const conversionRate =
+      totalViews30d > 0
+        ? Math.round((totalLeads30d / totalViews30d) * 10000) / 100
+        : 0;
 
     return {
       property: {
@@ -588,7 +751,9 @@ export class PropertiesService {
   }
 
   async getPriceHistory(userId: string, propertyId: string) {
-    const property = await this.prisma.property.findUnique({ where: { id: propertyId } });
+    const property = await this.prisma.property.findUnique({
+      where: { id: propertyId },
+    });
     if (!property) throw new NotFoundException('Property not found');
     if (property.userId !== userId) throw new ForbiddenException();
     return this.prisma.priceHistory.findMany({
@@ -608,11 +773,21 @@ export class PropertiesService {
     });
   }
 
-  private getAutoFlagReason({ description, price, imageCount }: { description: string; price: number | string; imageCount: number }): string | null {
+  private getAutoFlagReason({
+    description,
+    price,
+    imageCount,
+  }: {
+    description: string;
+    price: number | string;
+    imageCount: number;
+  }): string | null {
     const reasons: string[] = [];
     if (imageCount < 3) reasons.push('foto kurang dari 3');
-    if ((description ?? '').length < 50) reasons.push('deskripsi terlalu singkat (< 50 karakter)');
-    if (Number(price) < 10_000_000) reasons.push('harga mencurigakan (< Rp 10 juta)');
+    if ((description ?? '').length < 50)
+      reasons.push('deskripsi terlalu singkat (< 50 karakter)');
+    if (Number(price) < 10_000_000)
+      reasons.push('harga mencurigakan (< Rp 10 juta)');
     return reasons.length ? `Auto-flag: ${reasons.join(', ')}` : null;
   }
 
@@ -629,12 +804,12 @@ export class PropertiesService {
 
   private translatePropertyType(type: string): string {
     const map: Record<string, string> = {
-      'HOUSE': 'rumah',
-      'APARTMENT': 'apartemen',
-      'LAND': 'tanah',
-      'COMMERCIAL': 'komersial',
-      'VILLA': 'villa',
-      'WAREHOUSE': 'gudang',
+      HOUSE: 'rumah',
+      APARTMENT: 'apartemen',
+      LAND: 'tanah',
+      COMMERCIAL: 'komersial',
+      VILLA: 'villa',
+      WAREHOUSE: 'gudang',
     };
     return map[type] || type.toLowerCase();
   }

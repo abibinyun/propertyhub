@@ -10,13 +10,19 @@ export class ResendEmailProvider implements EmailProvider {
 
   constructor(private config: ConfigService) {
     this.apiKey = this.config.get<string>('RESEND_API_KEY', '');
-    this.from = this.config.get<string>('EMAIL_FROM', 'PropertyHub <noreply@propertyhub.id>');
+    this.from = this.config.get<string>(
+      'EMAIL_FROM',
+      'PropertyHub <noreply@propertyhub.id>',
+    );
   }
 
   async send({ to, subject, html }: SendEmailOptions): Promise<void> {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
-      headers: { Authorization: `Bearer ${this.apiKey}`, 'Content-Type': 'application/json' },
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({ from: this.from, to, subject, html }),
     });
     if (!res.ok) {

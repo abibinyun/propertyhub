@@ -15,7 +15,11 @@ export class PaymentController {
     @Param('propertyId') propertyId: string,
     @Param('featuredType') featuredType: string,
   ) {
-    return this.paymentService.createFeaturedPayment(user.id, propertyId, featuredType.toUpperCase());
+    return this.paymentService.createFeaturedPayment(
+      user.id,
+      propertyId,
+      featuredType.toUpperCase(),
+    );
   }
 
   // Webhook dari Midtrans (tidak perlu auth)
@@ -32,6 +36,10 @@ export class PaymentController {
     @Param('propertyId') propertyId: string,
     @Param('featuredType') featuredType: string,
   ) {
-    return this.paymentService.activateFeaturedDirect(user.id, propertyId, featuredType.toUpperCase());
+    return this.paymentService.activateFeaturedDirect(
+      user.id,
+      propertyId,
+      featuredType.toUpperCase(),
+    );
   }
 }

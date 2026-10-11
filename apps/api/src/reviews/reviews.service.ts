@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 
@@ -6,7 +10,10 @@ import { CreateReviewDto } from './dto/create-review.dto';
 export class ReviewsService {
   constructor(private prisma: PrismaService) {}
 
-  async canReview(userId: string, agentId: string): Promise<{ eligible: boolean; reason?: string }> {
+  async canReview(
+    userId: string,
+    agentId: string,
+  ): Promise<{ eligible: boolean; reason?: string }> {
     if (userId === agentId) return { eligible: false, reason: 'self' };
 
     const alreadyReviewed = await this.prisma.review.findUnique({
@@ -27,7 +34,8 @@ export class ReviewsService {
   }
 
   async create(authorId: string, agentId: string, dto: CreateReviewDto) {
-    if (authorId === agentId) throw new BadRequestException('Tidak bisa review diri sendiri');
+    if (authorId === agentId)
+      throw new BadRequestException('Tidak bisa review diri sendiri');
 
     const agent = await this.prisma.user.findUnique({ where: { id: agentId } });
     if (!agent) throw new BadRequestException('Agen tidak ditemukan');
@@ -53,7 +61,9 @@ export class ReviewsService {
         include: { author: { select: { name: true, avatar: true } } },
       });
     } catch {
-      throw new ConflictException('Anda sudah pernah memberikan review untuk agen ini');
+      throw new ConflictException(
+        'Anda sudah pernah memberikan review untuk agen ini',
+      );
     }
   }
 

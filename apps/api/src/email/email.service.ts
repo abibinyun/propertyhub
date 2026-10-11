@@ -10,17 +10,24 @@ export class EmailService implements EmailProvider {
 
   constructor(private config: ConfigService) {
     const providerName = this.config.get<string>('EMAIL_PROVIDER', 'log');
-    this.provider = providerName === 'resend'
-      ? new ResendEmailProvider(config)
-      : new LogEmailProvider();
+    this.provider =
+      providerName === 'resend'
+        ? new ResendEmailProvider(config)
+        : new LogEmailProvider();
   }
 
   async send(options: SendEmailOptions): Promise<void> {
     return this.provider.send(options);
   }
 
-  async sendVerificationEmail(to: string, name: string, token: string): Promise<void> {
-    const appUrl = this.config.get<string>('FRONTEND_URL') || this.config.get<string>('APP_URL', 'http://localhost:3004');
+  async sendVerificationEmail(
+    to: string,
+    name: string,
+    token: string,
+  ): Promise<void> {
+    const appUrl =
+      this.config.get<string>('FRONTEND_URL') ||
+      this.config.get<string>('APP_URL', 'http://localhost:3004');
     const url = `${appUrl}/verify-email?token=${token}`;
     return this.send({
       to,
@@ -65,8 +72,14 @@ export class EmailService implements EmailProvider {
     });
   }
 
-  async sendPasswordResetEmail(to: string, name: string, token: string): Promise<void> {
-    const appUrl = this.config.get<string>('FRONTEND_URL') || this.config.get<string>('APP_URL', 'http://localhost:3004');
+  async sendPasswordResetEmail(
+    to: string,
+    name: string,
+    token: string,
+  ): Promise<void> {
+    const appUrl =
+      this.config.get<string>('FRONTEND_URL') ||
+      this.config.get<string>('APP_URL', 'http://localhost:3004');
     const url = `${appUrl}/reset-password?token=${token}`;
     return this.send({
       to,

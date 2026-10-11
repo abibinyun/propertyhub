@@ -1,6 +1,10 @@
 import { ConfigService } from '@nestjs/config';
 import * as Midtrans from 'midtrans-client';
-import { PaymentProvider, CreateFeaturedPaymentOptions, PaymentResult } from './payment.interface';
+import {
+  PaymentProvider,
+  CreateFeaturedPaymentOptions,
+  PaymentResult,
+} from './payment.interface';
 
 export class MidtransPaymentProvider implements PaymentProvider {
   private snap: Midtrans.Snap;
@@ -13,10 +17,22 @@ export class MidtransPaymentProvider implements PaymentProvider {
     });
   }
 
-  async createFeaturedPayment(options: CreateFeaturedPaymentOptions): Promise<PaymentResult> {
+  async createFeaturedPayment(
+    options: CreateFeaturedPaymentOptions,
+  ): Promise<PaymentResult> {
     const response = await this.snap.createTransaction({
-      transaction_details: { order_id: options.orderId, gross_amount: options.amount },
-      item_details: [{ id: options.featuredType, price: options.amount, quantity: 1, name: `Featured ${options.featuredType} - ${options.propertyTitle}` }],
+      transaction_details: {
+        order_id: options.orderId,
+        gross_amount: options.amount,
+      },
+      item_details: [
+        {
+          id: options.featuredType,
+          price: options.amount,
+          quantity: 1,
+          name: `Featured ${options.featuredType} - ${options.propertyTitle}`,
+        },
+      ],
     } as any);
 
     return { token: response.token, redirectUrl: response.redirect_url };

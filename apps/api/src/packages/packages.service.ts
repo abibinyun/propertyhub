@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RankingService } from '../properties/ranking.service';
 
@@ -27,8 +32,12 @@ export class PackagesService {
     });
   }
 
-  async checkAndDeductListingQuota(userId: string): Promise<{ isFree: boolean }> {
-    const settings = await this.prisma.siteSettings.findUnique({ where: { id: 'default' } });
+  async checkAndDeductListingQuota(
+    userId: string,
+  ): Promise<{ isFree: boolean }> {
+    const settings = await this.prisma.siteSettings.findUnique({
+      where: { id: 'default' },
+    });
     const freeQuota = settings?.freeListingQuota ?? 3;
 
     const userActiveCount = await this.prisma.property.count({
@@ -63,23 +72,34 @@ export class PackagesService {
     return { isFree: false };
   }
 
-  async bumpProperty(userId: string, propertyId: string): Promise<{ message: string }> {
-    const property = await this.prisma.property.findUnique({ where: { id: propertyId } });
+  async bumpProperty(
+    userId: string,
+    propertyId: string,
+  ): Promise<{ message: string }> {
+    const property = await this.prisma.property.findUnique({
+      where: { id: propertyId },
+    });
     if (!property || property.deletedAt) {
       throw new NotFoundException('Properti tidak ditemukan');
     }
     if (property.userId !== userId) {
-      throw new ForbiddenException('Anda hanya dapat menyundul properti milik Anda sendiri');
+      throw new ForbiddenException(
+        'Anda hanya dapat menyundul properti milik Anda sendiri',
+      );
     }
 
-    const settings = await this.prisma.siteSettings.findUnique({ where: { id: 'default' } });
+    const settings = await this.prisma.siteSettings.findUnique({
+      where: { id: 'default' },
+    });
     const cooldownHours = settings?.bumpCooldownHours ?? 6;
 
     if (property.lastBoostedAt) {
       const cooldownMs = cooldownHours * 3600 * 1000;
       const elapsedMs = Date.now() - new Date(property.lastBoostedAt).getTime();
       if (elapsedMs < cooldownMs) {
-        const remainingMinutes = Math.ceil((cooldownMs - elapsedMs) / (60 * 1000));
+        const remainingMinutes = Math.ceil(
+          (cooldownMs - elapsedMs) / (60 * 1000),
+        );
         throw new BadRequestException(
           `Listing baru saja disundul. Cooldown tersisa ${remainingMinutes} menit.`,
         );

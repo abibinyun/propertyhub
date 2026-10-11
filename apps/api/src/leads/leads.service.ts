@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, ConflictException, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
@@ -38,7 +44,9 @@ export class LeadsService {
 
     // Cegah kirim ke properti milik sendiri
     if (property.userId === userId) {
-      throw new ConflictException('Tidak dapat mengirim lead ke properti sendiri');
+      throw new ConflictException(
+        'Tidak dapat mengirim lead ke properti sendiri',
+      );
     }
 
     // Cek duplikat: user sudah pernah kirim lead ke properti ini dalam 24 jam
@@ -50,7 +58,9 @@ export class LeadsService {
       },
     });
     if (recentDuplicate) {
-      throw new ConflictException('Anda sudah mengirim pesan ke properti ini dalam 24 jam terakhir');
+      throw new ConflictException(
+        'Anda sudah mengirim pesan ke properti ini dalam 24 jam terakhir',
+      );
     }
 
     // Cek daily limit
@@ -62,7 +72,10 @@ export class LeadsService {
       },
     });
     if (todayCount >= dailyLimit) {
-      throw new HttpException(`Batas pengiriman pesan harian (${dailyLimit}) telah tercapai`, HttpStatus.TOO_MANY_REQUESTS);
+      throw new HttpException(
+        `Batas pengiriman pesan harian (${dailyLimit}) telah tercapai`,
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
     }
 
     const [lead] = await this.prisma.$transaction([
@@ -90,16 +103,26 @@ export class LeadsService {
       select: { email: true, name: true },
     });
     if (owner) {
-      await this.emailService.sendLeadNotificationEmail(owner.email, owner.name, lead.property.title, {
-        name: lead.name, phone: lead.phone, email: lead.email, message: lead.message,
-      });
-      this.notificationsService.create(
-        (lead.property as any).userId,
-        'lead_received',
-        'Pesan baru masuk',
-        `${lead.name} mengirim pesan untuk "${lead.property.title}"`,
-        '/dashboard/leads',
-      ).catch(() => {});
+      await this.emailService.sendLeadNotificationEmail(
+        owner.email,
+        owner.name,
+        lead.property.title,
+        {
+          name: lead.name,
+          phone: lead.phone,
+          email: lead.email,
+          message: lead.message,
+        },
+      );
+      this.notificationsService
+        .create(
+          (lead.property as any).userId,
+          'lead_received',
+          'Pesan baru masuk',
+          `${lead.name} mengirim pesan untuk "${lead.property.title}"`,
+          '/dashboard/leads',
+        )
+        .catch(() => {});
     }
 
     return lead;
@@ -135,7 +158,11 @@ export class LeadsService {
           { email: { contains: query.search, mode: 'insensitive' } },
           { phone: { contains: query.search, mode: 'insensitive' } },
           { message: { contains: query.search, mode: 'insensitive' } },
-          { property: { title: { contains: query.search, mode: 'insensitive' } } },
+          {
+            property: {
+              title: { contains: query.search, mode: 'insensitive' },
+            },
+          },
         ],
       }),
     };
@@ -165,8 +192,14 @@ export class LeadsService {
       ...(query.search && {
         OR: [
           { message: { contains: query.search, mode: 'insensitive' } },
-          { property: { title: { contains: query.search, mode: 'insensitive' } } },
-          { property: { city: { contains: query.search, mode: 'insensitive' } } },
+          {
+            property: {
+              title: { contains: query.search, mode: 'insensitive' },
+            },
+          },
+          {
+            property: { city: { contains: query.search, mode: 'insensitive' } },
+          },
         ],
       }),
     };
@@ -186,9 +219,12 @@ export class LeadsService {
   }
 
   async findPropertyLeads(userId: string, propertyId: string) {
-    const property = await this.prisma.property.findUnique({ where: { id: propertyId } });
+    const property = await this.prisma.property.findUnique({
+      where: { id: propertyId },
+    });
     if (!property) throw new NotFoundException('Property not found');
-    if (property.userId !== userId) throw new NotFoundException('Property not found');
+    if (property.userId !== userId)
+      throw new NotFoundException('Property not found');
 
     return this.prisma.lead.findMany({
       where: { propertyId },
@@ -203,7 +239,8 @@ export class LeadsService {
     });
 
     if (!lead) throw new NotFoundException('Lead not found');
-    if (lead.property.userId !== userId) throw new NotFoundException('Lead not found');
+    if (lead.property.userId !== userId)
+      throw new NotFoundException('Lead not found');
 
     return this.prisma.lead.update({
       where: { id: leadId },

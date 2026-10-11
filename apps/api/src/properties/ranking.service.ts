@@ -44,13 +44,15 @@ export class RankingService {
    */
   calculateFreshnessScore(lastBoostedAt: Date): number {
     const now = new Date();
-    const daysSinceBoost = Math.floor((now.getTime() - lastBoostedAt.getTime()) / (1000 * 60 * 60 * 24));
+    const daysSinceBoost = Math.floor(
+      (now.getTime() - lastBoostedAt.getTime()) / (1000 * 60 * 60 * 24),
+    );
 
     // Decay: 100 -> 50 over 30 days, then 50 -> 0 over next 60 days
     if (daysSinceBoost <= 30) {
-      return 100 - (daysSinceBoost * 50 / 30);
+      return 100 - (daysSinceBoost * 50) / 30;
     } else if (daysSinceBoost <= 90) {
-      return 50 - ((daysSinceBoost - 30) * 50 / 60);
+      return 50 - ((daysSinceBoost - 30) * 50) / 60;
     }
     return 0;
   }
@@ -200,7 +202,9 @@ export class RankingService {
     const chunkSize = 50;
     for (let i = 0; i < properties.length; i += chunkSize) {
       const chunk = properties.slice(i, i + chunkSize);
-      await Promise.allSettled(chunk.map((p) => this.updatePropertyRanking(p.id)));
+      await Promise.allSettled(
+        chunk.map((p) => this.updatePropertyRanking(p.id)),
+      );
     }
   }
 }

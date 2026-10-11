@@ -2,7 +2,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PackagesService } from './packages.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { RankingService } from '../properties/ranking.service';
-import { ForbiddenException, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 
 describe('PackagesService (TDD)', () => {
   let service: PackagesService;
@@ -82,13 +86,17 @@ describe('PackagesService (TDD)', () => {
       prisma.property.count.mockResolvedValue(5);
       prisma.userSubscription.findFirst.mockResolvedValue(null); // No subscription
 
-      await expect(service.checkAndDeductListingQuota('user-1')).rejects.toThrow(ForbiddenException);
+      await expect(
+        service.checkAndDeductListingQuota('user-1'),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 
   describe('Sundul / Bump Listing Logic (Pilar 3)', () => {
     it('should enforce cooldown if property was bumped recently', async () => {
-      prisma.siteSettings.findUnique.mockResolvedValue({ bumpCooldownHours: 6 });
+      prisma.siteSettings.findUnique.mockResolvedValue({
+        bumpCooldownHours: 6,
+      });
       prisma.property.findUnique.mockResolvedValue({
         id: 'prop-1',
         userId: 'user-1',
@@ -97,11 +105,15 @@ describe('PackagesService (TDD)', () => {
         deletedAt: null,
       });
 
-      await expect(service.bumpProperty('user-1', 'prop-1')).rejects.toThrow(BadRequestException);
+      await expect(service.bumpProperty('user-1', 'prop-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should deduct bump quota, update lastBoostedAt, and trigger ranking update on valid bump', async () => {
-      prisma.siteSettings.findUnique.mockResolvedValue({ bumpCooldownHours: 6 });
+      prisma.siteSettings.findUnique.mockResolvedValue({
+        bumpCooldownHours: 6,
+      });
       prisma.property.findUnique.mockResolvedValue({
         id: 'prop-1',
         userId: 'user-1',
@@ -132,7 +144,9 @@ describe('PackagesService (TDD)', () => {
           data: expect.objectContaining({ freshnessScore: 100 }),
         }),
       );
-      expect(rankingService.updatePropertyRanking).toHaveBeenCalledWith('prop-1');
+      expect(rankingService.updatePropertyRanking).toHaveBeenCalledWith(
+        'prop-1',
+      );
       expect(result.message).toContain('berhasil disundul');
     });
   });
