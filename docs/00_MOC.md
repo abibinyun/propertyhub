@@ -7,6 +7,7 @@ All system architecture artifacts, domain specifications, and engineering guidel
 
 ## 📌 Project Meta & Operational Guides
 
+- [SDD_ENTERPRISE_COMMERCIAL_GRADE.md](./SDD_ENTERPRISE_COMMERCIAL_GRADE.md) — **Master Software Design Document (v2.0 Commercial Grade)**
 - [STATUS.md](./STATUS.md) — Comprehensive implementation status, completed modules, and roadmap
 - [DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md) — Local development workflow, port guidelines, and seeder accounts
 - [../AGENTS.md](../AGENTS.md) — Operating guidelines and architectural invariants for AI agents
