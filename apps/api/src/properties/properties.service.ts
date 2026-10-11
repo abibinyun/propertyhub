@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -12,6 +13,7 @@ import { RankingService } from './ranking.service';
 
 @Injectable()
 export class PropertiesService {
+  private readonly logger = new Logger(PropertiesService.name);
   constructor(
     private prisma: PrismaService,
     private cloudinary: CloudinaryService,
@@ -271,9 +273,15 @@ export class PropertiesService {
       }),
     ])
       .then(() => {
-        this.rankingService.updatePropertyRanking(propertyId).catch(() => {});
+        this.rankingService
+          .updatePropertyRanking(propertyId)
+          .catch((err: unknown) =>
+            this.logger.warn('Failed to update rank', err),
+          );
       })
-      .catch(() => {});
+      .catch((err: unknown) =>
+        this.logger.warn('Failed to record property view', err),
+      );
   }
 
   async update(userId: string, slug: string, dto: UpdatePropertyDto) {
@@ -405,7 +413,7 @@ export class PropertiesService {
               ? { createdAt: 'desc' } // handled post-query
               : { createdAt: 'desc' };
 
-    let [data, total] = await Promise.all([
+    const [rawData, total] = await Promise.all([
       this.prisma.property.findMany({
         where,
         include: {
@@ -420,6 +428,7 @@ export class PropertiesService {
       }),
       this.prisma.property.count({ where }),
     ]);
+    let data = rawData;
 
     // Sort by favorites count post-query (Prisma tidak support orderBy relation count langsung)
     if (query.sort === 'favorites') {

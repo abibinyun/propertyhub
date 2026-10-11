@@ -96,7 +96,12 @@ export function PropertyCard({ property, favoriteIds }: { property: Property; fa
             </button>
             {/* Compare */}
             <button
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); inCompare ? remove(property.id) : add(property); }}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (inCompare) remove(property.id);
+                else add(property);
+              }}
               className={cn('absolute top-3 right-[84px] h-8 w-8 rounded-full bg-white/80 hover:bg-white flex items-center justify-center shadow backdrop-blur-sm transition-all duration-200 md:opacity-0 md:group-hover:opacity-100', inCompare ? 'text-primary' : 'text-slate-600 hover:text-primary')}
               title={inCompare ? 'Hapus dari perbandingan' : 'Tambah ke perbandingan'}
             >

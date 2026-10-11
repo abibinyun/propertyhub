@@ -25,7 +25,7 @@ import { UploadImageDto } from './dto/upload-image.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { getConfig } from '../common/config';
+import type { RequestUser } from '@propertyhub/shared';
 
 const LISTING_TYPES = ['jual', 'sewa'];
 const PROPERTY_TYPES = [
@@ -48,7 +48,7 @@ export class PropertiesController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  create(@CurrentUser() user: any, @Body() dto: CreatePropertyDto) {
+  create(@CurrentUser() user: RequestUser, @Body() dto: CreatePropertyDto) {
     return this.propertiesService.create(user.id, dto);
   }
 
@@ -57,7 +57,7 @@ export class PropertiesController {
   @UseInterceptors(FileInterceptor('file'))
   @Throttle({ default: { ttl: 600000, limit: 20 } }) // 20 uploads per 10 menit
   uploadImage(
-    @CurrentUser() user: any,
+    @CurrentUser() user: RequestUser,
     @Param('id') propertyId: string,
     @UploadedFile(
       new ParseFilePipe({
@@ -81,13 +81,19 @@ export class PropertiesController {
 
   @Patch('images/:imageId/primary')
   @UseGuards(JwtAuthGuard)
-  setPrimaryImage(@CurrentUser() user: any, @Param('imageId') imageId: string) {
+  setPrimaryImage(
+    @CurrentUser() user: RequestUser,
+    @Param('imageId') imageId: string,
+  ) {
     return this.propertiesService.setPrimaryImage(user.id, imageId);
   }
 
   @Delete('images/:imageId')
   @UseGuards(JwtAuthGuard)
-  deleteImage(@CurrentUser() user: any, @Param('imageId') imageId: string) {
+  deleteImage(
+    @CurrentUser() user: RequestUser,
+    @Param('imageId') imageId: string,
+  ) {
     return this.propertiesService.deleteImage(user.id, imageId);
   }
 
@@ -96,7 +102,7 @@ export class PropertiesController {
   @UseInterceptors(FileInterceptor('file'))
   @Throttle({ default: { ttl: 600000, limit: 10 } })
   uploadFloorPlan(
-    @CurrentUser() user: any,
+    @CurrentUser() user: RequestUser,
     @Param('id') propertyId: string,
     @UploadedFile(
       new ParseFilePipe({
@@ -113,14 +119,17 @@ export class PropertiesController {
 
   @Delete(':id/floor-plan')
   @UseGuards(JwtAuthGuard)
-  deleteFloorPlan(@CurrentUser() user: any, @Param('id') propertyId: string) {
+  deleteFloorPlan(
+    @CurrentUser() user: RequestUser,
+    @Param('id') propertyId: string,
+  ) {
     return this.propertiesService.deleteFloorPlan(user.id, propertyId);
   }
 
   @Patch(':slug')
   @UseGuards(JwtAuthGuard)
   update(
-    @CurrentUser() user: any,
+    @CurrentUser() user: RequestUser,
     @Param('slug') slug: string,
     @Body() dto: UpdatePropertyDto,
   ) {
@@ -129,7 +138,7 @@ export class PropertiesController {
 
   @Delete(':slug')
   @UseGuards(JwtAuthGuard)
-  delete(@CurrentUser() user: any, @Param('slug') slug: string) {
+  delete(@CurrentUser() user: RequestUser, @Param('slug') slug: string) {
     return this.propertiesService.delete(user.id, slug);
   }
 
@@ -143,7 +152,7 @@ export class PropertiesController {
   @Get('my/analytics/:propertyId')
   @UseGuards(JwtAuthGuard)
   getAnalytics(
-    @CurrentUser() user: any,
+    @CurrentUser() user: RequestUser,
     @Param('propertyId') propertyId: string,
   ) {
     return this.propertiesService.getAnalytics(user.id, propertyId);
@@ -152,7 +161,7 @@ export class PropertiesController {
   @Get('my/price-history/:propertyId')
   @UseGuards(JwtAuthGuard)
   getPriceHistory(
-    @CurrentUser() user: any,
+    @CurrentUser() user: RequestUser,
     @Param('propertyId') propertyId: string,
   ) {
     return this.propertiesService.getPriceHistory(user.id, propertyId);
@@ -167,7 +176,7 @@ export class PropertiesController {
   @Get('my')
   @UseGuards(JwtAuthGuard)
   findMyProperties(
-    @CurrentUser() user: any,
+    @CurrentUser() user: RequestUser,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('search') search?: string,
@@ -187,7 +196,7 @@ export class PropertiesController {
   @UseGuards(OptionalJwtAuthGuard)
   findBySlug(
     @Param('slug') slug: string,
-    @CurrentUser() user?: any,
+    @CurrentUser() user?: RequestUser,
     @Req() req?: Request,
   ) {
     return this.propertiesService.findOne(slug, user?.id, {

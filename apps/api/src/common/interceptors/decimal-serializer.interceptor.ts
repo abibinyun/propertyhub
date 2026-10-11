@@ -8,13 +8,17 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Decimal } from '@prisma/client/runtime/library';
 
-function serializeDecimals(obj: any): any {
+function serializeDecimals(obj: unknown): unknown {
   if (obj === null || obj === undefined) return obj;
   if (obj instanceof Decimal) return obj.toNumber();
-  if (Array.isArray(obj)) return obj.map(serializeDecimals);
+  if (Array.isArray(obj))
+    return obj.map((item: unknown) => serializeDecimals(item));
   if (typeof obj === 'object' && !(obj instanceof Date)) {
     return Object.fromEntries(
-      Object.entries(obj).map(([k, v]) => [k, serializeDecimals(v)]),
+      Object.entries(obj as Record<string, unknown>).map(([k, v]) => [
+        k,
+        serializeDecimals(v),
+      ]),
     );
   }
   return obj;
@@ -22,7 +26,7 @@ function serializeDecimals(obj: any): any {
 
 @Injectable()
 export class DecimalSerializerInterceptor implements NestInterceptor {
-  intercept(_ctx: ExecutionContext, next: CallHandler): Observable<any> {
-    return next.handle().pipe(map(serializeDecimals));
+  intercept(_ctx: ExecutionContext, next: CallHandler): Observable<unknown> {
+    return next.handle().pipe(map((data: unknown) => serializeDecimals(data)));
   }
 }

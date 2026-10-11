@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Search, MapPin, Home, Building2, Trees, Store } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -40,21 +39,18 @@ export function HomeSearch() {
   const router = useRouter();
   const [tab, setTab] = useState('jual');
   const [query, setQuery] = useState('');
-  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [kotaList, setKotaList] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
-    getKotaList().then(setKotaList).catch(() => {});
+    getKotaList()
+      .then(setKotaList)
+      .catch((err: unknown) => console.warn('Failed to load kota list:', err));
   }, []);
 
-  const updateSuggestions = useCallback((q: string) => {
-    setSuggestions(q.trim() ? searchKota(kotaList, q, 6) : []);
-  }, [kotaList]);
-
-  useEffect(() => {
-    updateSuggestions(query);
-  }, [query, updateSuggestions]);
+  const suggestions = useMemo(() => {
+    return query.trim() ? searchKota(kotaList, query, 6) : [];
+  }, [kotaList, query]);
 
   const handleSearch = (kota?: string) => {
     const slug = (kota ?? query).trim().toLowerCase().replace(/\s+/g, '-');

@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import {
   PaymentProvider,
   CreateFeaturedPaymentOptions,
@@ -5,22 +6,18 @@ import {
 } from './payment.interface';
 
 export class LogPaymentProvider implements PaymentProvider {
-  async createFeaturedPayment(
+  private readonly logger = new Logger(LogPaymentProvider.name);
+
+  createFeaturedPayment(
     options: CreateFeaturedPaymentOptions,
   ): Promise<PaymentResult> {
-    console.log('\n💳 [PAYMENT - LOG MODE]');
-    console.log(`Order ID  : ${options.orderId}`);
-    console.log(`Amount    : Rp ${options.amount.toLocaleString('id-ID')}`);
-    console.log(
-      `Customer  : ${options.customerName} <${options.customerEmail}>`,
+    this.logger.log(
+      `[PAYMENT LOG] Order: ${options.orderId} | Rp ${options.amount.toLocaleString('id-ID')} | User: ${options.customerName} | Tier: ${options.featuredType}`,
     );
-    console.log(`Property  : ${options.propertyTitle}`);
-    console.log(`Tier      : ${options.featuredType}`);
-    console.log(`→ Set PAYMENT_PROVIDER=midtrans to enable real payment\n`);
 
-    return {
+    return Promise.resolve({
       token: `log-token-${options.orderId}`,
       redirectUrl: `${process.env.FRONTEND_URL || 'http://localhost:3004'}/dashboard/properties?featured=pending&orderId=${options.orderId}`,
-    };
+    });
   }
 }

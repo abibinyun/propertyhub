@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useTransition } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { PropertyCard } from '@/components/property/property-card';
+import { Property } from '@/types/property';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -32,15 +33,15 @@ const SORTS = [
 interface Meta { total: number; page: number; limit: number; totalPages: number }
 
 interface Props {
-  properties: any[];
+  properties: Property[];
   meta: Meta;
   initialPropertyType: string;
   initialListingType: string;
   initialSort: string;
-  initialPage: number;
+  initialPage?: number;
 }
 
-export function AgentListings({ properties, meta, initialPropertyType, initialListingType, initialSort, initialPage }: Props) {
+export function AgentListings({ properties, meta, initialPropertyType, initialListingType, initialSort }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -78,7 +79,7 @@ export function AgentListings({ properties, meta, initialPropertyType, initialLi
             Tidak ada listing yang sesuai filter
           </div>
         ) : (
-          properties.map((p: any) => <PropertyCard key={p.id} property={p} />)
+          properties.map((p: Property) => <PropertyCard key={p.id} property={p} />)
         )}
       </div>
 

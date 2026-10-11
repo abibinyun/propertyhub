@@ -5,7 +5,6 @@ import { ConfigService } from '@nestjs/config';
 import { RankingService } from './ranking.service';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { Prisma } from '@prisma/client';
 
 describe('PropertiesService (TDD)', () => {
   let service: PropertiesService;

@@ -264,7 +264,7 @@ export default async function HomePage() {
                     <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
                   ))}
                 </div>
-                <p className="text-sm text-muted-foreground leading-relaxed flex-1">"{t.text}"</p>
+                <p className="text-sm text-muted-foreground leading-relaxed flex-1">&ldquo;{t.text}&rdquo;</p>
                 <div className="flex items-center gap-3 pt-2 border-t border-border/40">
                   <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm flex-shrink-0">
                     {t.name.charAt(0)}

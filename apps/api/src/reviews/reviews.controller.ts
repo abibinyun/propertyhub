@@ -3,6 +3,7 @@ import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import type { RequestUser } from '@propertyhub/shared';
 
 @Controller('reviews')
 export class ReviewsController {
@@ -11,7 +12,7 @@ export class ReviewsController {
   @Post('agent/:agentId')
   @UseGuards(JwtAuthGuard)
   create(
-    @CurrentUser() user: any,
+    @CurrentUser() user: RequestUser,
     @Param('agentId') agentId: string,
     @Body() dto: CreateReviewDto,
   ) {
@@ -20,7 +21,10 @@ export class ReviewsController {
 
   @Get('agent/:agentId/can-review')
   @UseGuards(JwtAuthGuard)
-  canReview(@CurrentUser() user: any, @Param('agentId') agentId: string) {
+  canReview(
+    @CurrentUser() user: RequestUser,
+    @Param('agentId') agentId: string,
+  ) {
     return this.reviewsService.canReview(user.id, agentId);
   }
 

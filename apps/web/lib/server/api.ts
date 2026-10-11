@@ -6,6 +6,43 @@ import { FavoriteItem } from '@/lib/api/favorites';
 import { Lead } from '@/types/lead';
 import { AdminStats, AdminUser, AdminLead, ModerationLog } from '@/lib/api/admin';
 
+export interface ReportItem {
+  id: string;
+  propertyId: string;
+  userId: string;
+  reason: string;
+  notes?: string | null;
+  resolved: boolean;
+  createdAt: string;
+  property?: Property;
+  user?: User;
+}
+
+export interface SavedSearchItem {
+  id: string;
+  name: string;
+  url: string;
+  createdAt: string;
+}
+
+export interface AgentProfileResponse {
+  user: User & { _count?: { properties: number } };
+  properties: Property[];
+  meta: { total: number; page: number; limit: number; totalPages: number };
+}
+
+export interface AgentReviewsResponse {
+  reviews: Array<{
+    id: string;
+    rating: number;
+    comment?: string | null;
+    createdAt: string;
+    author: { name: string; avatar?: string | null };
+  }>;
+  avgRating: number | null;
+  totalReviews: number;
+}
+
 import { API_URL } from '@/lib/config';
 
 async function serverFetch<T>(path: string, init?: RequestInit): Promise<T> {
@@ -63,13 +100,13 @@ export const serverApi = {
   getModerationQueue: (status = 'PENDING') => serverFetch<PaginatedResponse<Property>>(`/admin/moderation/queue?status=${status}`),
   getModerationLogs: () => serverFetch<PaginatedResponse<ModerationLog>>('/admin/moderation/logs'),
   getAdminLeads: (params?: string) => serverFetch<PaginatedResponse<AdminLead>>(`/admin/leads${params ? '?' + params : ''}`),
-  getReports: (resolved?: string) => serverFetch<any[]>(`/reports${resolved !== undefined ? `?resolved=${resolved}` : ''}`),
-  getSavedSearches: () => serverFetch<any[]>('/saved-searches'),
-  getAgentProfile: (handle: string, query?: Record<string, any>) => {
+  getReports: (resolved?: string) => serverFetch<ReportItem[]>(`/reports${resolved !== undefined ? `?resolved=${resolved}` : ''}`),
+  getSavedSearches: () => serverFetch<SavedSearchItem[]>('/saved-searches'),
+  getAgentProfile: (handle: string, query?: Record<string, string | number>) => {
     const qs = query ? '?' + new URLSearchParams(
       Object.fromEntries(Object.entries(query).filter(([, v]) => v !== undefined && v !== '' && v !== null).map(([k, v]) => [k, String(v)]))
     ).toString() : '';
-    return serverFetch<any>(`/users/${handle}/public${qs}`);
+    return serverFetch<AgentProfileResponse>(`/users/${handle}/public${qs}`);
   },
-  getAgentReviews: (agentId: string) => serverFetch<any>(`/reviews/agent/${agentId}`),
+  getAgentReviews: (agentId: string) => serverFetch<AgentReviewsResponse>(`/reviews/agent/${agentId}`),
 };

@@ -19,7 +19,8 @@ export function SortControls() {
   const handleChange = (value: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.delete('page');
-    value === 'default' ? params.delete('sort') : params.set('sort', value);
+    if (value === 'default') params.delete('sort');
+    else params.set('sort', value);
     router.push(`${pathname}?${params.toString()}`);
   };
 

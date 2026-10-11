@@ -73,22 +73,24 @@ export default async function PropertyAnalyticsPage({ params }: Props) {
             <p className="text-sm text-muted-foreground">Belum ada data referrer</p>
           ) : (
             <div className="space-y-3">
-              {topReferrers.map((r: { referrer: string; count: number }, i: number) => {
-                const total = topReferrers.reduce((s: number, x: any) => s + x.count, 0);
-                const pct = Math.round((r.count / total) * 100);
-                const domain = r.referrer === 'Direct' ? 'Direct' : (() => { try { return new URL(r.referrer).hostname; } catch { return r.referrer; } })();
-                return (
-                  <div key={i} className="space-y-1">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="truncate max-w-[140px] font-medium">{domain}</span>
-                      <span className="text-muted-foreground">{r.count}x ({pct}%)</span>
+              {(() => {
+                const total = topReferrers.reduce((s: number, x: { count: number }) => s + x.count, 0);
+                return topReferrers.map((r: { referrer: string; count: number }, i: number) => {
+                  const pct = total > 0 ? Math.round((r.count / total) * 100) : 0;
+                  const domain = r.referrer === 'Direct' ? 'Direct' : (() => { try { return new URL(r.referrer).hostname; } catch { return r.referrer; } })();
+                  return (
+                    <div key={i} className="space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="truncate max-w-[140px] font-medium">{domain}</span>
+                        <span className="text-muted-foreground">{r.count}x ({pct}%)</span>
+                      </div>
+                      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-primary rounded-full" style={{ width: `${pct}%` }} />
+                      </div>
                     </div>
-                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                      <div className="h-full bg-primary rounded-full" style={{ width: `${pct}%` }} />
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                });
+              })()}
             </div>
           )}
 

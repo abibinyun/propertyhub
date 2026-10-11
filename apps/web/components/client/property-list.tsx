@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, useTransition, useEffect } from 'react';
+import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { propertiesApi } from '@/lib/api/properties';
 import { Property, PropertyStatus } from '@/types/property';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -49,7 +48,7 @@ export function PropertyList({ initialProperties, meta, initialSearch = '', init
   const router = useRouter();
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
-  const [properties, setProperties] = useState(initialProperties);
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<Property | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [featuredTarget, setFeaturedTarget] = useState<Property | null>(null);
@@ -57,12 +56,19 @@ export function PropertyList({ initialProperties, meta, initialSearch = '', init
   const [filterStatus, setFilterStatus] = useState(initialStatus);
   const [sort, setSort] = useState(initialSort);
 
-  useEffect(() => {
-    setProperties(initialProperties);
+  const [prevProps, setPrevProps] = useState({ initialSearch, initialStatus, initialSort });
+  if (
+    prevProps.initialSearch !== initialSearch ||
+    prevProps.initialStatus !== initialStatus ||
+    prevProps.initialSort !== initialSort
+  ) {
+    setPrevProps({ initialSearch, initialStatus, initialSort });
     setSearch(initialSearch);
     setFilterStatus(initialStatus);
     setSort(initialSort);
-  }, [initialProperties, initialSearch, initialStatus, initialSort]);
+  }
+
+  const properties = initialProperties.filter((p) => !deletedIds.includes(p.id));
 
   const pushUrl = (overrides: Record<string, string>) => {
     const u = new URLSearchParams();
@@ -79,7 +85,7 @@ export function PropertyList({ initialProperties, meta, initialSearch = '', init
     setDeleting(true);
     try {
       await propertiesApi.delete(deleteTarget.slug);
-      setProperties((p) => p.filter((x) => x.id !== deleteTarget.id));
+      setDeletedIds((prev) => [...prev, deleteTarget.id]);
     } catch { /* silent */ }
     finally { setDeleting(false); setDeleteTarget(null); }
   };

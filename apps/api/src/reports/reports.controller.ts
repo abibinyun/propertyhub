@@ -13,6 +13,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import type { RequestUser } from '@propertyhub/shared';
 
 @Controller('reports')
 export class ReportsController {
@@ -21,7 +22,7 @@ export class ReportsController {
   @Post()
   @UseGuards(JwtAuthGuard)
   create(
-    @CurrentUser() user: any,
+    @CurrentUser() user: RequestUser,
     @Body() body: { propertyId: string; reason: string; notes?: string },
   ) {
     return this.reportsService.create(

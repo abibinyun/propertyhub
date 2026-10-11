@@ -46,12 +46,15 @@ function WilayahSelect({
   const filtered = q ? items.filter((i) => i.nama.toLowerCase().includes(q.toLowerCase())) : items;
 
   useEffect(() => {
-    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    const h = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+        setQ('');
+      }
+    };
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
   }, []);
-
-  useEffect(() => { if (!open) setQ(''); }, [open]);
 
   return (
     <div ref={ref} className="relative">

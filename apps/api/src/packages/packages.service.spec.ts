@@ -2,11 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PackagesService } from './packages.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { RankingService } from '../properties/ranking.service';
-import {
-  ForbiddenException,
-  BadRequestException,
-  NotFoundException,
-} from '@nestjs/common';
+import { ForbiddenException, BadRequestException } from '@nestjs/common';
 
 describe('PackagesService (TDD)', () => {
   let service: PackagesService;

@@ -61,8 +61,8 @@ export default function AdminSettingsPage() {
     settingsApi.get().then(setSettings);
   }, []);
 
-  const set = (key: keyof SiteSettings, value: any) =>
-    setSettings((s) => s ? { ...s, [key]: value } : s);
+  const set = <K extends keyof SiteSettings>(key: K, value: SiteSettings[K]) =>
+    setSettings((s) => (s ? { ...s, [key]: value } : s));
 
   const handleSave = async () => {
     if (!settings) return;

@@ -1,10 +1,5 @@
 import { ImageResponse } from 'next/og';
-
-export const runtime = 'edge';
-export const alt = 'PropertyHub';
-export const size = { width: 1200, height: 630 };
-export const contentType = 'image/png';
-
+import { Property, PropertyImage } from '@/types/property';
 import { API_URL } from '@/lib/config';
 
 const TYPE_LABEL: Record<string, string> = {
@@ -19,19 +14,26 @@ function formatPrice(price: string | number): string {
   return `Rp ${num.toLocaleString('id-ID')}`;
 }
 
+export const runtime = 'edge';
+export const alt = 'PropertyHub';
+export const size = { width: 1200, height: 630 };
+export const contentType = 'image/png';
+
 export default async function Image({ params }: { params: { location: string; slug: string } }) {
-  let property: any = null;
+  let property: Property | null = null;
   try {
     const res = await fetch(`${API_URL}/properties/properti/detail/${params.slug}`, { cache: 'no-store' });
-    if (res.ok) property = await res.json();
-  } catch {}
+    if (res.ok) property = (await res.json()) as Property;
+  } catch (err: unknown) {
+    console.warn('Failed to fetch OG property:', err);
+  }
 
   const title = property?.title ?? 'Properti';
   const price = property?.price ? formatPrice(property.price) : '';
   const location = property ? `${property.district}, ${property.city}` : '';
   const type = property ? (TYPE_LABEL[property.propertyType] ?? property.propertyType) : '';
   const status = property?.listingType === 'SALE' ? 'Dijual' : 'Disewa';
-  const imgUrl = property?.images?.find((i: any) => i.isPrimary)?.url ?? property?.images?.[0]?.url;
+  const imgUrl = property?.images?.find((i: PropertyImage) => i.isPrimary)?.url ?? property?.images?.[0]?.url;
 
   return new ImageResponse(
     (
@@ -45,6 +47,7 @@ export default async function Image({ params }: { params: { location: string; sl
         {imgUrl && (
           <img
             src={imgUrl}
+            alt={title}
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.3 }}
           />
         )}

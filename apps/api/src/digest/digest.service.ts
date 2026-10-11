@@ -152,7 +152,11 @@ export class DigestService {
     // Recalculate ranking + notifikasi per properti
     for (const p of expired) {
       // Recalculate ranking (featured=false sekarang, rank score turun)
-      await this.ranking.updatePropertyRanking(p.id).catch(() => {});
+      await this.ranking
+        .updatePropertyRanking(p.id)
+        .catch((err: unknown) =>
+          this.logger.warn('Failed to update expired property ranking', err),
+        );
 
       await this.notifications
         .create(
@@ -162,7 +166,9 @@ export class DigestService {
           `Featured listing "${p.title}" telah berakhir. Perpanjang sekarang untuk tetap tampil di posisi teratas.`,
           `/dashboard/properties`,
         )
-        .catch(() => {});
+        .catch((err: unknown) =>
+          this.logger.warn('Failed to send featured expired notification', err),
+        );
     }
 
     this.logger.log(`Expired ${expired.length} featured listings`);

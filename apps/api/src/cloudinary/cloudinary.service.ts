@@ -42,7 +42,10 @@ export class CloudinaryService {
     return new Promise((resolve, reject) => {
       cloudinary.uploader
         .upload_stream(uploadOptions, (error, result) => {
-          if (error) return reject(error);
+          if (error)
+            return reject(
+              new Error(error.message || 'Cloudinary upload error'),
+            );
           resolve(result.secure_url);
         })
         .end(file.buffer);
@@ -57,7 +60,7 @@ export class CloudinaryService {
   }
 
   private extractPublicId(url: string): string | null {
-    const match = url.match(/\/([^\/]+)\.[^\.]+$/);
+    const match = url.match(/\/([^/]+)\.[^.]+$/);
     return match ? match[1] : null;
   }
 }

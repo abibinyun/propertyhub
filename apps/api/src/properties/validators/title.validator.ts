@@ -1,8 +1,8 @@
 import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
-  ValidationArguments,
 } from 'class-validator';
+import type { ValidationArguments } from 'class-validator';
 
 @ValidatorConstraint({ name: 'propertyTitle', async: false })
 export class PropertyTitleValidator implements ValidatorConstraintInterface {
@@ -41,7 +41,7 @@ export class PropertyTitleValidator implements ValidatorConstraintInterface {
     /http|www\./i, // URLs
   ];
 
-  validate(title: string, args: ValidationArguments) {
+  validate(title: string) {
     if (!title || typeof title !== 'string') {
       return false;
     }

@@ -2,6 +2,7 @@ import { Controller, Post, Body, Param, UseGuards } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import type { RequestUser } from '@propertyhub/shared';
 
 @Controller('payments')
 export class PaymentController {
@@ -11,7 +12,7 @@ export class PaymentController {
   @Post('featured/:propertyId/:featuredType')
   @UseGuards(JwtAuthGuard)
   createFeatured(
-    @CurrentUser() user: any,
+    @CurrentUser() user: RequestUser,
     @Param('propertyId') propertyId: string,
     @Param('featuredType') featuredType: string,
   ) {
@@ -32,7 +33,7 @@ export class PaymentController {
   @Post('featured/:propertyId/:featuredType/activate')
   @UseGuards(JwtAuthGuard)
   activateDirect(
-    @CurrentUser() user: any,
+    @CurrentUser() user: RequestUser,
     @Param('propertyId') propertyId: string,
     @Param('featuredType') featuredType: string,
   ) {

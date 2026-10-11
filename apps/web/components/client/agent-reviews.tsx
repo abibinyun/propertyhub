@@ -12,9 +12,9 @@ import { useAuth } from '@/lib/context/auth-context';
 interface Review {
   id: string;
   rating: number;
-  comment?: string;
+  comment?: string | null;
   createdAt: string;
-  author: { name: string; avatar?: string };
+  author: { name: string; avatar?: string | null };
 }
 
 interface Props {

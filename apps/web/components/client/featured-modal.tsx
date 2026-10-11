@@ -41,12 +41,15 @@ export function FeaturedModal({ propertyId, propertyTitle, open, onClose, onSucc
 
       const result = await paymentsApi.createFeatured(propertyId, selected);
       // Load Midtrans Snap
-      (window as any).snap.pay(result.token, {
-        onSuccess: () => { onSuccess(); onClose(); },
-        onPending: () => { onClose(); },
-        onError: () => setError('Pembayaran gagal, coba lagi'),
-        onClose: () => {},
-      });
+      if (typeof window !== 'undefined' && 'snap' in window) {
+        const snap = (window as unknown as { snap: { pay: (token: string, options: unknown) => void } }).snap;
+        snap.pay(result.token, {
+          onSuccess: () => { onSuccess(); onClose(); },
+          onPending: () => { onClose(); },
+          onError: () => setError('Pembayaran gagal, coba lagi'),
+          onClose: () => {},
+        });
+      }
     } catch {
       setError('Terjadi kesalahan, coba lagi');
     } finally {
@@ -81,7 +84,7 @@ export function FeaturedModal({ propertyId, propertyTitle, open, onClose, onSucc
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold">{tier.label}</span>
-                  {'boost' in tier && <Badge variant="outline" className="text-xs font-bold text-emerald-600 border-emerald-300">Boost {(tier as any).boost}</Badge>}
+                  {tier.boost && <Badge variant="outline" className="text-xs font-bold text-emerald-600 border-emerald-300">Boost {tier.boost}</Badge>}
                   {tier.type === 'PREMIUM' && <Badge className="bg-blue-500 text-white text-xs border-0">Populer</Badge>}
                   {tier.type === 'ULTIMATE' && <Badge className="bg-amber-500 text-white text-xs border-0">Terbaik</Badge>}
                 </div>

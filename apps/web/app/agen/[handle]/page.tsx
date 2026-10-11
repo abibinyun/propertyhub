@@ -1,12 +1,11 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
-import Link from 'next/link';
 import { BadgeCheck, Building2, Calendar, Star, Phone, Mail, MessageCircle } from 'lucide-react';
 import { AgentReviews } from '@/components/client/agent-reviews';
 import { AgentListings } from '@/components/client/agent-listings';
 import { ShareButton } from '@/components/client/share-button';
-import { serverApi } from '@/lib/server/api';
+import { serverApi, AgentProfileResponse, AgentReviewsResponse } from '@/lib/server/api';
 
 import { BASE_URL } from '@/lib/config';
 
@@ -38,8 +37,8 @@ export default async function AgentProfilePage({ params, searchParams }: Props) 
   const sort = sp.sort || 'rank';
   const page = Number(sp.page) || 1;
 
-  let data: any;
-  let reviewData: any = { reviews: [], avgRating: null, totalReviews: 0 };
+  let data: AgentProfileResponse;
+  let reviewData: AgentReviewsResponse = { reviews: [], avgRating: null, totalReviews: 0 };
 
   try {
     data = await serverApi.getAgentProfile(handle, { propertyType, listingType, sort, page, limit: 12 });
@@ -97,10 +96,12 @@ export default async function AgentProfilePage({ params, searchParams }: Props) 
                   <Building2 className="h-4 w-4" />
                   {properties.length} listing aktif
                 </span>
-                <span className="flex items-center gap-1.5">
-                  <Calendar className="h-4 w-4" />
-                  Bergabung {new Date(user.createdAt).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
-                </span>
+                {user.createdAt && (
+                  <span className="flex items-center gap-1.5">
+                    <Calendar className="h-4 w-4" />
+                    Bergabung {new Date(user.createdAt).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+                  </span>
+                )}
                 {reviewData.avgRating && (
                   <span className="flex items-center gap-1.5">
                     <Star className="h-4 w-4 fill-amber-400 text-amber-400" />

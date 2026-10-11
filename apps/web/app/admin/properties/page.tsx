@@ -26,6 +26,7 @@ export default async function AdminPropertiesPage({ searchParams }: Props) {
   const { status, type, search, page = '1' } = await searchParams;
   const params = new URLSearchParams();
   if (status) params.set('status', status);
+  if (type) params.set('propertyType', type);
   if (search) params.set('search', search);
   if (page) params.set('page', page);
   params.set('limit', '15');

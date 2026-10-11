@@ -4,6 +4,7 @@ import {
   ConflictException,
   HttpException,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
@@ -29,6 +30,7 @@ const PROPERTY_SELECT = {
 
 @Injectable()
 export class LeadsService {
+  private readonly logger = new Logger(LeadsService.name);
   constructor(
     private prisma: PrismaService,
     private emailService: EmailService,
@@ -122,7 +124,9 @@ export class LeadsService {
           `${lead.name} mengirim pesan untuk "${lead.property.title}"`,
           '/dashboard/leads',
         )
-        .catch(() => {});
+        .catch((err: unknown) =>
+          this.logger.warn('Failed to send lead in-app notification', err),
+        );
     }
 
     return lead;

@@ -15,6 +15,7 @@ import { LeadsService } from './leads.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import type { RequestUser } from '@propertyhub/shared';
 
 @Controller('leads')
 @UseGuards(JwtAuthGuard)
@@ -27,17 +28,20 @@ export class LeadsController {
     medium: { ttl: 86400000, limit: 10 },
   })
   // Max 3 leads per menit, max 10 leads per hari per user
-  create(@CurrentUser() user: any, @Body() dto: CreateLeadDto) {
+  create(@CurrentUser() user: RequestUser, @Body() dto: CreateLeadDto) {
     return this.leadsService.create(user.id, dto);
   }
 
   @Get('unread-count')
-  getUnreadCount(@CurrentUser() user: any) {
+  getUnreadCount(@CurrentUser() user: RequestUser) {
     return this.leadsService.getUnreadCount(user.id);
   }
 
   @Get('received/export')
-  async exportReceivedLeads(@CurrentUser() user: any, @Res() res: Response) {
+  async exportReceivedLeads(
+    @CurrentUser() user: RequestUser,
+    @Res() res: Response,
+  ) {
     const { data } = await this.leadsService.findReceivedLeads(user.id, {
       limit: 10000,
     });
@@ -66,7 +70,7 @@ export class LeadsController {
 
   @Get('received')
   findReceivedLeads(
-    @CurrentUser() user: any,
+    @CurrentUser() user: RequestUser,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('search') search?: string,
@@ -82,7 +86,7 @@ export class LeadsController {
 
   @Get('my')
   findMyLeads(
-    @CurrentUser() user: any,
+    @CurrentUser() user: RequestUser,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('search') search?: string,
@@ -98,7 +102,7 @@ export class LeadsController {
 
   @Get('property/:propertyId')
   findPropertyLeads(
-    @CurrentUser() user: any,
+    @CurrentUser() user: RequestUser,
     @Param('propertyId') propertyId: string,
   ) {
     return this.leadsService.findPropertyLeads(user.id, propertyId);
@@ -106,7 +110,7 @@ export class LeadsController {
 
   @Patch(':id/status')
   updateStatus(
-    @CurrentUser() user: any,
+    @CurrentUser() user: RequestUser,
     @Param('id') id: string,
     @Body('status') status: string,
   ) {

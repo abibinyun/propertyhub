@@ -3,7 +3,7 @@ import { PaymentService } from './payment.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { NotificationsService } from '../notifications/notifications.service';
-import { BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { UnauthorizedException } from '@nestjs/common';
 import { createHash } from 'crypto';
 
 describe('PaymentService (TDD)', () => {

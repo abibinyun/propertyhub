@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import Image from 'next/image';
-import { ChevronLeft, ChevronRight, X, Grid2x2, Expand } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Grid2x2 } from 'lucide-react';
 import { PropertyImage } from '@/types/property';
 import { cn } from '@/lib/utils';
 

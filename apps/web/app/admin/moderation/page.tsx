@@ -17,7 +17,7 @@ interface Props {
 }
 
 export default async function ModerationPage({ searchParams }: Props) {
-  const { status = 'PENDING', page = '1' } = await searchParams;
+  const { status = 'PENDING' } = await searchParams;
   const { data: properties, meta } = await serverApi.getModerationQueue(status);
 
   return (

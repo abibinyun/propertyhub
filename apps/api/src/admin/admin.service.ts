@@ -1,9 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class AdminService {
+  private readonly logger = new Logger(AdminService.name);
+
   constructor(
     private prisma: PrismaService,
     private notifications: NotificationsService,
@@ -345,7 +347,9 @@ export class AdminService {
         `"${property.title}" telah disetujui dan sekarang aktif`,
         `/dashboard/properties`,
       )
-      .catch(() => {});
+      .catch((err: unknown) =>
+        this.logger.warn('Failed to send notification', err),
+      );
 
     return { message: 'Property approved' };
   }
@@ -386,7 +390,9 @@ export class AdminService {
         `"${property.title}" ditolak: ${reason}`,
         `/dashboard/properties`,
       )
-      .catch(() => {});
+      .catch((err: unknown) =>
+        this.logger.warn('Failed to send notification', err),
+      );
 
     return { message: 'Property rejected' };
   }
@@ -426,7 +432,9 @@ export class AdminService {
         `"${property.title}" ditandai untuk ditinjau: ${reason}`,
         `/dashboard/properties`,
       )
-      .catch(() => {});
+      .catch((err: unknown) =>
+        this.logger.warn('Failed to send notification', err),
+      );
 
     return { message: 'Property flagged' };
   }

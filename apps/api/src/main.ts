@@ -63,4 +63,7 @@ async function bootstrap() {
   await app.listen(port);
   logger.log(`🚀 Running on: http://localhost:${port}`);
 }
-bootstrap();
+bootstrap().catch((err: unknown) => {
+  new Logger('Bootstrap').error('Fatal error during application startup', err);
+  process.exit(1);
+});

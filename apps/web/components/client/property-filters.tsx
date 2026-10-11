@@ -59,12 +59,12 @@ function FilterForm({ initialMinPrice, initialMaxPrice, initialBedrooms, initial
   const apply = () => {
     const params = new URLSearchParams(searchParams.toString());
     params.delete('page');
-    minPrice ? params.set('minPrice', minPrice) : params.delete('minPrice');
-    maxPrice ? params.set('maxPrice', maxPrice) : params.delete('maxPrice');
-    bedrooms ? params.set('bedrooms', bedrooms) : params.delete('bedrooms');
-    minArea ? params.set('minArea', minArea) : params.delete('minArea');
-    certificate ? params.set('certificate', certificate) : params.delete('certificate');
-    furnishing ? params.set('furnishing', furnishing) : params.delete('furnishing');
+    if (minPrice) params.set('minPrice', minPrice); else params.delete('minPrice');
+    if (maxPrice) params.set('maxPrice', maxPrice); else params.delete('maxPrice');
+    if (bedrooms) params.set('bedrooms', bedrooms); else params.delete('bedrooms');
+    if (minArea) params.set('minArea', minArea); else params.delete('minArea');
+    if (certificate) params.set('certificate', certificate); else params.delete('certificate');
+    if (furnishing) params.set('furnishing', furnishing); else params.delete('furnishing');
     router.push(`${pathname}?${params.toString()}`);
     onApply?.();
   };

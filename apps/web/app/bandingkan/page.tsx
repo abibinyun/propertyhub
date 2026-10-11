@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { propertiesApi } from '@/lib/api/properties';
+import { Property, PropertyFeature, PropertyImage } from '@/types/property';
 import { formatPrice } from '@/lib/utils';
 import { propertyDetailUrl } from '@/lib/url';
 import { BadgeCheck } from 'lucide-react';
@@ -12,22 +13,22 @@ export const metadata: Metadata = { title: 'Bandingkan Properti', robots: { inde
 
 interface Props { searchParams: Promise<{ ids?: string }> }
 
-const ROWS: { label: string; key: string; format?: (v: any) => string }[] = [
-  { label: 'Harga', key: 'price', format: v => formatPrice(String(v)) },
+const ROWS: { label: string; key: keyof Property; format?: (v: unknown) => string }[] = [
+  { label: 'Harga', key: 'price', format: (v) => formatPrice(String(v)) },
   { label: 'Tipe', key: 'propertyType' },
-  { label: 'Status', key: 'listingType', format: v => v === 'SALE' ? 'Dijual' : 'Disewa' },
+  { label: 'Status', key: 'listingType', format: (v) => (v === 'SALE' ? 'Dijual' : 'Disewa') },
   { label: 'Kota', key: 'city' },
   { label: 'Kecamatan', key: 'district' },
-  { label: 'Luas Tanah', key: 'landArea', format: v => v ? `${v} m²` : '—' },
-  { label: 'Luas Bangunan', key: 'buildingArea', format: v => v ? `${v} m²` : '—' },
-  { label: 'Kamar Tidur', key: 'bedrooms', format: v => v ?? '—' },
-  { label: 'Kamar Mandi', key: 'bathrooms', format: v => v ?? '—' },
-  { label: 'Lantai', key: 'floors', format: v => v ?? '—' },
-  { label: 'Garasi', key: 'garage', format: v => v ?? '—' },
-  { label: 'Sertifikat', key: 'certificateType', format: v => v ?? '—' },
-  { label: 'Tahun Dibangun', key: 'yearBuilt', format: v => v ?? '—' },
-  { label: 'Furnitur', key: 'furnishing', format: v => v ?? '—' },
-  { label: 'Agen', key: 'user', format: v => v?.name ?? '—' },
+  { label: 'Luas Tanah', key: 'landArea', format: (v) => (v ? `${String(v)} m²` : '—') },
+  { label: 'Luas Bangunan', key: 'buildingArea', format: (v) => (v ? `${String(v)} m²` : '—') },
+  { label: 'Kamar Tidur', key: 'bedrooms', format: (v) => (v ? String(v) : '—') },
+  { label: 'Kamar Mandi', key: 'bathrooms', format: (v) => (v ? String(v) : '—') },
+  { label: 'Lantai', key: 'floors', format: (v) => (v ? String(v) : '—') },
+  { label: 'Garasi', key: 'garage', format: (v) => (v ? String(v) : '—') },
+  { label: 'Sertifikat', key: 'certificateType', format: (v) => (v ? String(v) : '—') },
+  { label: 'Tahun Dibangun', key: 'yearBuilt', format: (v) => (v ? String(v) : '—') },
+  { label: 'Furnitur', key: 'furnishing', format: (v) => (v ? String(v) : '—') },
+  { label: 'Agen', key: 'user', format: (v) => (v && typeof v === 'object' && 'name' in v ? String((v as { name: string }).name) : '—') },
 ];
 
 export default async function BandingkanPage({ searchParams }: Props) {
@@ -37,9 +38,9 @@ export default async function BandingkanPage({ searchParams }: Props) {
   const idList = ids.split(',').slice(0, 3).filter(Boolean);
   if (idList.length < 2) notFound();
 
-  const properties = await Promise.all(
-    idList.map(slug => propertiesApi.getBySlug(slug).catch(() => null))
-  ).then(r => r.filter(Boolean));
+  const properties = (await Promise.all(
+    idList.map((slug) => propertiesApi.getBySlug(slug).catch(() => null)),
+  ).then((r) => r.filter(Boolean))) as Property[];
 
   if (properties.length < 2) notFound();
 
@@ -58,8 +59,8 @@ export default async function BandingkanPage({ searchParams }: Props) {
               <thead>
                 <tr className="border-b border-border/40">
                   <th className="px-4 py-4 text-left text-sm font-semibold text-muted-foreground w-32">Spesifikasi</th>
-                  {properties.map((p: any) => {
-                    const img = p.images?.find((i: any) => i.isPrimary) ?? p.images?.[0];
+                  {properties.map((p: Property) => {
+                    const img = p.images?.find((i: PropertyImage) => i.isPrimary) ?? p.images?.[0];
                     return (
                       <th key={p.id} className="px-4 py-4 text-left min-w-[220px]">
                         <Link href={propertyDetailUrl(p)} className="block hover:opacity-80 transition-opacity">
@@ -87,9 +88,9 @@ export default async function BandingkanPage({ searchParams }: Props) {
                 {ROWS.map(({ label, key, format }, i) => (
                   <tr key={key} className={i % 2 === 0 ? 'bg-slate-50/50' : ''}>
                     <td className="px-4 py-3 text-xs font-medium text-muted-foreground">{label}</td>
-                    {properties.map((p: any) => {
+                    {properties.map((p: Property) => {
                       const val = p[key];
-                      const display = format ? format(val) : (val ?? '—');
+                      const display = format ? format(val) : ((val as string | number) ?? '—');
                       return (
                         <td key={p.id} className="px-4 py-3 text-sm">{String(display)}</td>
                       );
@@ -100,11 +101,11 @@ export default async function BandingkanPage({ searchParams }: Props) {
                 {/* Fitur */}
                 <tr>
                   <td className="px-4 py-3 text-xs font-medium text-muted-foreground">Fasilitas</td>
-                  {properties.map((p: any) => (
+                  {properties.map((p: Property) => (
                     <td key={p.id} className="px-4 py-3">
-                      {p.features?.length > 0 ? (
+                      {p.features && p.features.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
-                          {p.features.map((f: any) => (
+                          {p.features.map((f: PropertyFeature) => (
                             <Badge key={f.feature} variant="secondary" className="text-xs">{f.feature}</Badge>
                           ))}
                         </div>

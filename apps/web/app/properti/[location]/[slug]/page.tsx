@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { propertiesApi } from '@/lib/api/properties';
 import { Badge } from '@/components/ui/badge';
 
@@ -304,7 +305,9 @@ export default async function PropertyDetailPage({ params }: Props) {
             {property.floorPlanUrl && (
               <div className="bg-white rounded-2xl border border-border/60 p-5 md:p-6">
                 <h2 className="font-semibold text-base mb-4">Denah Lantai</h2>
-                <img src={property.floorPlanUrl} alt="Denah lantai" className="w-full rounded-xl border object-contain max-h-96" />
+                <div className="relative w-full h-80 rounded-xl overflow-hidden border">
+                  <Image src={property.floorPlanUrl} alt="Denah lantai" fill className="object-contain" />
+                </div>
               </div>
             )}
 
@@ -345,7 +348,7 @@ export default async function PropertyDetailPage({ params }: Props) {
               <div className="bg-white rounded-2xl border border-border/60 overflow-hidden">
                 <div className="bg-gradient-to-br from-primary/5 to-primary/10 px-5 py-4 border-b border-border/50">
                   <p className="text-xs text-muted-foreground mb-1">Ditawarkan oleh</p>
-                  <Link href={`/agen/${(property.user as any)?.username ?? property.userId}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                  <Link href={`/agen/${property.user?.username ?? property.userId}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                     <div className="h-11 w-11 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-lg flex-shrink-0">
                       {property.user?.name?.charAt(0) ?? 'A'}
                     </div>

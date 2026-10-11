@@ -37,14 +37,12 @@ export function SimpleDonutChart({ data, size = 120 }: {
   const r = 40;
   const cx = size / 2;
   const cy = size / 2;
-  let cumulative = 0;
-
-  const slices = data.map((d) => {
+  const slices = data.map((d, i) => {
     const pct = total > 0 ? d.value / total : 0;
-    const start = cumulative;
-    cumulative += pct;
+    const start = data.slice(0, i).reduce((sum, item) => sum + (total > 0 ? item.value / total : 0), 0);
+    const end = start + pct;
     const startAngle = start * 2 * Math.PI - Math.PI / 2;
-    const endAngle = cumulative * 2 * Math.PI - Math.PI / 2;
+    const endAngle = end * 2 * Math.PI - Math.PI / 2;
     const x1 = cx + r * Math.cos(startAngle);
     const y1 = cy + r * Math.sin(startAngle);
     const x2 = cx + r * Math.cos(endAngle);

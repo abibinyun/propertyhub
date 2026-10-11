@@ -9,6 +9,7 @@ import {
 import { FavoritesService } from './favorites.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import type { RequestUser } from '@propertyhub/shared';
 
 @Controller('favorites')
 @UseGuards(JwtAuthGuard)
@@ -17,7 +18,7 @@ export class FavoritesController {
 
   @Post(':propertyId')
   addFavorite(
-    @CurrentUser() user: any,
+    @CurrentUser() user: RequestUser,
     @Param('propertyId') propertyId: string,
   ) {
     return this.favoritesService.addFavorite(user.id, propertyId);
@@ -25,30 +26,30 @@ export class FavoritesController {
 
   @Delete(':propertyId')
   removeFavorite(
-    @CurrentUser() user: any,
+    @CurrentUser() user: RequestUser,
     @Param('propertyId') propertyId: string,
   ) {
     return this.favoritesService.removeFavorite(user.id, propertyId);
   }
 
   @Get()
-  getFavorites(@CurrentUser() user: any) {
+  getFavorites(@CurrentUser() user: RequestUser) {
     return this.favoritesService.getFavorites(user.id);
   }
 
   @Get('ids')
-  getFavoriteIds(@CurrentUser() user: any) {
+  getFavoriteIds(@CurrentUser() user: RequestUser) {
     return this.favoritesService.getFavoriteIds(user.id);
   }
 
   @Get('property-counts')
-  getPropertyFavoriteCounts(@CurrentUser() user: any) {
+  getPropertyFavoriteCounts(@CurrentUser() user: RequestUser) {
     return this.favoritesService.getPropertyFavoriteCounts(user.id);
   }
 
   @Get('check/:propertyId')
   isFavorite(
-    @CurrentUser() user: any,
+    @CurrentUser() user: RequestUser,
     @Param('propertyId') propertyId: string,
   ) {
     return this.favoritesService.isFavorite(user.id, propertyId);

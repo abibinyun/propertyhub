@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { serverApi } from '@/lib/server/api';
-import { Flag, CheckCircle } from 'lucide-react';
+import { serverApi, ReportItem } from '@/lib/server/api';
+import { CheckCircle } from 'lucide-react';
 
 export const metadata = { title: 'Laporan Listing — Admin' };
 
@@ -38,17 +38,17 @@ export default async function AdminReportsPage({ searchParams }: { searchParams:
               </tr>
             </thead>
             <tbody className="divide-y divide-border/40">
-              {reports.map((r: any) => (
+              {reports.map((r: ReportItem) => (
                 <tr key={r.id} className="hover:bg-slate-50/50">
                   <td className="px-4 py-3">
-                    <Link href={`/properti/${r.property.slug}`} target="_blank" className="font-medium hover:underline line-clamp-1 max-w-[180px] block">
-                      {r.property.title}
+                    <Link href={`/properti/${r.property?.slug ?? ''}`} target="_blank" className="font-medium hover:underline line-clamp-1 max-w-[180px] block">
+                      {r.property?.title ?? 'Properti'}
                     </Link>
-                    <p className="text-xs text-muted-foreground">{r.property.city}</p>
+                    <p className="text-xs text-muted-foreground">{r.property?.city ?? ''}</p>
                   </td>
                   <td className="px-4 py-3">
-                    <p className="font-medium">{r.user.name}</p>
-                    <p className="text-xs text-muted-foreground">{r.user.email}</p>
+                    <p className="font-medium">{r.user?.name ?? 'Anonim'}</p>
+                    <p className="text-xs text-muted-foreground">{r.user?.email ?? '—'}</p>
                   </td>
                   <td className="px-4 py-3">
                     <span className="text-xs bg-red-50 text-red-700 px-2 py-1 rounded-full">{r.reason}</span>

@@ -21,6 +21,7 @@ import {
 } from './dto/auth.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
+import type { RequestUser } from '@propertyhub/shared';
 import { getConfig } from '../common/config';
 
 @Controller('auth')
@@ -83,7 +84,7 @@ export class AuthController {
   @Post('logout')
   @UseGuards(JwtAuthGuard)
   async logout(
-    @CurrentUser() user: any,
+    @CurrentUser() user: RequestUser,
     @Res({ passthrough: true }) res: Response,
   ) {
     await this.authService.revokeRefreshToken(user.id);
@@ -107,7 +108,7 @@ export class AuthController {
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  getProfile(@CurrentUser() user: any) {
+  getProfile(@CurrentUser() user: RequestUser) {
     return user;
   }
 
@@ -118,7 +119,7 @@ export class AuthController {
 
   @Post('resend-verification')
   @UseGuards(JwtAuthGuard)
-  resendVerification(@CurrentUser() user: any) {
+  resendVerification(@CurrentUser() user: RequestUser) {
     return this.authService.resendVerification(user.id);
   }
 

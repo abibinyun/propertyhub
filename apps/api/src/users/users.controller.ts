@@ -24,6 +24,7 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import type { RequestUser } from '@propertyhub/shared';
 import { getConfig } from '../common/config';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -42,7 +43,7 @@ export class UsersController {
 
   @Post('verification')
   submitVerification(
-    @CurrentUser() user: any,
+    @CurrentUser() user: RequestUser,
     @Body() dto: SubmitVerificationDto,
   ) {
     return this.verificationService.submitVerification(user.id, dto);
@@ -50,7 +51,7 @@ export class UsersController {
 
   @Patch('verification/:id/review')
   reviewVerification(
-    @CurrentUser() user: any,
+    @CurrentUser() user: RequestUser,
     @Param('id') verificationId: string,
     @Body() body: { status: 'APPROVED' | 'REJECTED'; reason?: string },
   ) {
@@ -67,13 +68,13 @@ export class UsersController {
   }
 
   @Get('profile')
-  getProfile(@CurrentUser() user: any) {
+  getProfile(@CurrentUser() user: RequestUser) {
     return this.usersService.getProfile(user.id);
   }
 
   @Get('check-username/:username')
   async checkUsername(
-    @CurrentUser() user: any,
+    @CurrentUser() user: RequestUser,
     @Param('username') username: string,
   ) {
     const existing = await this.prisma.user.findUnique({ where: { username } });
@@ -81,7 +82,10 @@ export class UsersController {
   }
 
   @Patch('profile')
-  async updateProfile(@CurrentUser() user: any, @Body() dto: UpdateProfileDto) {
+  async updateProfile(
+    @CurrentUser() user: RequestUser,
+    @Body() dto: UpdateProfileDto,
+  ) {
     // Cek username unik jika diisi
     if (dto.username) {
       const existing = await this.prisma.user.findUnique({
@@ -96,7 +100,7 @@ export class UsersController {
   @Post('avatar')
   @UseInterceptors(FileInterceptor('file'))
   async uploadAvatar(
-    @CurrentUser() user: any,
+    @CurrentUser() user: RequestUser,
     @UploadedFile(
       new ParseFilePipe({
         validators: [
@@ -117,7 +121,7 @@ export class UsersController {
 
   @Patch('password')
   async changePassword(
-    @CurrentUser() user: any,
+    @CurrentUser() user: RequestUser,
     @Body() body: { currentPassword: string; newPassword: string },
   ) {
     const u = await this.prisma.user.findUnique({ where: { id: user.id } });
@@ -138,7 +142,7 @@ export class UsersController {
   }
 
   @Get('stats')
-  getStats(@CurrentUser() user: any) {
+  getStats(@CurrentUser() user: RequestUser) {
     return this.usersService.getDashboardStats(user.id);
   }
 }

@@ -2,11 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { VerificationService } from './verification.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import {
-  ForbiddenException,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { ForbiddenException } from '@nestjs/common';
 
 describe('VerificationService (TDD)', () => {
   let service: VerificationService;

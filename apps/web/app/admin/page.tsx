@@ -1,11 +1,10 @@
 import Link from 'next/link';
 import { serverApi } from '@/lib/server/api';
-import { Badge } from '@/components/ui/badge';
 import { SimpleBarChart, SimpleDonutChart } from '@/components/client/admin-charts';
 import { formatPrice } from '@/lib/utils';
 import {
   Users, Building2, MessageSquare, TrendingUp,
-  Clock, CheckCircle2, AlertTriangle, ArrowUpRight,
+  AlertTriangle, ArrowUpRight,
 } from 'lucide-react';
 
 const TYPE_COLORS: Record<string, string> = {

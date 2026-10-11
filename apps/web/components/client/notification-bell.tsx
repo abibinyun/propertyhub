@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
 import { Bell, CheckCheck, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -14,16 +13,26 @@ const TYPE_ICON: Record<string, string> = {
   property_flagged: '⚠️',
 };
 
+interface NotificationItem {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  url?: string | null;
+  read: boolean;
+  createdAt: string;
+}
+
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
-  const [data, setData] = useState<{ items: any[]; unread: number }>({ items: [], unread: 0 });
+  const [data, setData] = useState<{ items: NotificationItem[]; unread: number }>({ items: [], unread: 0 });
   const ref = useRef<HTMLDivElement>(null);
 
   const fetch_ = () =>
     fetch(`${API_URL}/notifications`, { credentials: 'include' })
       .then(r => r.ok ? r.json() : null)
       .then(d => d && setData(d))
-      .catch(() => {});
+      .catch((err: unknown) => console.warn('Failed to fetch notifications:', err));
 
   useEffect(() => {
     fetch_();

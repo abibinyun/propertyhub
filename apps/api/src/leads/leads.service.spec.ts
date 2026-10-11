@@ -4,7 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { EmailService } from '../email/email.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { ConflictException, HttpException, HttpStatus } from '@nestjs/common';
+import { ConflictException } from '@nestjs/common';
 
 describe('LeadsService (TDD)', () => {
   let service: LeadsService;

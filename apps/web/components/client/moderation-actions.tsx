@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { adminApi } from '@/lib/api/admin';
 import { Property } from '@/types/property';
 import { Button } from '@/components/ui/button';

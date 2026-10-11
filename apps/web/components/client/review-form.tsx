@@ -26,8 +26,9 @@ export function ReviewForm({ agentId, onSuccess }: Props) {
     try {
       await reviewsApi.create(agentId, { rating, comment: comment.trim() || undefined });
       onSuccess();
-    } catch (e: any) {
-      setError(e?.message || 'Gagal mengirim review');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : (typeof e === 'object' && e !== null && 'message' in e ? String((e as { message: string }).message) : 'Gagal mengirim review');
+      setError(msg);
     } finally {
       setLoading(false);
     }

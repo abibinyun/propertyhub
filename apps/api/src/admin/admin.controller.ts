@@ -13,6 +13,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import type { RequestUser } from '@propertyhub/shared';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -61,7 +62,7 @@ export class AdminController {
 
   @Patch('moderation/:id/approve')
   approveProperty(
-    @CurrentUser() user: any,
+    @CurrentUser() user: RequestUser,
     @Param('id') id: string,
     @Body() data: { notes?: string },
   ) {
@@ -70,7 +71,7 @@ export class AdminController {
 
   @Patch('moderation/:id/reject')
   rejectProperty(
-    @CurrentUser() user: any,
+    @CurrentUser() user: RequestUser,
     @Param('id') id: string,
     @Body() data: { reason: string; notes?: string },
   ) {
@@ -84,7 +85,7 @@ export class AdminController {
 
   @Patch('moderation/:id/flag')
   flagProperty(
-    @CurrentUser() user: any,
+    @CurrentUser() user: RequestUser,
     @Param('id') id: string,
     @Body() data: { reason: string; notes?: string },
   ) {

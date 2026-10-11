@@ -12,7 +12,7 @@ import { LocationSection } from './form-sections/location';
 import { FeaturesSection } from './form-sections/features';
 import { ImageUploadSection } from './form-sections/image-upload';
 import { FloorPlanUpload } from './floor-plan-upload';
-import { cn, formatPrice } from '@/lib/utils';
+import { formatPrice } from '@/lib/utils';
 
 interface FormState {
   title: string; description: string; propertyType: PropertyType; listingType: ListingType;

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { adminApi } from '@/lib/api/admin';
-import { Property, PropertyStatus } from '@/types/property';
+import { Property } from '@/types/property';
 import { Button } from '@/components/ui/button';
 import { Eye, Trash2 } from 'lucide-react';
 import { propertyDetailUrl } from '@/lib/url';

@@ -4,10 +4,9 @@ import Image from 'next/image';
 import { serverApi } from '@/lib/server/api';
 import { getToken } from '@/lib/server/auth';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   Building2, Heart, MessageSquare, Eye, Plus, ArrowRight,
-  TrendingUp, MapPin, Phone, Mail, Bell,
+  TrendingUp, MapPin, Phone, Bell,
 } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import { propertyDetailUrl } from '@/lib/url';

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/context/auth-context';
 import {
   NavigationMenu, NavigationMenuContent, NavigationMenuItem,
@@ -14,7 +14,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import {
   Home, Building2, Warehouse, Trees, Store, Hotel,
@@ -183,7 +182,7 @@ function MobileMegaSection({
 }: { data: typeof JUAL_MENU; status: string; label: string; onNavigate: () => void }) {
   const [activeType, setActiveType] = useState<string | null>(null);
 
-  const handleTypeClick = (e: React.MouseEvent, typeSlug: string, href: string) => {
+  const handleTypeClick = (e: React.MouseEvent, typeSlug: string) => {
     if (activeType === typeSlug) {
       // Second tap → navigate directly
       onNavigate();
@@ -205,7 +204,7 @@ function MobileMegaSection({
               {/* Type row */}
               <Link
                 href={item.href}
-                onClick={(e) => handleTypeClick(e, typeSlug, item.href)}
+                onClick={(e) => handleTypeClick(e, typeSlug)}
                 className={cn(
                   'flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors',
                   isActive ? 'bg-accent' : 'hover:bg-accent',
@@ -263,7 +262,6 @@ function MobileMegaSection({
 export function Header({ settings }: { settings: SiteSettings }) {
   const { user, logout } = useAuth();
   const pathname = usePathname();
-  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [announcement, setAnnouncement] = useState(true);

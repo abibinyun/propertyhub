@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, MapPin, Home, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -32,7 +32,7 @@ interface Props {
 export function SearchBar({ onClose, autoFocus, className }: Props) {
   const router = useRouter();
   const [query, setQuery] = useState('');
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [open, setOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(-1);
   const [kotaList, setKotaList] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -40,18 +40,20 @@ export function SearchBar({ onClose, autoFocus, className }: Props) {
 
   // Load wilayah data once
   useEffect(() => {
-    getKotaList().then(setKotaList).catch(() => {});
+    getKotaList()
+      .then(setKotaList)
+      .catch((err: unknown) => console.warn('Failed to load kota list:', err));
   }, []);
 
   useEffect(() => {
     if (autoFocus) setTimeout(() => inputRef.current?.focus(), 50);
   }, [autoFocus]);
 
-  const buildSuggestions = useCallback((q: string) => {
-    if (!q.trim()) return [];
-    const lower = q.toLowerCase();
+  const suggestions = useMemo(() => {
+    if (!query.trim()) return [];
+    const lower = query.toLowerCase();
 
-    const cities: Suggestion[] = searchKota(kotaList, q, 5).map((c) => ({
+    const cities: Suggestion[] = searchKota(kotaList, query, 5).map((c) => ({
       type: 'city',
       label: c,
       href: `/jual/${c.toLowerCase().replace(/\s+/g, '-')}`,
@@ -63,18 +65,13 @@ export function SearchBar({ onClose, autoFocus, className }: Props) {
       .map((t) => ({ type: 'property', label: t.label, href: `/jual/${t.slug}` }));
 
     return [...cities, ...types].slice(0, 7);
-  }, [kotaList]);
-
-  useEffect(() => {
-    setSuggestions(buildSuggestions(query));
-    setActiveIdx(-1);
-  }, [query, buildSuggestions]);
+  }, [query, kotaList]);
 
   // Close on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setSuggestions([]);
+        setOpen(false);
       }
     };
     document.addEventListener('mousedown', handler);
@@ -84,7 +81,7 @@ export function SearchBar({ onClose, autoFocus, className }: Props) {
   const navigate = (href: string) => {
     router.push(href);
     setQuery('');
-    setSuggestions([]);
+    setOpen(false);
     onClose?.();
   };
 
@@ -103,7 +100,7 @@ export function SearchBar({ onClose, autoFocus, className }: Props) {
     if (!suggestions.length) return;
     if (e.key === 'ArrowDown') { e.preventDefault(); setActiveIdx((i) => Math.min(i + 1, suggestions.length - 1)); }
     if (e.key === 'ArrowUp') { e.preventDefault(); setActiveIdx((i) => Math.max(i - 1, -1)); }
-    if (e.key === 'Escape') { setSuggestions([]); onClose?.(); }
+    if (e.key === 'Escape') { setOpen(false); onClose?.(); }
   };
 
   return (
@@ -114,7 +111,8 @@ export function SearchBar({ onClose, autoFocus, className }: Props) {
           <Input
             ref={inputRef}
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+            onFocus={() => setOpen(true)}
             onKeyDown={handleKeyDown}
             placeholder="Cari kota, area, tipe properti..."
             className="pl-9 h-9 text-sm"
@@ -129,7 +127,7 @@ export function SearchBar({ onClose, autoFocus, className }: Props) {
         )}
       </form>
 
-      {suggestions.length > 0 && (
+      {open && suggestions.length > 0 && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl border shadow-lg z-50 overflow-hidden">
           {suggestions.map((s, i) => (
             <button
